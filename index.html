@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EventFlow â€” AI Sales Automation for Restaurants</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <style>
+    /* â”€â”€ Reset & Base â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink:      #001524;
+      --teal:     #15616D;
+      --teal-lt:  #1a7a89;
+      --cream:    #FFECD1;
+      --orange:   #FF7D00;
+      --brandy:   #78290F;
+      --white:    #ffffff;
+      --font:     'DM Sans', sans-serif;
+      --serif:    'DM Serif Display', serif;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font);
+      background: var(--cream);
+      color: var(--ink);
+      overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { max-width: 100%; }
+
+    /* â”€â”€ Nav â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 4rem;
+      background: rgba(255,236,209,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(21,97,109,0.1);
+      transition: box-shadow 0.3s;
+    }
+    nav.scrolled { box-shadow: 0 2px 24px rgba(0,21,36,0.08); }
+    .nav-logo { display: flex; align-items: center; gap: 0.6rem; }
+    .nav-logo svg { width: 36px; height: 36px; }
+    .nav-logo span { font-size: 1.2rem; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; }
+    .nav-links { display: flex; align-items: center; gap: 2rem; }
+    .nav-links a { font-size: 0.9rem; font-weight: 500; color: var(--ink); opacity: 0.75; transition: opacity 0.2s; }
+    .nav-links a:hover { opacity: 1; }
+    .nav-cta {
+      background: var(--orange); color: var(--white);
+      padding: 0.55rem 1.4rem; border-radius: 6px;
+      font-size: 0.9rem; font-weight: 600;
+      transition: transform 0.2s, box-shadow 0.2s;
+      opacity: 1 !important;
+    }
+    .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(255,125,0,0.35); }
+
+    /* â”€â”€ Hero â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    #hero {
+      min-height: 100vh;
+      display: flex; align-items: center;
+      padding: 8rem 4rem 4rem;
+      position: relative; overflow: hidden;
+    }
+    .hero-content { max-width: 560px; z-index: 2; position: relative; }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: rgba(21,97,109,0.1); border: 1px solid rgba(21,97,109,0.2);
+      color: var(--teal); font-size: 0.8rem; font-weight: 600;
+      padding: 0.35rem 0.9rem; border-radius: 100px; margin-bottom: 1.5rem;
+      letter-spacing: 0.05em; text-transform: uppercase;
+    }
+    .hero-eyebrow span { width: 6px; height: 6px; background: var(--orange); border-radius: 50%; display: inline-block; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.4)} }
+    .hero-title {
+      font-family: var(--serif);
+      font-size: clamp(2.6rem, 5vw, 4rem);
+      line-height: 1.1;
+      color: var(--ink);
+      margin-bottom: 1.5rem;
+    }
+    .hero-title em { font-style: normal; color: var(--teal); }
+    .hero-title .accent { color: var(--orange); }
+    .hero-sub {
+      font-size: 1.1rem; line-height: 1.7;
+      color: var(--ink); opacity: 0.7;
+      max-width: 480px; margin-bottom: 2.5rem;
+    }
+    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .btn-primary {
+      background: var(--orange); color: var(--white);
+      padding: 0.85rem 2rem; border-radius: 8px;
+      font-size: 1rem; font-weight: 600;
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: inline-flex; align-items: center; gap: 0.5rem;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255,125,0,0.35); }
+    .btn-secondary {
+      background: transparent; color: var(--teal);
+      padding: 0.85rem 2rem; border-radius: 8px;
+      font-size: 1rem; font-weight: 600; border: 2px solid var(--teal);
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn-secondary:hover { background: var(--teal); color: var(--white); }
+    .hero-stats {
+      display: flex; gap: 2.5rem; margin-top: 3rem;
+      padding-top: 2rem; border-top: 1px solid rgba(21,97,109,0.15);
+    }
+    .stat-item { }
+    .stat-num { font-size: 1.8rem; font-weight: 700; color: var(--teal); }
+    .stat-label { font-size: 0.8rem; color: var(--ink); opacity: 0.6; margin-top: 0.1rem; }
+
+    /* â”€â”€ Hero Canvas Animation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    #hero-canvas {
+      position: absolute; right: -2rem; top: 50%; transform: translateY(-50%);
+      width: 55vw; max-width: 700px; height: 80vh;
+      z-index: 1; opacity: 0.95;
+    }
+
+    /* â”€â”€ Section Shared â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    section { padding: 6rem 4rem; }
+    .section-label {
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--orange);
+      margin-bottom: 0.75rem;
+    }
+    .section-title {
+      font-family: var(--serif);
+      font-size: clamp(2rem, 3.5vw, 2.8rem);
+      color: var(--ink); line-height: 1.15;
+      margin-bottom: 1rem;
+    }
+    .section-sub {
+      font-size: 1rem; line-height: 1.7;
+      color: var(--ink); opacity: 0.65;
+      max-width: 560px;
+    }
+    .section-header { margin-bottom: 4rem; }
+    .section-header.centered { text-align: center; }
+    .section-header.centered .section-sub { margin: 0 auto; }
+
+    /* Fade-in animation */
+    .fade-up { opacity: 0; transform: translateY(32px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .fade-up.visible { opacity: 1; transform: translateY(0); }
+
+    /* â”€â”€ How It Works â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    #how {
+      background: var(--ink);
+      color: var(--white);
+    }
+    #how .section-title { color: var(--white); }
+    #how .section-sub { color: rgba(255,255,255,0.6); }
+    #how .section-label { color: var(--orange); }
+    .steps-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 2rem; position: relative;
+    }
+    .step-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px; padding: 2rem;
+      position: relative; overflow: hidden;
+      transition: background 0.3s, border-color 0.3s, transform 0.3s;
+    }
+    .step-card:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,125,0,0.3); transform: translateY(-4px); }
+    .step-num {
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--orange);
+      margin-bottom: 1.25rem;
+    }
+    .step-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      background: rgba(21,97,109,0.3);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1.25rem;
+    }
+    .step-icon svg { width: 24px; height: 24px; stroke: var(--teal-lt); fill: none; stroke-width: 1.5; }
+    .step-card h3 { font-size: 1.1rem; font-weight: 600; color: var(--white); margin-bottom: 0.6rem; }
+    .step-card p { font-size: 0.9rem; line-height: 1.65; color: rgba(255,255,255,0.55); }
+    .step-connector {
+      position: absolute; top: 2.8rem; right: -1rem;
+      color: var(--orange); font-size: 1.2rem; z-index: 2;
+    }
+    /* Flow animation bar */
+    .flow-bar {
+      height: 3px; background: linear-gradient(90deg, var(--teal), var(--orange));
+      border-radius: 2px; margin-bottom: 4rem;
+      position: relative; overflow: hidden;
+    }
+    .flow-bar::after {
+      content: ''; position: absolute; top: 0; left: -100%; width: 60%;
+      height: 100%; background: rgba(255,255,255,0.5);
+      animation: flowshine 3s ease infinite;
+    }
+    @keyframes flowshine { 0%{left:-100%} 100%{left:200%} }
+
+    /* â”€â”€ Email Flow Diagram â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .flow-diagram {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px; padding: 2.5rem;
+      margin-top: 3rem; position: relative; overflow: hidden;
+    }
+    .flow-diagram-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; flex-wrap: wrap;
+    }
+    .flow-node {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px; padding: 1rem 1.5rem;
+      text-align: center; min-width: 120px; flex: 1;
+    }
+    .flow-node .fn-icon { font-size: 1.5rem; margin-bottom: 0.4rem; }
+    .flow-node .fn-label { font-size: 0.8rem; font-weight: 600; color: rgba(255,255,255,0.8); }
+    .flow-node .fn-sub { font-size: 0.7rem; color: rgba(255,255,255,0.4); margin-top: 0.2rem; }
+    .flow-arrow {
+      color: var(--orange); font-size: 1.4rem; font-weight: 300;
+      flex-shrink: 0;
+    }
+    .flow-node.active { border-color: var(--orange); background: rgba(255,125,0,0.1); }
+    .flow-node.active .fn-label { color: var(--orange); }
+
+    /* â”€â”€ Tiers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    #tiers { background: var(--cream); }
+    .tiers-intro { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; margin-bottom: 4rem; }
+    .tier-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; }
+    .tier-card {
+      border-radius: 16px; padding: 2rem;
+      border: 2px solid transparent;
+      transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+      cursor: default;
+    }
+    .tier-card:hover { transform: translateY(-6px); box-shadow: 0 16px 48px rgba(0,21,36,0.12); border-color: var(--orange); }
+    .tier-a { background: var(--ink); color: var(--white); }
+    .tier-b { background: var(--teal); color: var(--white); }
+    .tier-c { background: #e8f4f6; color: var(--ink); }
+    .tier-d { background: #fff3e8; color: var(--ink); }
+    .tier-badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; padding: 0.3rem 0.8rem; border-radius: 100px;
+      margin-bottom: 1.25rem;
+    }
+    .tier-a .tier-badge { background: var(--orange); color: var(--white); }
+    .tier-b .tier-badge { background: rgba(255,255,255,0.2); color: var(--white); }
+    .tier-c .tier-badge { background: var(--teal); color: var(--white); }
+    .tier-d .tier-badge { background: var(--ink); color: var(--white); }
+    .tier-card h3 { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .tier-card .tier-size { font-size: 0.85rem; opacity: 0.65; margin-bottom: 1rem; }
+    .tier-card p { font-size: 0.9rem; line-height: 1.6; opacity: 0.8; margin-bottom: 1.25rem; }
+    .tier-example {
+      background: rgba(255,255,255,0.12); border-radius: 10px;
+      padding: 0.9rem 1.1rem; font-size: 0.82rem; line-height: 1.55;
+      font-style: italic; margin-bottom: 1.25rem;
+    }
+    .tier-c .tier-example, .tier-d .tier-example { background: rgba(0,21,36,0.06); }
+    .tier-outcomes { list-style: none; }
+    .tier-outcomes li {
+      font-size: 0.82rem; opacity: 0.75; padding: 0.3rem 0;
+      display: flex; align-items: flex-start; gap: 0.5rem;
+    }
+    .tier-outcomes li::before { content: 'âœ“'; color: var(--orange); font-weight: 700; flex-shrink: 0; }
+    .tier-a .tier-outcomes li::before { color: var(--orange); }
+    .tier-b .tier-outcomes li::before { color: #7fe8f0; }
+
+    /* â”€â”€ Pricing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    #pricing { background: var(--ink); }
+    #pricing .section-title { color: var(--white); }
+    #pricing .section-sub { color: rgba(255,255,255,0.55); }
+    #pricing .section-label { color: var(--orange); }
+    .pricing-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem; max-width: 760px; margin: 0 auto;
+    }
+    .pricing-card {
+      border-radius: 20px; padding: 2.5rem;
+      border: 2px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04);
+      transition: transform 0.3s, border-color 0.3s;
+      position: relative;
+    }
+    .pricing-card:hover { transform: translateY(-6px); border-color: rgba(255,125,0,0.4); }
+    .pricing-card.featured {
+      border-color: var(--orange);
+      background: rgba(255,125,0,0.07);
+    }
+    .pricing-badge {
+      position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+      background: var(--orange); color: var(--white);
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; padding: 0.3rem 1rem; border-radius: 100px;
+    }
+    .pricing-tier { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--orange); margin-bottom: 0.5rem; }
+    .pricing-name { font-size: 1.4rem; font-weight: 700; color: var(--white); margin-bottom: 0.5rem; }
+    .pricing-desc { font-size: 0.88rem; color: rgba(255,255,255,0.5); line-height: 1.6; margin-bottom: 2rem; }
+    .pricing-price { margin-bottom: 2rem; }
+    .pricing-amount { font-size: 2.8rem; font-weight: 700; color: var(--white); }
+    .pricing-period { font-size: 0.9rem; color: rgba(255,255,255,0.4); margin-left: 0.3rem; }
+    .pricing-features { list-style: none; margin-bottom: 2rem; }
+    .pricing-features li {
+      font-size: 0.88rem; color: rgba(255,255,255,0.7);
+      padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex; align-items: center; gap: 0.6rem;
+    }
+    .pricing-features li::before { content: 'âœ“'; color: var(--orange); font-weight: 700; }
+    .pricing-cta {
+      display: block; text-align: center;
+      padding: 0.85rem; border-radius: 8px;
+      font-size: 0.95rem; font-weight: 600;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .pricing-card.featured .pricing-cta { background: var(--orange); color: var(--white); }
+    .pricing-card.featured .pricing-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255,125,0,0.4); }
+    .pricing-card:not(.featured) .pricing-cta { border: 2px solid rgba(255,255,255,0.2); color: var(--white); }
+    .pricing-card:not(.featured) .pricing-cta:hover { border-color: rgba(255,255,255,0.5); }
+    .pricing-note { text-align: center; font-size: 0.82rem; color: rgba(255,255,255,0.35); margin-top: 2rem; }
+
+    /* â”€â”€ About â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    #about { background: var(--cream); }
+    .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; }
+    .about-visual {
+      position: relative; aspect-ratio: 1;
+      max-width: 440px;
+    }
+    .about-card {
+      background: var(--ink); color: var(--white);
+      border-radius: 20px; padding: 2.5rem;
+      position: relative; overflow: hidden;
+    }
+    .about-card::before {
+      content: ''; position: absolute;
+      top: -60px; right: -60px;
+      width: 180px; height: 180px;
+      background: radial-gradient(circle, rgba(255,125,0,0.3), transparent);
+      border-radius: 50%;
+    }
+    .about-card-quote {
+      font-family: var(--serif); font-size: 1.35rem; line-height: 1.5;
+      color: var(--white); margin-bottom: 1.5rem; position: relative;
+    }
+    .about-card-author { display: flex; align-items: center; gap: 1rem; }
+    .author-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--teal), var(--orange));
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; color: var(--white); font-size: 1rem;
+    }
+    .author-name { font-weight: 600; color: var(--white); font-size: 0.9rem; }
+    .author-role { font-size: 0.78rem; color: rgba(255,255,255,0.5); }
+    .stat-mini-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem;
+    }
+    .stat-mini {
+      background: rgba(255,255,255,0.07); border-radius: 12px;
+      padding: 1rem; text-align: center;
+    }
+    .stat-mini-num { font-size: 1.5rem; font-weight: 700; color: var(--orange); }
+    .stat-mini-label { font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-top: 0.15rem; }
+    .about-text h2 { font-family: var(--serif); font-size: 2.2rem; line-height: 1.2; margin-bottom: 1.25rem; }
+    .about-text p { font-size: 1rem; line-height: 1.75; color: var(--ink); opacity: 0.7; margin-bottom: 1rem; }
+    .about-values { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; }
+    .about-value { display: flex; gap: 1rem; align-items: flex-start; }
+    .value-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: rgba(21,97,109,0.12); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+    }
+    .value-text h4 { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.2rem; }
+    .value-text p { font-size: 0.82rem; opacity: 0.6; margin: 0; line-height: 1.5; }
+
+    /* â”€â”€ Contact â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    #contact {
+      background: linear-gradient(135deg, var(--teal) 0%, #0d4d56 100%);
+      color: var(--white);
+    }
+    #contact .section-title { color: var(--white); }
+    #contact .section-label { color: rgba(255,236,209,0.8); }
+    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; }
+    .contact-info p { font-size: 1rem; line-height: 1.75; opacity: 0.75; margin-bottom: 2rem; }
+    .contact-points { list-style: none; }
+    .contact-points li {
+      display: flex; align-items: center; gap: 0.75rem;
+      font-size: 0.9rem; padding: 0.6rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.8);
+    }
+    .contact-points li svg { stroke: var(--orange); fill: none; stroke-width: 1.5; width: 18px; height: 18px; flex-shrink: 0; }
+    .contact-form { display: flex; flex-direction: column; gap: 1.1rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .form-group label { font-size: 0.82rem; font-weight: 600; opacity: 0.75; }
+    .form-group input, .form-group select, .form-group textarea {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px; padding: 0.75rem 1rem;
+      color: var(--white); font-family: var(--font); font-size: 0.9rem;
+      outline: none; transition: border-color 0.2s, background 0.2s;
+    }
+    .form-group input::placeholder, .form-group textarea::placeholder { color: rgba(255,255,255,0.35); }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      border-color: var(--orange); background: rgba(255,255,255,0.15);
+    }
+    .form-group select option { background: var(--teal); color: var(--white); }
+    .form-group textarea { resize: vertical; min-height: 120px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-submit {
+      background: var(--orange); color: var(--white);
+      border: none; padding: 0.9rem 2rem; border-radius: 8px;
+      font-family: var(--font); font-size: 1rem; font-weight: 600;
+      cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+      align-self: flex-start;
+    }
+    .form-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255,125,0,0.4); }
+
+    /* â”€â”€ Footer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    footer {
+      background: var(--ink); color: rgba(255,255,255,0.4);
+      padding: 2rem 4rem;
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 0.82rem;
+    }
+    footer .footer-logo { display: flex; align-items: center; gap: 0.5rem; color: rgba(255,255,255,0.6); font-weight: 600; }
+    footer .footer-logo svg { width: 24px; height: 24px; }
+    footer a { color: rgba(255,255,255,0.4); transition: color 0.2s; }
+    footer a:hover { color: var(--orange); }
+
+    /* â”€â”€ Responsive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    @media (max-width: 960px) {
+      nav { padding: 1rem 2rem; }
+      .nav-links { display: none; }
+      #hero { padding: 7rem 2rem 4rem; }
+      #hero-canvas { display: none; }
+      section { padding: 4rem 2rem; }
+      .about-grid, .contact-grid, .tiers-intro { grid-template-columns: 1fr; gap: 2.5rem; }
+      .form-row { grid-template-columns: 1fr; }
+      footer { flex-direction: column; gap: 1rem; text-align: center; padding: 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- â”€â”€ Nav â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<nav id="navbar">
+  <div class="nav-logo">
+    <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="18" cy="18" r="15" stroke="#15616D" stroke-width="2"/>
+      <circle cx="7" cy="16" r="3" fill="#15616D"/>
+      <circle cx="18" cy="27" r="3" fill="#15616D"/>
+      <circle cx="28" cy="10" r="4" fill="#FF7D00"/>
+      <path d="M7 16 Q12 10 18 27 Q22 18 28 10" stroke="#15616D" stroke-width="2" fill="none" stroke-linecap="round"/>
+    </svg>
+    <span>EventFlow</span>
+  </div>
+  <div class="nav-links">
+    <a href="#how">How It Works</a>
+    <a href="#tiers">Tiers</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#about">About</a>
+    <a href="#contact" class="nav-cta">Get Started</a>
+  </div>
+</nav>
+
+<!-- â”€â”€ Hero â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<section id="hero">
+  <div class="hero-content fade-up">
+    <div class="hero-eyebrow"><span></span> AI Sales Automation</div>
+    <h1 class="hero-title">
+      Your restaurant's<br/>
+      <em>always-on</em> sales<br/>
+      <span class="accent">team.</span>
+    </h1>
+    <p class="hero-sub">
+      EventFlow responds to every private dining inquiry instantly â€” 24/7 â€” classifying leads, sending the right menus, and escalating your biggest opportunities to your team automatically.
+    </p>
+    <div class="hero-actions">
+      <a href="#contact" class="btn-primary">Book a Demo â†’</a>
+      <a href="#how" class="btn-secondary">See How It Works</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-item">
+        <div class="stat-num">&lt; 60s</div>
+        <div class="stat-label">Average response time</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">24/7</div>
+        <div class="stat-label">Always-on coverage</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">0</div>
+        <div class="stat-label">Missed inquiries</div>
+      </div>
+    </div>
+  </div>
+  <canvas id="hero-canvas"></canvas>
+</section>
+
+<!-- â”€â”€ How It Works â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<section id="how">
+  <div class="section-header fade-up">
+    <div class="section-label">The Process</div>
+    <h2 class="section-title">From inbox to booked â€”<br/>in under a minute.</h2>
+    <p class="section-sub">EventFlow plugs into your existing email inbox and handles the entire inquiry pipeline automatically, so your team only steps in when it matters most.</p>
+  </div>
+  <div class="flow-bar"></div>
+  <div class="steps-grid fade-up">
+    <div class="step-card">
+      <div class="step-num">Step 01</div>
+      <div class="step-icon">
+        <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
+      </div>
+      <h3>Inquiry Received</h3>
+      <p>A guest emails your sales inbox asking about a private event, group dinner, or venue buyout â€” at any hour.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">Step 02</div>
+      <div class="step-icon">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      </div>
+      <h3>AI Classification</h3>
+      <p>EventFlow reads the inquiry, pulls from your venue's knowledge base, and classifies the lead by tier â€” size, intent, and urgency.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">Step 03</div>
+      <div class="step-icon">
+        <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+      </div>
+      <h3>Smart Response Sent</h3>
+      <p>The right menus, pricing, and messaging are sent automatically â€” tailored to the group size and inquiry type. No copy-paste, no delay.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">Step 04</div>
+      <div class="step-icon">
+        <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.28h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6.09 6.09l1.08-1.09a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+      </div>
+      <h3>Escalation When It Counts</h3>
+      <p>Large groups (29+ guests) trigger an immediate alert to your sales manager â€” with full context, so they can close the deal fast.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">Step 05</div>
+      <div class="step-icon">
+        <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+      <h3>Logged & Tracked</h3>
+      <p>Every interaction is logged â€” lead tier, response sent, escalation status â€” so you always know what's in your pipeline.</p>
+    </div>
+  </div>
+  <div class="flow-diagram fade-up">
+    <div class="flow-diagram-inner">
+      <div class="flow-node">
+        <div class="fn-icon">ðŸ“§</div>
+        <div class="fn-label">Guest Email</div>
+        <div class="fn-sub">Any time, any device</div>
+      </div>
+      <div class="flow-arrow">â†’</div>
+      <div class="flow-node active">
+        <div class="fn-icon">ðŸ¤–</div>
+        <div class="fn-label">EventFlow AI</div>
+        <div class="fn-sub">GPT-4o + your knowledge base</div>
+      </div>
+      <div class="flow-arrow">â†’</div>
+      <div class="flow-node">
+        <div class="fn-icon">ðŸ“‹</div>
+        <div class="fn-label">Lead Classified</div>
+        <div class="fn-sub">Tier A / B / C / D</div>
+      </div>
+      <div class="flow-arrow">â†’</div>
+      <div class="flow-node">
+        <div class="fn-icon">ðŸ’¬</div>
+        <div class="fn-label">Reply Sent</div>
+        <div class="fn-sub">Menus + next steps</div>
+      </div>
+      <div class="flow-arrow">â†’</div>
+      <div class="flow-node">
+        <div class="fn-icon">ðŸ””</div>
+        <div class="fn-label">Team Alerted</div>
+        <div class="fn-sub">Big groups only</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- â”€â”€ Tier Benefits â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<section id="tiers">
+  <div class="section-header fade-up">
+    <div class="section-label">Lead Intelligence</div>
+    <h2 class="section-title">Every inquiry handled<br/>exactly right.</h2>
+    <p class="section-sub">EventFlow doesn't send a one-size-fits-all reply. It reads each inquiry and responds with the right level of detail, the right menus, and the right urgency.</p>
+  </div>
+  <div class="tier-cards fade-up">
+
+    <div class="tier-card tier-a">
+      <div class="tier-badge">ðŸ”¥ Tier A â€” High Value</div>
+      <h3>Ready to Book</h3>
+      <div class="tier-size">29+ guests Â· Full details provided</div>
+      <div class="tier-example">"Hi, I'm planning a corporate dinner for 55 people on April 10th. We'd love a full buyout. Budget is around $12k. Who should I speak with?"</div>
+      <p>Your most valuable inquiries. EventFlow immediately alerts your sales manager and sends a professional handoff response â€” no menu links, just a warm human touch.</p>
+      <ul class="tier-outcomes">
+        <li>Instant Slack alert to your sales manager</li>
+        <li>Escalation email with full guest context</li>
+        <li>Zero risk of a big lead going cold overnight</li>
+      </ul>
+    </div>
+
+    <div class="tier-card tier-b">
+      <div class="tier-badge">ðŸ“… Tier B â€” Planning Stage</div>
+      <h3>Event Planner</h3>
+      <div class="tier-size">15â€“28 guests Â· Exploring options</div>
+      <div class="tier-example">"We're planning a birthday dinner for about 20 people in May. Do you have a private space? What are the menu options?"</div>
+      <p>Guests with clear intent but still gathering info. EventFlow sends both group menus and sets clear expectations â€” handled professionally without involving your team.</p>
+      <ul class="tier-outcomes">
+        <li>Both group menu links sent automatically</li>
+        <li>Professional, branded response in seconds</li>
+        <li>Frees your team from routine back-and-forth</li>
+      </ul>
+    </div>
+
+    <div class="tier-card tier-c">
+      <div class="tier-badge">ðŸ½ï¸ Tier C â€” Small Group</div>
+      <h3>Group Reservation</h3>
+      <div class="tier-size">13â€“14 guests Â· Casual inquiry</div>
+      <div class="tier-example">"Hey, we have about 13 people coming for a birthday. Do you have space for a group? What are the options?"</div>
+      <p>Right on the boundary â€” EventFlow sends the regular menu plus both group menus, letting the guest self-select the best fit. No phone tag required.</p>
+      <ul class="tier-outcomes">
+        <li>Regular menu + group menus provided</li>
+        <li>Invites guest to share more details</li>
+        <li>Consistent, polished response every time</li>
+      </ul>
+    </div>
+
+    <div class="tier-card tier-d">
+      <div class="tier-badge">ðŸ’¬ Tier D â€” Early Stage</div>
+      <h3>Initial Inquiry</h3>
+      <div class="tier-size">1â€“12 guests Â· Minimal context</div>
+      <div class="tier-example">"Do you do private events?"</div>
+      <p>Short, vague, or early-stage questions. EventFlow responds warmly, shares the regular menu, and asks qualifying questions â€” turning a one-liner into a real conversation.</p>
+      <ul class="tier-outcomes">
+        <li>Regular menu sent with warm follow-up questions</li>
+        <li>No missed opportunity on a low-effort inquiry</li>
+        <li>Moves guest toward providing real details</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- â”€â”€ Pricing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<section id="pricing">
+  <div class="section-header centered fade-up">
+    <div class="section-label">Pricing</div>
+    <h2 class="section-title">Simple, transparent pricing.</h2>
+    <p class="section-sub">No per-inquiry fees. No setup surprises. Just a flat monthly rate based on your venue's needs.</p>
+  </div>
+  <div class="pricing-grid fade-up">
+
+    <div class="pricing-card">
+      <div class="pricing-tier">Tier 1</div>
+      <div class="pricing-name">Essentials</div>
+      <div class="pricing-desc">For restaurants ready to stop missing inquiries and start responding instantly â€” every time.</div>
+      <div class="pricing-price">
+        <span class="pricing-amount">$149</span>
+        <span class="pricing-period">/ month</span>
+      </div>
+      <ul class="pricing-features">
+        <li>AI-powered email responses 24/7</li>
+        <li>Lead tier classification (Aâ€“D)</li>
+        <li>Menu link delivery by group size</li>
+        <li>Escalation alerts for large groups</li>
+        <li>Email log & reporting</li>
+        <li>1 venue / inbox</li>
+      </ul>
+      <a href="#contact" class="pricing-cta">Get Started</a>
+    </div>
+
+    <div class="pricing-card featured">
+      <div class="pricing-badge">Most Popular</div>
+      <div class="pricing-tier">Tier 2</div>
+      <div class="pricing-name">Pro</div>
+      <div class="pricing-desc">For high-volume venues that want full automation, SMS escalation, and CRM integration.</div>
+      <div class="pricing-price">
+        <span class="pricing-amount">$299</span>
+        <span class="pricing-period">/ month</span>
+      </div>
+      <ul class="pricing-features">
+        <li>Everything in Essentials</li>
+        <li>SMS alerts to sales manager</li>
+        <li>TripleSeat CRM integration</li>
+        <li>Follow-up email sequences</li>
+        <li>Knowledge base from your PDFs</li>
+        <li>Priority support</li>
+      </ul>
+      <a href="#contact" class="pricing-cta">Get Started</a>
+    </div>
+
+  </div>
+  <p class="pricing-note fade-up">All plans include onboarding + setup. Cancel anytime. Custom enterprise plans available â€” <a href="#contact" style="color:var(--orange)">contact us</a>.</p>
+</section>
+
+<!-- â”€â”€ About â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<section id="about">
+  <div class="about-grid">
+    <div class="about-visual fade-up">
+      <div class="about-card">
+        <p class="about-card-quote">"Restaurants lose bookings every night to slow response times. EventFlow fixes that â€” permanently."</p>
+        <div class="about-card-author">
+          <div class="author-avatar">MW</div>
+          <div>
+            <div class="author-name">Mitchell Wilson</div>
+            <div class="author-role">Founder, EventFlow</div>
+          </div>
+        </div>
+        <div class="stat-mini-grid">
+          <div class="stat-mini">
+            <div class="stat-mini-num">&lt; 60s</div>
+            <div class="stat-mini-label">Avg. reply time</div>
+          </div>
+          <div class="stat-mini">
+            <div class="stat-mini-num">24/7</div>
+            <div class="stat-mini-label">Coverage</div>
+          </div>
+          <div class="stat-mini">
+            <div class="stat-mini-num">0</div>
+            <div class="stat-mini-label">Missed leads</div>
+          </div>
+          <div class="stat-mini">
+            <div class="stat-mini-num">4</div>
+            <div class="stat-mini-label">Smart lead tiers</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="about-text fade-up">
+      <div class="section-label">Our Story</div>
+      <h2 class="section-title">Built for the restaurant industry, by someone who gets it.</h2>
+      <p>EventFlow was built after watching countless private dining opportunities slip through the cracks â€” not because venues weren't interested, but because no one responded fast enough.</p>
+      <p>A group of 40 emails at 9pm on a Friday shouldn't have to wait until Monday morning. EventFlow makes sure it doesn't.</p>
+      <div class="about-values">
+        <div class="about-value">
+          <div class="value-icon">âš¡</div>
+          <div class="value-text">
+            <h4>Speed closes deals</h4>
+            <p>The first venue to respond wins. We make sure that's always you.</p>
+          </div>
+        </div>
+        <div class="about-value">
+          <div class="value-icon">ðŸŽ¯</div>
+          <div class="value-text">
+            <h4>Smart, not robotic</h4>
+            <p>Responses are warm, professional, and tailored â€” guests never feel like they're talking to a bot.</p>
+          </div>
+        </div>
+        <div class="about-value">
+          <div class="value-icon">ðŸ”’</div>
+          <div class="value-text">
+            <h4>Your team stays in control</h4>
+            <p>EventFlow handles the routine. Your team focuses on the conversations that matter.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- â”€â”€ Contact â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<section id="contact">
+  <div class="contact-grid">
+    <div class="contact-info fade-up">
+      <div class="section-label">Get In Touch</div>
+      <h2 class="section-title">Ready to never miss<br/>another booking?</h2>
+      <p>Book a 20-minute demo and see EventFlow working live on a real inbox. We'll set you up with a free trial so you can see the difference before committing.</p>
+      <ul class="contact-points">
+        <li>
+          <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.28h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6.09 6.09l1.08-1.09a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          20-min demo, no pressure
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          mitchell@eventflowsales.com
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Setup takes less than a week
+        </li>
+      </ul>
+    </div>
+    <div class="fade-up">
+      <form class="contact-form" onsubmit="handleSubmit(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label>First Name</label>
+            <input type="text" placeholder="Sarah" required />
+          </div>
+          <div class="form-group">
+            <label>Last Name</label>
+            <input type="text" placeholder="Johnson" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Work Email</label>
+          <input type="email" placeholder="sarah@yourrestaurant.com" required />
+        </div>
+        <div class="form-group">
+          <label>Restaurant / Venue Name</label>
+          <input type="text" placeholder="The Grand Room" required />
+        </div>
+        <div class="form-group">
+          <label>Your Role</label>
+          <select>
+            <option value="">Select your roleâ€¦</option>
+            <option>General Manager</option>
+            <option>Sales Manager</option>
+            <option>Director of Operations</option>
+            <option>Events Manager</option>
+            <option>Owner / Founder</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Monthly private event inquiries (approx.)</label>
+          <select>
+            <option value="">Select rangeâ€¦</option>
+            <option>Less than 10</option>
+            <option>10â€“30</option>
+            <option>30â€“60</option>
+            <option>60+</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Anything else? (optional)</label>
+          <textarea placeholder="Tell us a bit about your venue or what you're hoping to solveâ€¦"></textarea>
+        </div>
+        <button type="submit" class="form-submit">Book My Demo â†’</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- â”€â”€ Footer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<footer>
+  <div class="footer-logo">
+    <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="18" cy="18" r="15" stroke="#15616D" stroke-width="2"/>
+      <circle cx="7" cy="16" r="3" fill="#15616D"/>
+      <circle cx="18" cy="27" r="3" fill="#15616D"/>
+      <circle cx="28" cy="10" r="4" fill="#FF7D00"/>
+      <path d="M7 16 Q12 10 18 27 Q22 18 28 10" stroke="#15616D" stroke-width="2" fill="none" stroke-linecap="round"/>
+    </svg>
+    EventFlow
+  </div>
+  <span>Â© 2026 EventFlow. All rights reserved.</span>
+  <div style="display:flex;gap:1.5rem;">
+    <a href="#how">How It Works</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#contact">Contact</a>
+  </div>
+</footer>
+
+<script>
+// â”€â”€ Nav scroll â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+  navbar.classList.toggle('scrolled', window.scrollY > 20);
+});
+
+// â”€â”€ Scroll fade-in â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('visible'), i * 80);
+    }
+  });
+}, { threshold: 0.12 });
+document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+// â”€â”€ Hero canvas animation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const canvas = document.getElementById('hero-canvas');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  canvas.width = canvas.offsetWidth * devicePixelRatio;
+  canvas.height = canvas.offsetHeight * devicePixelRatio;
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+}
+window.addEventListener('resize', resize);
+resize();
+
+const INK    = '#001524';
+const TEAL   = '#15616D';
+const ORANGE = '#FF7D00';
+const CREAM  = '#FFECD1';
+
+// Nodes
+const nodes = [
+  { x: 0.5, y: 0.5, r: 28, color: TEAL,   label: 'EventFlow AI',    pulse: true,  speed: 0 },
+  { x: 0.15, y: 0.25, r: 14, color: TEAL,  label: 'Email In',        pulse: false, speed: 0, orbit: { cx: 0.5, cy: 0.5, rx: 0.36, ry: 0.26, angle: Math.PI*1.8, rate: 0.008 } },
+  { x: 0.85, y: 0.3,  r: 14, color: TEAL,  label: 'AI Response',     pulse: false, speed: 0, orbit: { cx: 0.5, cy: 0.5, rx: 0.36, ry: 0.26, angle: Math.PI*0.8, rate: 0.008 } },
+  { x: 0.2,  y: 0.75, r: 14, color: TEAL,  label: 'Lead Classified', pulse: false, speed: 0, orbit: { cx: 0.5, cy: 0.5, rx: 0.36, ry: 0.26, angle: Math.PI*1.2, rate: 0.008 } },
+  { x: 0.8,  y: 0.7,  r: 14, color: TEAL,  label: 'Escalation',      pulse: false, speed: 0, orbit: { cx: 0.5, cy: 0.5, rx: 0.36, ry: 0.26, angle: Math.PI*0.2, rate: 0.008 } },
+  { x: 0.5,  y: 0.12, r: 10, color: ORANGE, label: '',               pulse: false, speed: 0, orbit: { cx: 0.5, cy: 0.5, rx: 0.42, ry: 0.32, angle: Math.PI*1.5, rate: -0.012 } },
+  { x: 0.5,  y: 0.88, r: 10, color: ORANGE, label: '',               pulse: false, speed: 0, orbit: { cx: 0.5, cy: 0.5, rx: 0.42, ry: 0.32, angle: Math.PI*0.5, rate: -0.012 } },
+];
+
+let t = 0;
+let packets = [];
+
+function addPacket() {
+  // Pick two random orbital nodes
+  const orbitals = nodes.filter(n => n.orbit);
+  const from = orbitals[Math.floor(Math.random() * orbitals.length)];
+  packets.push({ from, progress: 0, speed: 0.008 + Math.random() * 0.006 });
+}
+
+setInterval(addPacket, 1400);
+addPacket();
+
+function draw() {
+  const W = canvas.offsetWidth;
+  const H = canvas.offsetHeight;
+  ctx.clearRect(0, 0, W, H);
+
+  // Update orbits
+  nodes.forEach(n => {
+    if (n.orbit) {
+      n.orbit.angle += n.orbit.rate;
+      n.x = n.orbit.cx + Math.cos(n.orbit.angle) * n.orbit.rx;
+      n.y = n.orbit.cy + Math.sin(n.orbit.angle) * n.orbit.ry;
+    }
+  });
+
+  // Draw orbital paths
+  ctx.save();
+  ctx.strokeStyle = 'rgba(21,97,109,0.12)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 8]);
+  // Main orbit ellipse
+  ctx.beginPath();
+  ctx.ellipse(W * 0.5, H * 0.5, W * 0.36, H * 0.26, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.ellipse(W * 0.5, H * 0.5, W * 0.42, H * 0.32, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  // Draw connection lines from center to orbital nodes
+  nodes.forEach(n => {
+    if (!n.orbit) return;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(21,97,109,0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(nodes[0].x * W, nodes[0].y * H);
+    ctx.lineTo(n.x * W, n.y * H);
+    ctx.stroke();
+    ctx.restore();
+  });
+
+  // Draw packets
+  packets = packets.filter(p => p.progress < 1);
+  packets.forEach(p => {
+    p.progress += p.speed;
+    const cx = nodes[0].x * W;
+    const cy = nodes[0].y * H;
+    const fx = p.from.x * W;
+    const fy = p.from.y * H;
+    const px = cx + (fx - cx) * p.progress;
+    const py = cy + (fy - cy) * p.progress;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(px, py, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = ORANGE;
+    ctx.shadowColor = ORANGE;
+    ctx.shadowBlur = 10;
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // Draw nodes
+  nodes.forEach(n => {
+    const nx = n.x * W;
+    const ny = n.y * H;
+    const pulse = n.pulse ? (Math.sin(t * 2) * 0.25 + 1) : 1;
+
+    if (n.pulse) {
+      // Glow rings
+      [40, 28, 18].forEach((extra, i) => {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(nx, ny, n.r + extra * pulse, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(21,97,109,${0.05 - i * 0.015})`;
+        ctx.fill();
+        ctx.restore();
+      });
+    }
+
+    // Node circle
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(nx, ny, n.r * (n.pulse ? pulse : 1), 0, Math.PI * 2);
+    ctx.fillStyle = n.color === ORANGE ? ORANGE : (n.pulse ? TEAL : 'rgba(21,97,109,0.85)');
+    ctx.shadowColor = n.color === ORANGE ? 'rgba(255,125,0,0.5)' : 'rgba(21,97,109,0.4)';
+    ctx.shadowBlur = n.pulse ? 20 : 10;
+    ctx.fill();
+    ctx.restore();
+
+    // Inner detail for center node
+    if (n.pulse) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(nx, ny, n.r * 0.55, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,236,209,0.25)';
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Label
+    if (n.label) {
+      ctx.save();
+      ctx.font = `${n.pulse ? '600 13px' : '500 10px'} DM Sans, sans-serif`;
+      ctx.fillStyle = n.pulse ? '#FFECD1' : 'rgba(0,21,36,0.7)';
+      ctx.textAlign = 'center';
+      ctx.fillText(n.label, nx, ny + n.r + (n.pulse ? 20 : 16));
+      ctx.restore();
+    }
+  });
+
+  t += 0.016;
+  requestAnimationFrame(draw);
+}
+draw();
+
+// â”€â”€ Form submit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function handleSubmit(e) {
+  e.preventDefault();
+  const btn = e.target.querySelector('.form-submit');
+  btn.textContent = 'âœ“ Submitted! We\'ll be in touch soon.';
+  btn.style.background = '#15616D';
+  btn.disabled = true;
+}
+</script>
+</body>
+</html>
