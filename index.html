@@ -1,1313 +1,1878 @@
+<!-- verified -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EventFlow — AI Sales Automation for Restaurants</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet" />
-  <style>
-    /* ── Reset & Base ─────────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --ink:      #001524;
-      --teal:     #15616D;
-      --teal-lt:  #1a7a89;
-      --cream:    #FFECD1;
-      --cream-lt: #FFF8F0;
-      --orange:   #FF7D00;
-      --brandy:   #78290F;
-      --white:    #ffffff;
-      --gray-50:  #f9fafb;
-      --gray-100: #f3f4f6;
-      --gray-200: #e5e7eb;
-      --gray-400: #9ca3af;
-      --gray-500: #6b7280;
-      --gray-600: #4b5563;
-      --gray-700: #374151;
-      --font:     'DM Sans', sans-serif;
-      --serif:    'DM Serif Display', serif;
-      --max-w:    1200px;
-      --radius:   16px;
-      --radius-lg: 24px;
-    }
-    html { scroll-behavior: smooth; }
-    body {
-      font-family: var(--font);
-      background: var(--white);
-      color: var(--ink);
-      overflow-x: hidden;
-      -webkit-font-smoothing: antialiased;
-    }
-    a { color: inherit; text-decoration: none; }
-    img { max-width: 100%; }
-    .max-w { max-width: var(--max-w); margin: 0 auto; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EventFlow — AI-Powered Sales for Hospitality</title>
+    <meta name="description" content="EventFlow is an AI-powered sales automation platform for restaurants and hospitality venues. Respond to event inquiries instantly, qualify leads, and book more private events.">
+    <meta name="keywords" content="restaurant event sales, AI sales automation, private event booking, hospitality AI, event inquiry management">
 
-    /* ── Nav ───────────────────────────────────────────────────────── */
-    nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0.9rem 4rem;
-      background: rgba(255,255,255,0.92);
-      backdrop-filter: blur(16px);
-      border-bottom: 1px solid var(--gray-200);
-      transition: box-shadow 0.3s;
-    }
-    nav.scrolled { box-shadow: 0 1px 12px rgba(0,0,0,0.06); }
-    .nav-logo { display: flex; align-items: center; gap: 0.6rem; }
-    .nav-logo svg { width: 34px; height: 34px; }
-    .nav-logo span { font-size: 1.15rem; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; }
-    .nav-links { display: flex; align-items: center; gap: 2rem; }
-    .nav-links > a, .nav-dropdown > .nav-dropdown-trigger {
-      font-size: 0.88rem; font-weight: 500; color: var(--gray-600);
-      transition: color 0.2s; cursor: pointer; background: none; border: none;
-      font-family: var(--font); display: inline-flex; align-items: center; gap: 0.3rem;
-    }
-    .nav-links > a:hover, .nav-dropdown:hover > .nav-dropdown-trigger { color: var(--ink); }
-    .nav-dropdown { position: relative; }
-    .nav-dropdown-trigger svg { width: 12px; height: 12px; transition: transform 0.2s; }
-    .nav-dropdown:hover .nav-dropdown-trigger svg { transform: rotate(180deg); }
-    .nav-dropdown-menu {
-      position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%);
-      background: var(--white); border-radius: 12px;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.1); border: 1px solid var(--gray-200);
-      padding: 0.5rem; min-width: 210px;
-      opacity: 0; visibility: hidden; transform: translateX(-50%) translateY(6px);
-      transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
-    }
-    .nav-dropdown:hover .nav-dropdown-menu {
-      opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0);
-    }
-    .nav-dropdown-menu a {
-      display: block; padding: 0.6rem 1rem; border-radius: 8px;
-      font-size: 0.85rem; font-weight: 500; color: var(--ink);
-      transition: background 0.15s;
-    }
-    .nav-dropdown-menu a:hover { background: var(--cream-lt); }
-    .nav-dropdown-menu a .dd-sub {
-      display: block; font-size: 0.72rem; color: var(--gray-500); font-weight: 400; margin-top: 0.1rem;
-    }
-    .nav-cta {
-      background: var(--teal); color: var(--white) !important;
-      padding: 0.5rem 1.3rem; border-radius: 100px;
-      font-size: 0.88rem; font-weight: 600;
-      transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
-    }
-    .nav-cta:hover { background: var(--teal-lt); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(21,97,109,0.25); }
-    .nav-toggle { display: none; background: none; border: none; cursor: pointer; padding: 0.5rem; }
-    .nav-toggle svg { width: 24px; height: 24px; stroke: var(--ink); fill: none; stroke-width: 2; }
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="EventFlow — AI-Powered Sales for Hospitality">
+    <meta property="og:description" content="Your AI sales manager for private events. Respond instantly, qualify leads, and book more events on autopilot.">
+    <meta property="og:url" content="https://eventflowsales.com">
+    <meta property="og:site_name" content="EventFlow">
 
-    /* ── Hero ──────────────────────────────────────────────────────── */
-    #hero {
-      padding: 10rem 4rem 5rem;
-      text-align: center;
-      background: var(--white);
-      position: relative;
-    }
-    .hero-content { max-width: 720px; margin: 0 auto; }
-    .hero-eyebrow {
-      display: inline-flex; align-items: center; gap: 0.5rem;
-      background: var(--cream-lt); border: 1px solid rgba(255,125,0,0.15);
-      color: var(--orange); font-size: 0.78rem; font-weight: 600;
-      padding: 0.35rem 1rem; border-radius: 100px; margin-bottom: 1.5rem;
-      letter-spacing: 0.04em; text-transform: uppercase;
-    }
-    .hero-eyebrow span { width: 6px; height: 6px; background: var(--orange); border-radius: 50%; display: inline-block; animation: pulse 2s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.4)} }
-    .hero-title {
-      font-family: var(--serif);
-      font-size: clamp(2.8rem, 5.5vw, 4.2rem);
-      line-height: 1.1;
-      color: var(--ink);
-      margin-bottom: 1.5rem;
-      letter-spacing: -0.02em;
-    }
-    .hero-title em { font-style: normal; color: var(--teal); }
-    .hero-title .accent { color: var(--orange); }
-    .hero-sub {
-      font-size: 1.15rem; line-height: 1.7;
-      color: var(--gray-600);
-      max-width: 560px; margin: 0 auto 2.5rem;
-    }
-    .hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
-    .btn-primary {
-      background: var(--teal); color: var(--white);
-      padding: 0.9rem 2.2rem; border-radius: 100px;
-      font-size: 1rem; font-weight: 600;
-      transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
-      display: inline-flex; align-items: center; gap: 0.5rem;
-    }
-    .btn-primary:hover { background: var(--teal-lt); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(21,97,109,0.25); }
-    .btn-secondary {
-      background: transparent; color: var(--ink);
-      padding: 0.9rem 2.2rem; border-radius: 100px;
-      font-size: 1rem; font-weight: 600; border: 1.5px solid var(--gray-200);
-      transition: border-color 0.2s, background 0.2s;
-    }
-    .btn-secondary:hover { border-color: var(--gray-400); background: var(--gray-50); }
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="EventFlow — AI-Powered Sales for Hospitality">
+    <meta name="twitter:description" content="Your AI sales manager for private events. Respond instantly, qualify leads, and book more events on autopilot.">
 
-    /* Social proof */
-    .hero-proof {
-      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
-      margin-top: 2rem; font-size: 0.88rem; color: var(--gray-500);
-    }
-    .hero-stars { color: var(--orange); font-size: 0.95rem; letter-spacing: 0.05rem; }
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
-    /* Hero product screenshot */
-    .hero-screenshot-wrap {
-      max-width: 960px; margin: 4rem auto 0;
-      border-radius: var(--radius-lg);
-      background: var(--cream-lt);
-      border: 1px solid rgba(0,0,0,0.06);
-      padding: 2rem;
-      box-shadow: 0 24px 80px rgba(0,0,0,0.07);
-    }
-    .hero-screenshot {
-      background: var(--white);
-      border-radius: var(--radius); padding: 1.5rem;
-      border: 1px solid var(--gray-200);
-    }
-    .screenshot-header {
-      display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;
-      padding-bottom: 0.75rem; border-bottom: 1px solid var(--gray-100);
-    }
-    .screenshot-dot { width: 10px; height: 10px; border-radius: 50%; }
-    .screenshot-dot:nth-child(1) { background: #ff5f57; }
-    .screenshot-dot:nth-child(2) { background: #ffbd2e; }
-    .screenshot-dot:nth-child(3) { background: #28c840; }
-    .screenshot-body { display: flex; flex-direction: column; gap: 0.6rem; }
-    .screenshot-row {
-      display: flex; align-items: center; gap: 0.75rem;
-      padding: 0.65rem 0.9rem; border-radius: 10px;
-      background: var(--gray-50); transition: background 0.2s;
-    }
-    .screenshot-row:hover { background: var(--gray-100); }
-    .screenshot-badge {
-      font-size: 0.65rem; font-weight: 700; padding: 0.2rem 0.55rem;
-      border-radius: 6px; color: var(--white); text-transform: uppercase;
-      letter-spacing: 0.05em; flex-shrink: 0;
-    }
-    .badge-a { background: var(--orange); }
-    .badge-b { background: var(--teal); }
-    .badge-c { background: var(--teal-lt); }
-    .badge-d { background: var(--gray-500); }
-    .screenshot-text { font-size: 0.82rem; color: var(--gray-700); }
-    .screenshot-status { font-size: 0.72rem; margin-left: auto; font-weight: 600; color: var(--teal); flex-shrink: 0; }
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y5L9CGEL9S"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-Y5L9CGEL9S');
+    </script>
 
-    /* ── Logo Bar ─────────────────────────────────────────────────── */
-    .logo-bar-section {
-      padding: 3rem 4rem;
-      border-top: 1px solid var(--gray-100);
-      border-bottom: 1px solid var(--gray-100);
-    }
-    .logo-bar-label {
-      text-align: center; font-size: 0.88rem; color: var(--gray-500);
-      margin-bottom: 2rem;
-    }
-    .logo-bar {
-      display: flex; align-items: center; justify-content: center;
-      gap: 3.5rem; flex-wrap: wrap;
-    }
-    .logo-placeholder {
-      width: 130px; height: 42px; border-radius: 8px;
-      background: var(--gray-50); border: 1px solid var(--gray-100);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.72rem; font-weight: 600; color: var(--gray-400);
-      letter-spacing: 0.06em; text-transform: uppercase;
-    }
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================
+           RESET & BASE
+           ============================================ */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* ── Section Shared ────────────────────────────────────────────── */
-    section { padding: 6rem 4rem; }
-    .section-label {
-      font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em;
-      text-transform: uppercase; color: var(--teal);
-      margin-bottom: 0.75rem;
-    }
-    .section-title {
-      font-family: var(--serif);
-      font-size: clamp(2.2rem, 4vw, 3.2rem);
-      color: var(--ink); line-height: 1.12;
-      margin-bottom: 1rem;
-      letter-spacing: -0.02em;
-    }
-    .section-sub {
-      font-size: 1.05rem; line-height: 1.7;
-      color: var(--gray-500);
-      max-width: 560px;
-    }
-    .section-header { margin-bottom: 4rem; }
-    .section-header.centered { text-align: center; }
-    .section-header.centered .section-sub { margin: 0 auto; }
+        :root {
+            --teal-dark: #0f4a54;
+            --teal: #15616d;
+            --teal-light: #1b7a89;
+            --orange: #ff7d00;
+            --orange-light: #ff9b3d;
+            --burnt: #78290f;
+            --dark: #001524;
+            --dark-card: #001e30;
+            --cream: #ffecd1;
+            --gray-900: #011b2d;
+            --gray-800: #0a2a3f;
+            --gray-700: #1a3d54;
+            --gray-600: #3a6070;
+            --gray-400: #8faab8;
+            --gray-300: #c5d8e2;
+            --gray-100: #e8f0f4;
+            --white: #ffecd1;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
 
-    /* Fade-in animation */
-    .fade-up { opacity: 0; transform: translateY(28px); transition: opacity 0.7s ease, transform 0.7s ease; }
-    .fade-up.visible { opacity: 1; transform: translateY(0); }
+        html { scroll-behavior: smooth; scroll-padding-top: 80px; }
 
-    /* ── Features (How It Works) — Bento Grid ─────────────────────── */
-    #features {
-      background: var(--cream-lt);
-    }
-    .bento-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1.25rem;
-    }
-    .bento-card {
-      background: var(--white);
-      border: 1px solid rgba(0,0,0,0.06);
-      border-radius: var(--radius-lg); padding: 2rem;
-      transition: transform 0.3s, box-shadow 0.3s;
-    }
-    .bento-card:hover { transform: translateY(-4px); box-shadow: 0 12px 36px rgba(0,0,0,0.06); }
-    .bento-card.span-2 { grid-column: span 2; }
-    .bento-card .step-num {
-      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em;
-      text-transform: uppercase; color: var(--orange);
-      margin-bottom: 1rem;
-    }
-    .bento-card .step-icon {
-      width: 44px; height: 44px; border-radius: 12px;
-      background: var(--cream-lt);
-      display: flex; align-items: center; justify-content: center;
-      margin-bottom: 1rem;
-    }
-    .bento-card .step-icon svg { width: 22px; height: 22px; stroke: var(--teal); fill: none; stroke-width: 1.5; }
-    .bento-card h3 { font-size: 1.05rem; font-weight: 700; color: var(--ink); margin-bottom: 0.5rem; }
-    .bento-card p { font-size: 0.88rem; line-height: 1.65; color: var(--gray-500); }
+        body {
+            font-family: var(--font);
+            color: var(--gray-300);
+            background: var(--dark);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
 
-    /* Flow diagram inside bento */
-    .bento-flow {
-      display: flex; align-items: center; gap: 0.75rem; margin-top: 1.25rem;
-      flex-wrap: wrap;
-    }
-    .bento-flow-node {
-      background: var(--cream-lt); border: 1px solid rgba(21,97,109,0.1);
-      border-radius: 10px; padding: 0.5rem 0.85rem;
-      font-size: 0.75rem; font-weight: 600; color: var(--teal);
-      text-align: center;
-    }
-    .bento-flow-node.active { background: var(--teal); color: var(--white); border-color: var(--teal); }
-    .bento-flow-arrow { color: var(--gray-400); font-size: 0.85rem; }
+        a { text-decoration: none; color: inherit; }
+        img { max-width: 100%; display: block; }
 
-    /* ── Solutions (Tiers) ────────────────────────────────────────── */
-    #solutions { background: var(--white); }
-    .tier-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; }
-    .tier-card {
-      border-radius: var(--radius-lg); padding: 2rem;
-      border: 1px solid rgba(0,0,0,0.06);
-      transition: transform 0.3s, box-shadow 0.3s;
-      cursor: default;
-    }
-    .tier-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(0,0,0,0.08); }
-    .tier-a { background: var(--ink); color: var(--white); }
-    .tier-b { background: var(--teal); color: var(--white); }
-    .tier-c { background: var(--cream-lt); color: var(--ink); border-color: rgba(0,0,0,0.06); }
-    .tier-d { background: var(--gray-50); color: var(--ink); border-color: rgba(0,0,0,0.06); }
-    .tier-badge {
-      display: inline-flex; align-items: center; gap: 0.4rem;
-      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em;
-      text-transform: uppercase; padding: 0.25rem 0.7rem; border-radius: 100px;
-      margin-bottom: 1.25rem;
-    }
-    .tier-a .tier-badge { background: var(--orange); color: var(--white); }
-    .tier-b .tier-badge { background: rgba(255,255,255,0.2); color: var(--white); }
-    .tier-c .tier-badge { background: var(--teal); color: var(--white); }
-    .tier-d .tier-badge { background: var(--ink); color: var(--white); }
-    .tier-card h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.35rem; }
-    .tier-card .tier-size { font-size: 0.82rem; opacity: 0.6; margin-bottom: 1rem; }
-    .tier-card > p { font-size: 0.88rem; line-height: 1.6; opacity: 0.75; margin-bottom: 1.25rem; }
-    .tier-example {
-      background: rgba(255,255,255,0.1); border-radius: 12px;
-      padding: 0.85rem 1rem; font-size: 0.8rem; line-height: 1.55;
-      font-style: italic; margin-bottom: 1.25rem;
-    }
-    .tier-c .tier-example, .tier-d .tier-example { background: rgba(0,0,0,0.04); }
-    .tier-outcomes { list-style: none; }
-    .tier-outcomes li {
-      font-size: 0.8rem; opacity: 0.7; padding: 0.25rem 0;
-      display: flex; align-items: flex-start; gap: 0.5rem;
-    }
-    .tier-outcomes li::before { content: '✓'; color: var(--orange); font-weight: 700; flex-shrink: 0; }
-    .tier-b .tier-outcomes li::before { color: #7fe8f0; }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
 
-    /* ── Pricing Comparison Table ─────────────────────────────────── */
-    #pricing { background: var(--cream-lt); }
-    .pricing-table-wrap {
-      max-width: 880px; margin: 0 auto;
-      background: var(--white);
-      border-radius: var(--radius-lg);
-      border: 1px solid rgba(0,0,0,0.06);
-      overflow: hidden;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.04);
-    }
-    .pricing-table {
-      width: 100%; border-collapse: collapse;
-    }
-    .pricing-table thead th {
-      padding: 2rem 1.5rem 1.5rem;
-      text-align: center; vertical-align: bottom;
-      border-bottom: 1px solid var(--gray-100);
-      background: var(--white);
-    }
-    .pricing-table thead th:first-child { text-align: left; }
-    .pricing-table thead th.featured-col {
-      background: rgba(21,97,109,0.03);
-      position: relative;
-    }
-    .pricing-table thead th.featured-col::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0;
-      height: 3px; background: var(--teal);
-    }
-    .plan-name { font-size: 1.05rem; font-weight: 700; color: var(--ink); margin-bottom: 0.25rem; }
-    .plan-price { font-size: 2.2rem; font-weight: 700; color: var(--ink); }
-    .plan-price span { font-size: 0.85rem; font-weight: 400; color: var(--gray-500); }
-    .plan-badge {
-      display: inline-block; background: var(--teal); color: var(--white);
-      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em;
-      text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 100px;
-      margin-bottom: 0.5rem;
-    }
-    .pricing-table tbody td {
-      padding: 0.8rem 1.5rem;
-      border-bottom: 1px solid var(--gray-100);
-      font-size: 0.88rem; color: var(--gray-600);
-    }
-    .pricing-table tbody td:first-child { color: var(--ink); font-weight: 500; }
-    .pricing-table tbody td:not(:first-child) { text-align: center; }
-    .pricing-table tbody td.featured-col { background: rgba(21,97,109,0.015); }
-    .pricing-table tbody tr:last-child td { border-bottom: none; }
-    .pricing-table .check { color: var(--teal); font-weight: 700; font-size: 1rem; }
-    .pricing-table .dash { color: var(--gray-200); }
-    .pricing-table tfoot td {
-      padding: 1.5rem; text-align: center;
-      border-top: 1px solid var(--gray-100);
-    }
-    .pricing-table tfoot td.featured-col { background: rgba(21,97,109,0.02); }
-    .pricing-cta {
-      display: inline-block; text-align: center;
-      padding: 0.65rem 1.6rem; border-radius: 100px;
-      font-size: 0.88rem; font-weight: 600;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .pricing-cta-primary { background: var(--teal); color: var(--white); }
-    .pricing-cta-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(21,97,109,0.25); }
-    .pricing-cta-secondary { border: 1.5px solid var(--gray-200); color: var(--ink); }
-    .pricing-cta-secondary:hover { border-color: var(--gray-400); }
-    .pricing-note { text-align: center; font-size: 0.82rem; color: var(--gray-500); margin-top: 2rem; }
-    .pricing-enterprise {
-      text-align: center; margin-top: 1.5rem; padding: 1.25rem;
-      background: var(--white); border-radius: var(--radius);
-      border: 1px solid var(--gray-100);
-      max-width: 880px; margin-left: auto; margin-right: auto;
-    }
-    .pricing-enterprise p { color: var(--gray-500); font-size: 0.9rem; }
-    .pricing-enterprise a { color: var(--teal); font-weight: 600; }
+        /* ============================================
+           NAVIGATION
+           ============================================ */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            background: rgba(255, 236, 209, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 21, 36, 0.08);
+            transition: all 0.3s ease;
+        }
 
-    /* ── Testimonials ──────────────────────────────────────────────── */
-    #testimonials { background: var(--white); overflow: hidden; }
-    /* Featured testimonial */
-    .testimonial-featured {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 4rem;
-      align-items: center; margin-bottom: 4rem;
-    }
-    .testimonial-featured-visual {
-      background: var(--cream-lt); border-radius: var(--radius-lg);
-      padding: 3rem; display: flex; align-items: center; justify-content: center;
-      aspect-ratio: 4/3; position: relative; overflow: hidden;
-    }
-    .testimonial-featured-visual::before {
-      content: ''; position: absolute; bottom: 0; left: 0; right: 0;
-      height: 60%; background: linear-gradient(180deg, transparent, rgba(255,125,0,0.06));
-    }
-    .testimonial-avatar-large {
-      width: 140px; height: 140px; border-radius: 50%;
-      background: linear-gradient(135deg, var(--teal), var(--orange));
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 700; color: var(--white); font-size: 2.5rem;
-      position: relative; z-index: 1;
-    }
-    .testimonial-featured-text .section-title { margin-bottom: 1.5rem; }
-    .testimonial-featured-quote {
-      font-size: 1.2rem; line-height: 1.65; color: var(--gray-600);
-      font-style: italic; margin-bottom: 1.5rem;
-    }
-    .testimonial-featured-author { font-weight: 600; color: var(--ink); font-size: 0.95rem; }
-    .testimonial-featured-role { font-size: 0.82rem; color: var(--gray-500); margin-top: 0.15rem; }
-    .testimonial-featured-link {
-      display: inline-flex; align-items: center; gap: 0.4rem;
-      margin-top: 1rem; font-size: 0.88rem; font-weight: 600; color: var(--teal);
-      transition: gap 0.2s;
-    }
-    .testimonial-featured-link:hover { gap: 0.7rem; }
+        nav.scrolled {
+            background: rgba(255, 236, 209, 1);
+            box-shadow: 0 4px 30px rgba(0, 21, 36, 0.1);
+        }
 
-    /* Testimonial cards slider */
-    .testimonials-track-wrapper { position: relative; }
-    .testimonials-track {
-      display: flex; gap: 1.25rem;
-      transition: transform 0.5s ease;
-    }
-    .testimonial-card {
-      min-width: 340px; flex: 0 0 340px;
-      background: var(--cream-lt); border-radius: var(--radius-lg);
-      padding: 2rem; border: 1px solid rgba(0,0,0,0.04);
-      transition: transform 0.3s, box-shadow 0.3s;
-    }
-    .testimonial-card:hover { transform: translateY(-4px); box-shadow: 0 12px 36px rgba(0,0,0,0.06); }
-    .testimonial-stars { color: var(--orange); font-size: 0.85rem; margin-bottom: 1rem; letter-spacing: 0.08rem; }
-    .testimonial-text {
-      font-size: 0.92rem; line-height: 1.7; color: var(--gray-700);
-      margin-bottom: 1.5rem; font-style: italic;
-    }
-    .testimonial-author { display: flex; align-items: center; gap: 0.75rem; }
-    .testimonial-avatar {
-      width: 38px; height: 38px; border-radius: 50%;
-      background: linear-gradient(135deg, var(--teal), var(--teal-lt));
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 700; color: var(--white); font-size: 0.78rem;
-    }
-    .testimonial-name { font-weight: 600; font-size: 0.85rem; color: var(--ink); }
-    .testimonial-role { font-size: 0.72rem; color: var(--gray-500); }
-    .testimonial-controls {
-      display: flex; justify-content: center; gap: 0.75rem; margin-top: 2rem;
-    }
-    .testimonial-btn {
-      width: 38px; height: 38px; border-radius: 50%;
-      background: var(--white); border: 1.5px solid var(--gray-200);
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; transition: border-color 0.2s, background 0.2s;
-      color: var(--ink);
-    }
-    .testimonial-btn:hover { border-color: var(--teal); background: var(--cream-lt); }
-    .testimonial-dots { display: flex; align-items: center; gap: 0.4rem; }
-    .testimonial-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--gray-200); transition: background 0.3s, width 0.3s;
-      cursor: pointer;
-    }
-    .testimonial-dot.active { background: var(--teal); width: 24px; border-radius: 4px; }
+        .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 72px;
+        }
 
-    /* ── FAQ ───────────────────────────────────────────────────────── */
-    #faq { background: var(--cream-lt); }
-    .faq-grid { max-width: 720px; margin: 0 auto; }
-    .faq-item {
-      border-bottom: 1px solid rgba(0,0,0,0.06);
-    }
-    .faq-question {
-      display: flex; align-items: center; justify-content: space-between;
-      width: 100%; padding: 1.2rem 0;
-      background: none; border: none; cursor: pointer;
-      font-family: var(--font); font-size: 1rem; font-weight: 600;
-      color: var(--ink); text-align: left; transition: color 0.2s;
-    }
-    .faq-question:hover { color: var(--teal); }
-    .faq-icon {
-      width: 28px; height: 28px; border-radius: 50%;
-      background: var(--white);
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; transition: transform 0.3s, background 0.3s;
-      border: 1px solid var(--gray-200);
-    }
-    .faq-item.open .faq-icon { transform: rotate(45deg); background: var(--teal); border-color: var(--teal); }
-    .faq-item.open .faq-icon svg { stroke: var(--white); }
-    .faq-icon svg { width: 14px; height: 14px; stroke: var(--gray-500); fill: none; stroke-width: 2.5; }
-    .faq-answer {
-      max-height: 0; overflow: hidden;
-      transition: max-height 0.4s ease, padding 0.4s ease;
-    }
-    .faq-item.open .faq-answer { max-height: 300px; padding-bottom: 1.25rem; }
-    .faq-answer p { font-size: 0.9rem; line-height: 1.7; color: var(--gray-500); }
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--dark);
+        }
 
-    /* ── About ─────────────────────────────────────────────────────── */
-    #about { background: var(--white); }
-    .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; }
-    .about-card {
-      background: var(--ink); color: var(--white);
-      border-radius: var(--radius-lg); padding: 2.5rem;
-      position: relative; overflow: hidden;
-    }
-    .about-card::before {
-      content: ''; position: absolute;
-      top: -60px; right: -60px;
-      width: 180px; height: 180px;
-      background: radial-gradient(circle, rgba(255,125,0,0.25), transparent);
-      border-radius: 50%;
-    }
-    .about-card-quote {
-      font-family: var(--serif); font-size: 1.3rem; line-height: 1.5;
-      color: var(--white); margin-bottom: 1.5rem; position: relative;
-    }
-    .about-card-author { display: flex; align-items: center; gap: 1rem; }
-    .author-avatar {
-      width: 42px; height: 42px; border-radius: 50%;
-      background: linear-gradient(135deg, var(--teal), var(--orange));
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 700; color: var(--white); font-size: 0.95rem;
-    }
-    .author-name { font-weight: 600; color: var(--white); font-size: 0.88rem; }
-    .author-role { font-size: 0.75rem; color: rgba(255,255,255,0.5); }
-    .stat-mini-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 1.5rem;
-    }
-    .stat-mini {
-      background: rgba(255,255,255,0.06); border-radius: 12px;
-      padding: 0.85rem; text-align: center;
-    }
-    .stat-mini-num { font-size: 1.35rem; font-weight: 700; color: var(--orange); }
-    .stat-mini-label { font-size: 0.7rem; color: rgba(255,255,255,0.45); margin-top: 0.1rem; }
-    .about-text .section-label { color: var(--teal); }
-    .about-text p { font-size: 1rem; line-height: 1.75; color: var(--gray-600); margin-bottom: 1rem; }
-    .about-values { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; }
-    .about-value { display: flex; gap: 1rem; align-items: flex-start; }
-    .value-icon {
-      width: 36px; height: 36px; border-radius: 10px;
-      background: var(--cream-lt); flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1rem;
-    }
-    .value-text h4 { font-size: 0.88rem; font-weight: 600; margin-bottom: 0.2rem; }
-    .value-text p { font-size: 0.82rem; color: var(--gray-500); margin: 0; line-height: 1.5; }
+        .nav-logo img {
+            height: 40px;
+            width: 40px;
+            border-radius: 10px;
+        }
 
-    /* ── Contact / Lead Capture ────────────────────────────────────── */
-    #contact {
-      background: var(--ink);
-      color: var(--white);
-    }
-    #contact .section-title { color: var(--white); }
-    #contact .section-label { color: var(--orange); }
-    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; max-width: var(--max-w); margin: 0 auto; }
-    .contact-info p { font-size: 1rem; line-height: 1.75; color: rgba(255,255,255,0.6); margin-bottom: 2rem; }
-    .contact-points { list-style: none; }
-    .contact-points li {
-      display: flex; align-items: center; gap: 0.75rem;
-      font-size: 0.88rem; padding: 0.6rem 0;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      color: rgba(255,255,255,0.7);
-    }
-    .contact-points li svg { stroke: var(--orange); fill: none; stroke-width: 1.5; width: 18px; height: 18px; flex-shrink: 0; }
-    .contact-form { display: flex; flex-direction: column; gap: 1rem; }
-    .form-group { display: flex; flex-direction: column; gap: 0.35rem; }
-    .form-group label { font-size: 0.8rem; font-weight: 600; color: rgba(255,255,255,0.6); }
-    .form-group input, .form-group select, .form-group textarea {
-      background: rgba(255,255,255,0.07);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 10px; padding: 0.7rem 1rem;
-      color: var(--white); font-family: var(--font); font-size: 0.88rem;
-      outline: none; transition: border-color 0.2s, background 0.2s;
-    }
-    .form-group input::placeholder, .form-group textarea::placeholder { color: rgba(255,255,255,0.3); }
-    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-      border-color: var(--teal-lt); background: rgba(255,255,255,0.1);
-    }
-    .form-group select option { background: var(--ink); color: var(--white); }
-    .form-group textarea { resize: vertical; min-height: 90px; }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    .form-submit {
-      background: var(--teal); color: var(--white);
-      border: none; padding: 0.85rem 2rem; border-radius: 100px;
-      font-family: var(--font); font-size: 0.95rem; font-weight: 600;
-      cursor: pointer; transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
-      align-self: flex-start;
-    }
-    .form-submit:hover { background: var(--teal-lt); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(21,97,109,0.3); }
-    .form-tabs {
-      display: flex; gap: 0; margin-bottom: 1.5rem;
-      background: rgba(255,255,255,0.06); border-radius: 100px;
-      padding: 0.25rem; overflow: hidden;
-    }
-    .form-tab {
-      flex: 1; padding: 0.55rem 1rem; text-align: center;
-      background: none; border: none; color: rgba(255,255,255,0.5);
-      font-family: var(--font); font-size: 0.82rem; font-weight: 600;
-      cursor: pointer; border-radius: 100px;
-      transition: background 0.2s, color 0.2s;
-    }
-    .form-tab.active { background: var(--teal); color: var(--white); }
-    .form-panel { display: none; }
-    .form-panel.active { display: block; }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 36px;
+            list-style: none;
+        }
 
-    /* ── Footer ────────────────────────────────────────────────────── */
-    footer {
-      background: var(--white);
-      border-top: 1px solid var(--gray-100);
-      padding: 4rem 4rem 0;
-    }
-    .footer-top {
-      display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
-      gap: 3rem; margin-bottom: 3rem; padding-bottom: 3rem;
-      border-bottom: 1px solid var(--gray-100);
-      max-width: var(--max-w); margin-left: auto; margin-right: auto;
-    }
-    .footer-brand p { font-size: 0.85rem; line-height: 1.6; margin-top: 0.75rem; color: var(--gray-500); max-width: 280px; }
-    .footer-col h4 { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray-400); margin-bottom: 1rem; }
-    .footer-col a { display: block; font-size: 0.85rem; color: var(--gray-600); padding: 0.25rem 0; transition: color 0.2s; }
-    .footer-col a:hover { color: var(--teal); }
-    .footer-bottom {
-      display: flex; align-items: center; justify-content: space-between;
-      font-size: 0.8rem; color: var(--gray-400);
-      padding: 1.5rem 0;
-      max-width: var(--max-w); margin: 0 auto;
-    }
-    .footer-logo { display: flex; align-items: center; gap: 0.5rem; color: var(--ink); font-weight: 700; font-size: 1rem; }
-    .footer-logo svg { width: 28px; height: 28px; }
-    .footer-bar {
-      height: 4px;
-      background: linear-gradient(90deg, var(--teal), var(--orange));
-    }
+        .nav-links a {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--dark);
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            position: relative;
+        }
 
-    /* ── Responsive ────────────────────────────────────────────────── */
-    @media (max-width: 960px) {
-      nav { padding: 0.9rem 2rem; }
-      .nav-links {
-        display: none; flex-direction: column;
-        position: absolute; top: 100%; left: 0; right: 0;
-        background: var(--white); padding: 1rem 2rem 2rem;
-        border-bottom: 1px solid var(--gray-200);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-        gap: 0.5rem;
-      }
-      .nav-links.open { display: flex; }
-      .nav-toggle { display: block; }
-      .nav-dropdown-menu {
-        position: static; transform: none; box-shadow: none; border: none;
-        opacity: 1; visibility: visible; padding: 0 0 0 1rem;
-      }
-      #hero { padding: 7rem 2rem 3rem; }
-      section { padding: 4rem 2rem; }
-      .bento-grid { grid-template-columns: 1fr; }
-      .bento-card.span-2 { grid-column: span 1; }
-      .about-grid, .contact-grid, .testimonial-featured { grid-template-columns: 1fr; gap: 2.5rem; }
-      .form-row { grid-template-columns: 1fr; }
-      .footer-top { grid-template-columns: 1fr 1fr; gap: 2rem; }
-      .footer-bottom { flex-direction: column; gap: 1rem; text-align: center; }
-      .testimonial-card { min-width: 280px; flex: 0 0 280px; }
-      .hero-screenshot-wrap { margin-top: 2.5rem; padding: 1rem; }
-    }
-    @media (max-width: 600px) {
-      .footer-top { grid-template-columns: 1fr; }
-      .hero-proof { flex-direction: column; gap: 0.25rem; }
-      .bento-flow { display: none; }
-    }
-  </style>
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px; left: 0;
+            width: 0; height: 2px;
+            background: var(--orange);
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover { opacity: 1; }
+        .nav-links a:hover::after { width: 100%; }
+
+        .nav-cta {
+            background: var(--orange);
+            color: var(--white) !important;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .nav-cta:hover {
+            background: var(--orange-light);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(255, 125, 0, 0.4);
+        }
+
+        .nav-cta::after { display: none !important; }
+
+        .mobile-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .mobile-toggle span {
+            width: 24px; height: 2px;
+            background: var(--dark);
+            border-radius: 2px;
+            transition: all 0.3s;
+        }
+
+        /* ============================================
+           HERO
+           ============================================ */
+        #home {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            padding-top: 72px;
+        }
+
+        #heroCanvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 50% 0%, rgba(21, 97, 109, 0.15) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 50% at 80% 20%, rgba(255, 125, 0, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse 50% 40% at 10% 80%, rgba(21, 97, 109, 0.06) 0%, transparent 50%);
+        }
+
+        .hero-grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(21, 97, 109, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(21, 97, 109, 0.05) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+            -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 60px 24px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(21, 97, 109, 0.15);
+            border: 1px solid rgba(21, 97, 109, 0.3);
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--teal-light);
+            margin-bottom: 32px;
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .hero-badge .dot {
+            width: 8px; height: 8px;
+            background: var(--orange);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .hero-h1 {
+            font-size: clamp(2.5rem, 6vw, 4.2rem);
+            font-weight: 800;
+            color: var(--white);
+            line-height: 1.1;
+            margin-bottom: 24px;
+            letter-spacing: -0.03em;
+            animation: fadeInUp 0.6s ease 0.1s forwards;
+            opacity: 0;
+        }
+
+        .hero-h1 .gradient {
+            background: linear-gradient(135deg, var(--teal), var(--orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-sub {
+            font-size: clamp(1.05rem, 2vw, 1.25rem);
+            color: var(--gray-400);
+            max-width: 620px;
+            margin: 0 auto 40px;
+            line-height: 1.7;
+            animation: fadeInUp 0.6s ease 0.2s forwards;
+            opacity: 0;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.6s ease 0.3s forwards;
+            opacity: 0;
+        }
+
+        .btn-primary {
+            background: var(--orange);
+            color: var(--white);
+            padding: 14px 32px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.25s;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            background: var(--orange-light);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 125, 0, 0.35);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--white);
+            padding: 14px 32px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            transition: all 0.25s;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 48px;
+            justify-content: center;
+            margin-top: 72px;
+            animation: fadeInUp 0.6s ease 0.4s forwards;
+            opacity: 0;
+        }
+
+        .hero-stat {
+            text-align: center;
+        }
+
+        .hero-stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--white);
+        }
+
+        .hero-stat-label {
+            font-size: 0.85rem;
+            color: var(--gray-400);
+            margin-top: 4px;
+        }
+
+        /* ============================================
+           SOCIAL PROOF BAR
+           ============================================ */
+        .social-proof {
+            padding: 60px 0;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .social-proof-label {
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--gray-600);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 28px;
+        }
+
+        .social-proof-logos {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 48px;
+            flex-wrap: wrap;
+            opacity: 0.4;
+        }
+
+        .social-proof-logos span {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gray-400);
+            letter-spacing: 0.05em;
+        }
+
+        /* ============================================
+           PROBLEM SECTION
+           ============================================ */
+        .problem-section {
+            padding: 120px 0;
+            position: relative;
+        }
+
+        .section-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--orange);
+            margin-bottom: 16px;
+        }
+
+        .section-label .line {
+            width: 24px; height: 1px;
+            background: var(--orange);
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 4vw, 2.8rem);
+            font-weight: 700;
+            color: var(--white);
+            line-height: 1.2;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        .section-subtitle {
+            font-size: 1.1rem;
+            color: var(--gray-400);
+            max-width: 600px;
+            line-height: 1.7;
+            margin-bottom: 56px;
+        }
+
+        .problem-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 24px;
+        }
+
+        .problem-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 32px;
+            transition: all 0.3s ease;
+        }
+
+        .problem-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 125, 0, 0.2);
+            transform: translateY(-4px);
+        }
+
+        .problem-icon {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            background: rgba(120, 41, 15, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+        }
+
+        .problem-card h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--white);
+            margin-bottom: 10px;
+        }
+
+        .problem-card p {
+            font-size: 0.95rem;
+            color: var(--gray-400);
+            line-height: 1.6;
+        }
+
+        /* ============================================
+           FEATURES
+           ============================================ */
+        #features {
+            padding: 120px 0;
+            position: relative;
+        }
+
+        .features-header {
+            text-align: center;
+            margin-bottom: 72px;
+        }
+
+        .features-header .section-subtitle {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .feature-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+            margin-bottom: 100px;
+        }
+
+        .feature-row:last-child { margin-bottom: 0; }
+
+        .feature-row.reverse { direction: rtl; }
+        .feature-row.reverse > * { direction: ltr; }
+
+        .feature-text .feature-number {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--orange);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 12px;
+        }
+
+        .feature-text h3 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 16px;
+            line-height: 1.2;
+        }
+
+        .feature-text p {
+            font-size: 1.05rem;
+            color: var(--gray-400);
+            line-height: 1.7;
+            margin-bottom: 24px;
+        }
+
+        .feature-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .feature-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 0.95rem;
+            color: var(--gray-300);
+        }
+
+        .feature-list li .check {
+            flex-shrink: 0;
+            width: 22px; height: 22px;
+            background: rgba(21, 97, 109, 0.15);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--teal-light);
+            font-size: 0.75rem;
+            margin-top: 2px;
+        }
+
+        .feature-visual {
+            background: linear-gradient(135deg, rgba(21, 97, 109, 0.08), rgba(255, 125, 0, 0.05));
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            padding: 40px;
+            min-height: 360px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-visual::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 30% 50%, rgba(21, 97, 109, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 70% 50%, rgba(255, 125, 0, 0.06) 0%, transparent 50%);
+        }
+
+        .mock-ui {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+        }
+
+        .mock-email {
+            background: var(--dark-card);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .mock-email-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            font-size: 0.85rem;
+        }
+
+        .mock-avatar {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--teal), var(--teal-light));
+        }
+
+        .mock-email-from {
+            color: var(--white);
+            font-weight: 600;
+        }
+
+        .mock-email-time {
+            color: var(--gray-600);
+            margin-left: auto;
+            font-size: 0.8rem;
+        }
+
+        .mock-email-body {
+            font-size: 0.85rem;
+            color: var(--gray-400);
+            line-height: 1.5;
+        }
+
+        .mock-response {
+            background: rgba(21, 97, 109, 0.08);
+            border: 1px solid rgba(21, 97, 109, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .mock-response-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .mock-ai-badge {
+            background: linear-gradient(135deg, var(--burnt), var(--orange));
+            color: var(--white);
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 6px;
+            letter-spacing: 0.05em;
+        }
+
+        .mock-response-time {
+            font-size: 0.8rem;
+            color: var(--teal-light);
+            font-weight: 600;
+        }
+
+        .mock-response-body {
+            font-size: 0.85rem;
+            color: var(--gray-300);
+            line-height: 1.5;
+        }
+
+        /* Lead qualification mock */
+        .mock-qualify {
+            width: 100%;
+        }
+
+        .mock-qualify-header {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--white);
+            margin-bottom: 16px;
+        }
+
+        .qualify-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .qualify-label {
+            font-size: 0.85rem;
+            color: var(--gray-400);
+        }
+
+        .qualify-value {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--white);
+        }
+
+        .qualify-score {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(21, 97, 109, 0.15);
+            color: var(--teal-light);
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        /* Follow-up mock */
+        .mock-timeline { width: 100%; }
+
+        .timeline-item {
+            display: flex;
+            gap: 16px;
+            padding-bottom: 24px;
+            position: relative;
+        }
+
+        .timeline-item:last-child { padding-bottom: 0; }
+
+        .timeline-dot-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .timeline-dot {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            background: var(--teal);
+            flex-shrink: 0;
+        }
+
+        .timeline-dot.active { background: var(--orange); box-shadow: 0 0 12px rgba(255, 125, 0, 0.4); }
+
+        .timeline-line {
+            width: 2px;
+            flex: 1;
+            background: rgba(255,255,255,0.08);
+            margin-top: 4px;
+        }
+
+        .timeline-content h4 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--white);
+            margin-bottom: 4px;
+        }
+
+        .timeline-content p {
+            font-size: 0.8rem;
+            color: var(--gray-400);
+        }
+
+        .timeline-content .tag {
+            display: inline-block;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 6px;
+            margin-top: 6px;
+        }
+
+        .tag-sent { background: rgba(21, 97, 109, 0.15); color: var(--teal-light); }
+        .tag-opened { background: rgba(255, 125, 0, 0.15); color: var(--orange); }
+        .tag-scheduled { background: rgba(255,255,255,0.08); color: var(--gray-400); }
+
+        /* ============================================
+           HOW IT WORKS
+           ============================================ */
+        .how-section {
+            padding: 120px 0;
+            background: linear-gradient(180deg, transparent, rgba(21, 97, 109, 0.03), transparent);
+        }
+
+        .how-header {
+            text-align: center;
+            margin-bottom: 72px;
+        }
+
+        .how-header .section-subtitle {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .how-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+        }
+
+        .how-step {
+            text-align: center;
+            padding: 40px 28px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .how-step:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(21, 97, 109, 0.2);
+            transform: translateY(-6px);
+        }
+
+        .how-step-number {
+            width: 52px; height: 52px;
+            background: linear-gradient(135deg, var(--burnt), var(--orange));
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--white);
+            margin: 0 auto 24px;
+        }
+
+        .how-step h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--white);
+            margin-bottom: 12px;
+        }
+
+        .how-step p {
+            font-size: 0.95rem;
+            color: var(--gray-400);
+            line-height: 1.6;
+        }
+
+        /* ============================================
+           PRICING
+           ============================================ */
+        #pricing {
+            padding: 120px 0;
+        }
+
+        .pricing-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+
+        .pricing-header .section-subtitle {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            align-items: stretch;
+        }
+
+        .pricing-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            padding: 40px 32px;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .pricing-card.featured {
+            background: linear-gradient(135deg, rgba(21, 97, 109, 0.1), rgba(255, 125, 0, 0.05));
+            border-color: rgba(21, 97, 109, 0.3);
+            position: relative;
+        }
+
+        .pricing-card.featured::before {
+            content: 'Most Popular';
+            position: absolute;
+            top: -12px; left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--orange), var(--burnt));
+            color: var(--cream);
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 5px 16px;
+            border-radius: 50px;
+            letter-spacing: 0.05em;
+        }
+
+        .pricing-tier {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--teal-light);
+            margin-bottom: 8px;
+        }
+
+        .pricing-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 8px;
+        }
+
+        .pricing-desc {
+            font-size: 0.9rem;
+            color: var(--gray-400);
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .pricing-amount {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+
+        .pricing-dollar {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--gray-400);
+        }
+
+        .pricing-value {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--white);
+            line-height: 1;
+        }
+
+        .pricing-period {
+            font-size: 0.9rem;
+            color: var(--gray-400);
+        }
+
+        .pricing-note {
+            font-size: 0.8rem;
+            color: var(--gray-600);
+            margin-bottom: 32px;
+        }
+
+        .pricing-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.06);
+            margin-bottom: 28px;
+        }
+
+        .pricing-features {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-bottom: 36px;
+            flex: 1;
+        }
+
+        .pricing-features li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: var(--gray-300);
+        }
+
+        .pricing-features .check-icon {
+            flex-shrink: 0;
+            color: var(--teal-light);
+            font-size: 1rem;
+            margin-top: 1px;
+        }
+
+        .pricing-btn {
+            display: block;
+            text-align: center;
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.25s;
+            cursor: pointer;
+            border: none;
+            width: 100%;
+        }
+
+        .pricing-btn-primary {
+            background: var(--orange);
+            color: var(--white);
+        }
+
+        .pricing-btn-primary:hover {
+            background: var(--orange-light);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 125, 0, 0.3);
+        }
+
+        .pricing-btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--white);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .pricing-btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* ============================================
+           TESTIMONIAL / QUOTE
+           ============================================ */
+        .quote-section {
+            padding: 100px 0;
+            background: linear-gradient(180deg, transparent, rgba(21, 97, 109, 0.03), transparent);
+        }
+
+        .quote-card {
+            max-width: 720px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .quote-text {
+            font-size: clamp(1.2rem, 2.5vw, 1.5rem);
+            font-weight: 400;
+            color: var(--gray-300);
+            line-height: 1.7;
+            font-style: italic;
+            margin-bottom: 28px;
+        }
+
+        .quote-text::before {
+            content: '\201C';
+            font-size: 4rem;
+            color: var(--teal);
+            display: block;
+            line-height: 0.5;
+            margin-bottom: 16px;
+        }
+
+        .quote-author {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--white);
+        }
+
+        .quote-role {
+            font-size: 0.85rem;
+            color: var(--gray-400);
+        }
+
+        /* ============================================
+           CONTACT / CTA
+           ============================================ */
+        #contact {
+            padding: 120px 0;
+        }
+
+        .cta-card {
+            background: linear-gradient(135deg, rgba(21, 97, 109, 0.12), rgba(255, 125, 0, 0.06));
+            border: 1px solid rgba(21, 97, 109, 0.2);
+            border-radius: 24px;
+            padding: 72px 48px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-card::before {
+            content: '';
+            position: absolute;
+            top: -50%; right: -20%;
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(255, 125, 0, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .cta-card .section-title {
+            margin-bottom: 16px;
+        }
+
+        .cta-card .section-subtitle {
+            margin: 0 auto 40px;
+            text-align: center;
+        }
+
+        .contact-form {
+            max-width: 500px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-input {
+            padding: 14px 18px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--white);
+            font-size: 0.95rem;
+            font-family: var(--font);
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: var(--teal);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 3px rgba(21, 97, 109, 0.15);
+        }
+
+        .form-input::placeholder { color: var(--gray-600); }
+
+        textarea.form-input {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .form-submit {
+            margin-top: 8px;
+        }
+
+        /* ============================================
+           FOOTER
+           ============================================ */
+        footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 60px 0 40px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 48px;
+            margin-bottom: 48px;
+        }
+
+        .footer-brand p {
+            font-size: 0.9rem;
+            color: var(--gray-400);
+            line-height: 1.6;
+            margin-top: 16px;
+            max-width: 300px;
+        }
+
+        .footer-col h4 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--white);
+            margin-bottom: 20px;
+        }
+
+        .footer-col a {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--gray-400);
+            padding: 6px 0;
+            transition: color 0.2s;
+        }
+
+        .footer-col a:hover { color: var(--white); }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--gray-600);
+        }
+
+        /* ============================================
+           ANIMATIONS
+           ============================================ */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 968px) {
+            .feature-row {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+            .feature-row.reverse { direction: ltr; }
+
+            .pricing-grid {
+                grid-template-columns: 1fr;
+                max-width: 440px;
+                margin: 0 auto;
+            }
+
+            .how-grid {
+                grid-template-columns: 1fr;
+                max-width: 440px;
+                margin: 0 auto;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .hero-stats { gap: 32px; }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .mobile-toggle { display: flex; }
+
+            .nav-links.open {
+                display: flex;
+                flex-direction: column;
+                position: absolute;
+                top: 72px; left: 0; right: 0;
+                background: rgba(255, 236, 209, 0.98);
+                padding: 24px;
+                gap: 20px;
+                border-bottom: 1px solid rgba(0, 21, 36, 0.08);
+            }
+
+            .hero-stats {
+                flex-direction: column;
+                gap: 24px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 32px;
+            }
+
+            .cta-card {
+                padding: 48px 24px;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                gap: 12px;
+                text-align: center;
+            }
+        }
+    </style>
 </head>
 <body>
 
-<!-- ── Nav ─────────────────────────────────────────────────────────── -->
-<nav id="navbar">
-  <div class="nav-logo">
-    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="50" cy="50" r="44" stroke="#001524" stroke-width="3"/>
-      <clipPath id="cc"><circle cx="50" cy="50" r="44"/></clipPath>
-      <path d="M6 54 C18 38,34 70,50 57 C66 44,80 65,94 52 L94 94 L6 94 Z" fill="#15616D" opacity="0.25" clip-path="url(#cc)"/>
-      <path d="M6 52 C18 36,34 68,50 55 C66 42,80 63,94 50" stroke="#15616D" stroke-width="3" fill="none" stroke-linecap="round"/>
-      <path d="M6 57 C18 41,34 73,50 60 C66 47,80 68,94 55" stroke="#15616D" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.5"/>
-      <circle cx="6" cy="52" r="6" fill="#001524"/>
-      <circle cx="94" cy="52" r="6" fill="#001524"/>
-      <circle cx="78" cy="14" r="8" fill="#FF7D00"/>
-    </svg>
-    <span>EventFlow</span>
-  </div>
-
-  <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="Menu">
-    <svg viewBox="0 0 24 24" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-  </button>
-
-  <div class="nav-links">
-    <div class="nav-dropdown">
-      <button class="nav-dropdown-trigger">
-        Product
-        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4.5L6 7.5L9 4.5"/></svg>
-      </button>
-      <div class="nav-dropdown-menu">
-        <a href="#features">Features <span class="dd-sub">See how it works</span></a>
-        <a href="#solutions">Solutions <span class="dd-sub">Lead tier classification</span></a>
-      </div>
-    </div>
-    <a href="#pricing">Pricing</a>
-    <div class="nav-dropdown">
-      <button class="nav-dropdown-trigger">
-        Resources
-        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4.5L6 7.5L9 4.5"/></svg>
-      </button>
-      <div class="nav-dropdown-menu">
-        <a href="#faq">FAQ <span class="dd-sub">Common questions</span></a>
-        <a href="#testimonials">Testimonials <span class="dd-sub">What customers say</span></a>
-      </div>
-    </div>
-    <a href="#about">About</a>
-    <a href="#contact">Contact</a>
-    <a href="#contact" class="nav-cta">Book a Demo</a>
-  </div>
-</nav>
-
-<!-- ── Hero ────────────────────────────────────────────────────────── -->
-<section id="hero">
-  <div class="hero-content fade-up">
-    <div class="hero-eyebrow"><span></span> Smarter Bookings. Fuller Rooms.</div>
-    <h1 class="hero-title">
-      Restaurant sales software<br/>
-      your team will <em>love</em>
-    </h1>
-    <p class="hero-sub">
-      EventFlow is an AI-powered sales assistant that responds to every private dining inquiry instantly — 24/7 — classifying leads, sending the right menus, and escalating your biggest opportunities automatically.
-    </p>
-    <div class="hero-actions">
-      <a href="#contact" class="btn-primary">Get a free demo</a>
-      <a href="#features" class="btn-secondary">See how it works</a>
-    </div>
-    <div class="hero-proof">
-      <span class="hero-stars">★★★★★</span>
-      <span><strong>5 stars</strong> from restaurant operators</span>
-    </div>
-  </div>
-
-  <div class="hero-screenshot-wrap fade-up">
-    <div class="hero-screenshot">
-      <div class="screenshot-header">
-        <div class="screenshot-dot"></div>
-        <div class="screenshot-dot"></div>
-        <div class="screenshot-dot"></div>
-      </div>
-      <div class="screenshot-body">
-        <div class="screenshot-row">
-          <span class="screenshot-badge badge-a">Tier A</span>
-          <span class="screenshot-text">Corporate dinner — 55 guests, April 10th</span>
-          <span class="screenshot-status">Escalated</span>
-        </div>
-        <div class="screenshot-row">
-          <span class="screenshot-badge badge-b">Tier B</span>
-          <span class="screenshot-text">Birthday party — 22 guests, private room</span>
-          <span class="screenshot-status">Replied</span>
-        </div>
-        <div class="screenshot-row">
-          <span class="screenshot-badge badge-c">Tier C</span>
-          <span class="screenshot-text">Group dinner — 13 guests, menu options</span>
-          <span class="screenshot-status">Replied</span>
-        </div>
-        <div class="screenshot-row">
-          <span class="screenshot-badge badge-d">Tier D</span>
-          <span class="screenshot-text">"Do you do private events?"</span>
-          <span class="screenshot-status">Qualified</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ── Logo Bar ────────────────────────────────────────────────────── -->
-<div class="logo-bar-section">
-  <p class="logo-bar-label">Join restaurants and venues already using EventFlow</p>
-  <div class="logo-bar">
-    <div class="logo-placeholder">Your Logo</div>
-    <div class="logo-placeholder">Your Logo</div>
-    <div class="logo-placeholder">Your Logo</div>
-    <div class="logo-placeholder">Your Logo</div>
-    <div class="logo-placeholder">Your Logo</div>
-  </div>
-</div>
-
-<!-- ── Features (How It Works) — Bento Grid ────────────────────────── -->
-<section id="features">
-  <div class="max-w">
-    <div class="section-header centered fade-up">
-      <div class="section-label">Features</div>
-      <h2 class="section-title">From inbox to booked —<br/>in under a minute</h2>
-      <p class="section-sub">EventFlow plugs into your existing email inbox and handles the entire inquiry pipeline automatically, so your team only steps in when it matters most.</p>
-    </div>
-    <div class="bento-grid fade-up">
-      <div class="bento-card span-2">
-        <div class="step-num">The Pipeline</div>
-        <h3>Every inquiry flows through 5 automated steps</h3>
-        <p>From the moment a guest sends an email to your sales inbox, EventFlow reads, classifies, responds, escalates, and logs — all in under 60 seconds.</p>
-        <div class="bento-flow">
-          <div class="bento-flow-node">Guest Email</div>
-          <div class="bento-flow-arrow">→</div>
-          <div class="bento-flow-node active">EventFlow AI</div>
-          <div class="bento-flow-arrow">→</div>
-          <div class="bento-flow-node">Lead Classified</div>
-          <div class="bento-flow-arrow">→</div>
-          <div class="bento-flow-node">Reply Sent</div>
-          <div class="bento-flow-arrow">→</div>
-          <div class="bento-flow-node">Team Alerted</div>
-        </div>
-      </div>
-      <div class="bento-card">
-        <div class="step-icon">
-          <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
-        </div>
-        <h3>Inquiry Received</h3>
-        <p>A guest emails your sales inbox about a private event, group dinner, or venue buyout — at any hour.</p>
-      </div>
-      <div class="bento-card">
-        <div class="step-icon">
-          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-        </div>
-        <h3>AI Classification</h3>
-        <p>EventFlow reads the inquiry, pulls from your venue's knowledge base, and classifies by tier — size, intent, and urgency.</p>
-      </div>
-      <div class="bento-card">
-        <div class="step-icon">
-          <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
-        </div>
-        <h3>Smart Response</h3>
-        <p>The right menus, pricing, and messaging sent automatically — tailored to group size and inquiry type.</p>
-      </div>
-      <div class="bento-card">
-        <div class="step-icon">
-          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-        </div>
-        <h3>Escalation</h3>
-        <p>Large groups (29+) trigger an immediate alert to your sales manager with full context.</p>
-      </div>
-      <div class="bento-card">
-        <div class="step-icon">
-          <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        </div>
-        <h3>Logged & Tracked</h3>
-        <p>Every interaction logged — lead tier, response sent, escalation status — so you always know your pipeline.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ── Solutions (Tier Benefits) ───────────────────────────────────── -->
-<section id="solutions">
-  <div class="max-w">
-    <div class="section-header centered fade-up">
-      <div class="section-label">Solutions</div>
-      <h2 class="section-title">Every inquiry handled<br/>exactly right</h2>
-      <p class="section-sub">EventFlow doesn't send a one-size-fits-all reply. It reads each inquiry and responds with the right level of detail, the right menus, and the right urgency.</p>
-    </div>
-    <div class="tier-cards fade-up">
-      <div class="tier-card tier-a">
-        <div class="tier-badge">Tier A — High Value</div>
-        <h3>Ready to Book</h3>
-        <div class="tier-size">29+ guests · Full details provided</div>
-        <div class="tier-example">"I'm planning a corporate dinner for 55 people on April 10th. Budget is around $12k."</div>
-        <p>Your most valuable inquiries. EventFlow immediately alerts your sales manager and sends a professional handoff response.</p>
-        <ul class="tier-outcomes">
-          <li>Instant Slack alert to your sales manager</li>
-          <li>Escalation email with full guest context</li>
-          <li>Zero risk of a big lead going cold</li>
-        </ul>
-      </div>
-      <div class="tier-card tier-b">
-        <div class="tier-badge">Tier B — Planning Stage</div>
-        <h3>Event Planner</h3>
-        <div class="tier-size">15–28 guests · Exploring options</div>
-        <div class="tier-example">"Planning a birthday dinner for 20 people in May. Do you have a private space?"</div>
-        <p>Guests with clear intent but still gathering info. EventFlow sends both group menus and sets clear expectations.</p>
-        <ul class="tier-outcomes">
-          <li>Both group menu links sent automatically</li>
-          <li>Professional, branded response in seconds</li>
-          <li>Frees your team from routine back-and-forth</li>
-        </ul>
-      </div>
-      <div class="tier-card tier-c">
-        <div class="tier-badge">Tier C — Small Group</div>
-        <h3>Group Reservation</h3>
-        <div class="tier-size">13–14 guests · Casual inquiry</div>
-        <div class="tier-example">"We have about 13 people for a birthday. Do you have space for a group?"</div>
-        <p>Right on the boundary — EventFlow sends the regular menu plus both group menus, letting the guest self-select.</p>
-        <ul class="tier-outcomes">
-          <li>Regular menu + group menus provided</li>
-          <li>Invites guest to share more details</li>
-          <li>Consistent, polished response every time</li>
-        </ul>
-      </div>
-      <div class="tier-card tier-d">
-        <div class="tier-badge">Tier D — Early Stage</div>
-        <h3>Initial Inquiry</h3>
-        <div class="tier-size">1–12 guests · Minimal context</div>
-        <div class="tier-example">"Do you do private events?"</div>
-        <p>Short or vague questions. EventFlow responds warmly, shares the regular menu, and asks qualifying questions.</p>
-        <ul class="tier-outcomes">
-          <li>Regular menu sent with warm follow-up</li>
-          <li>No missed opportunity on low-effort inquiries</li>
-          <li>Moves guest toward providing real details</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ── Pricing ──────────────────────────────────────────────────────── -->
-<section id="pricing">
-  <div class="max-w">
-    <div class="section-header centered fade-up">
-      <div class="section-label">Pricing</div>
-      <h2 class="section-title">Simple, transparent pricing</h2>
-      <p class="section-sub">No per-inquiry fees. No setup surprises. Just a flat monthly rate based on your venue's needs.</p>
-    </div>
-    <div class="pricing-table-wrap fade-up">
-      <table class="pricing-table">
-        <thead>
-          <tr>
-            <th></th>
-            <th>
-              <div class="plan-name">Essentials</div>
-              <div class="plan-price">$149 <span>/ mo</span></div>
-            </th>
-            <th class="featured-col">
-              <div class="plan-badge">Most Popular</div>
-              <div class="plan-name">Pro</div>
-              <div class="plan-price">$299 <span>/ mo</span></div>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td>AI-powered email responses 24/7</td><td><span class="check">&#10003;</span></td><td class="featured-col"><span class="check">&#10003;</span></td></tr>
-          <tr><td>Lead tier classification (A–D)</td><td><span class="check">&#10003;</span></td><td class="featured-col"><span class="check">&#10003;</span></td></tr>
-          <tr><td>Menu link delivery by group size</td><td><span class="check">&#10003;</span></td><td class="featured-col"><span class="check">&#10003;</span></td></tr>
-          <tr><td>Escalation alerts for large groups</td><td><span class="check">&#10003;</span></td><td class="featured-col"><span class="check">&#10003;</span></td></tr>
-          <tr><td>Email log & reporting</td><td><span class="check">&#10003;</span></td><td class="featured-col"><span class="check">&#10003;</span></td></tr>
-          <tr><td>SMS alerts to sales manager</td><td><span class="dash">—</span></td><td class="featured-col"><span class="check">&#10003;</span></td></tr>
-          <tr><td>TripleSeat CRM integration</td><td><span class="dash">—</span></td><td class="featured-col"><span class="check">&#10003;</span></td></tr>
-          <tr><td>Follow-up email sequences</td><td><span class="dash">—</span></td><td class="featured-col"><span class="check">&#10003;</span></td></tr>
-          <tr><td>Knowledge base from your PDFs</td><td><span class="dash">—</span></td><td class="featured-col"><span class="check">&#10003;</span></td></tr>
-          <tr><td>Priority support</td><td><span class="dash">—</span></td><td class="featured-col"><span class="check">&#10003;</span></td></tr>
-          <tr><td>Venues / inboxes included</td><td>1</td><td class="featured-col">Up to 3</td></tr>
-        </tbody>
-        <tfoot>
-          <tr>
-            <td></td>
-            <td><a href="#contact" class="pricing-cta pricing-cta-secondary">Get Started</a></td>
-            <td class="featured-col"><a href="#contact" class="pricing-cta pricing-cta-primary">Get Started</a></td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
-    <div class="pricing-enterprise fade-up">
-      <p>Need more than 3 venues or custom integrations? <a href="#contact">Contact us</a> for enterprise pricing.</p>
-    </div>
-    <p class="pricing-note fade-up">All plans include onboarding + setup. Cancel anytime.</p>
-  </div>
-</section>
-
-<!-- ── Testimonials ────────────────────────────────────────────────── -->
-<section id="testimonials">
-  <div class="max-w">
-    <div class="testimonial-featured fade-up">
-      <div class="testimonial-featured-visual">
-        <div class="testimonial-avatar-large">KR</div>
-      </div>
-      <div class="testimonial-featured-text">
-        <div class="section-label">Hear what customers are saying</div>
-        <h2 class="section-title">Restaurants trust EventFlow to close more bookings</h2>
-        <p class="testimonial-featured-quote">"We used to lose 3–4 big group inquiries a week just because nobody responded until Monday morning. EventFlow ended that overnight."</p>
-        <div class="testimonial-featured-author">Kendall R.</div>
-        <div class="testimonial-featured-role">Sales Manager, Fine Dining</div>
-        <a href="#contact" class="testimonial-featured-link">Book a demo →</a>
-      </div>
-    </div>
-
-    <div class="testimonials-track-wrapper fade-up">
-      <div class="testimonials-track" id="testimonials-track">
-        <div class="testimonial-card">
-          <div class="testimonial-stars">★★★★★</div>
-          <p class="testimonial-text">"The tier system is brilliant. Our sales team only gets pulled in for the big fish — everything else is handled automatically."</p>
-          <div class="testimonial-author">
-            <div class="testimonial-avatar">JM</div>
-            <div>
-              <div class="testimonial-name">James M.</div>
-              <div class="testimonial-role">GM, Upscale Restaurant Group</div>
+    <!-- ==================== NAV ==================== -->
+    <nav id="navbar">
+        <div class="nav-inner">
+            <a href="#home" class="nav-logo">
+                <img src="logo.svg" alt="EventFlow Logo">
+                EventFlow
+            </a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#pricing">Pricing</a></li>
+                <li><a href="#contact">Contact</a></li>
+                <li><a href="#contact" class="nav-cta">Get Started</a></li>
+            </ul>
+            <div class="mobile-toggle" id="mobileToggle" onclick="document.getElementById('navLinks').classList.toggle('open')">
+                <span></span><span></span><span></span>
             </div>
-          </div>
         </div>
-        <div class="testimonial-card">
-          <div class="testimonial-stars">★★★★★</div>
-          <p class="testimonial-text">"Setup was painless — they plugged into our existing inbox and had us live in under a week. The responses sound exactly like our brand."</p>
-          <div class="testimonial-author">
-            <div class="testimonial-avatar">SP</div>
-            <div>
-              <div class="testimonial-name">Sarah P.</div>
-              <div class="testimonial-role">Director of Operations</div>
+    </nav>
+
+    <!-- ==================== HERO ==================== -->
+    <section id="home">
+        <canvas id="heroCanvas"></canvas>
+        <div class="hero-bg"></div>
+        <div class="hero-grid"></div>
+        <div class="hero-content">
+            <h1 class="hero-h1">
+                Your AI Sales Manager<br>
+                for <span class="gradient">Private Events</span>
+            </h1>
+            <p class="hero-tagline" style="font-size:1.15rem;font-weight:600;color:var(--cream);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;animation:fadeInUp 0.6s ease 0.15s forwards;opacity:0;">Smarter Bookings. Fuller Rooms.</p>
+            <p class="hero-sub">
+                EventFlow responds to every event inquiry instantly, qualifies leads automatically, and follows up until they book. Built exclusively for restaurants and hospitality venues.
+            </p>
+            <div class="hero-buttons">
+                <a href="#contact" class="btn-primary">
+                    Start Free Trial
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </a>
+                <a href="#features" class="btn-secondary">
+                    See How It Works
+                </a>
             </div>
-          </div>
-        </div>
-        <div class="testimonial-card">
-          <div class="testimonial-stars">★★★★★</div>
-          <p class="testimonial-text">"We went from a 12-hour average response time to under 60 seconds. Our private dining revenue is up 30% since we started."</p>
-          <div class="testimonial-author">
-            <div class="testimonial-avatar">DL</div>
-            <div>
-              <div class="testimonial-name">David L.</div>
-              <div class="testimonial-role">Owner, Boutique Hotel</div>
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <div class="hero-stat-value">&lt; 2 min</div>
+                    <div class="hero-stat-label">Average response time</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-value">24/7</div>
+                    <div class="hero-stat-label">Always-on coverage</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-value">3x</div>
+                    <div class="hero-stat-label">More bookings converted</div>
+                </div>
             </div>
-          </div>
         </div>
-        <div class="testimonial-card">
-          <div class="testimonial-stars">★★★★★</div>
-          <p class="testimonial-text">"I was skeptical about AI handling our guest communication but the responses are warm, accurate, and on-brand. Guests have no idea."</p>
-          <div class="testimonial-author">
-            <div class="testimonial-avatar">AL</div>
-            <div>
-              <div class="testimonial-name">Amanda L.</div>
-              <div class="testimonial-role">Events Manager</div>
+    </section>
+
+
+    <!-- ==================== THE PROBLEM ==================== -->
+    <section class="problem-section">
+        <div class="container">
+            <div class="section-label"><span class="line"></span> The Problem</div>
+            <h2 class="section-title">Restaurants are losing event<br>revenue every day</h2>
+            <p class="section-subtitle">Your managers are busy running service. Meanwhile, event inquiries sit unanswered — and the first venue to respond usually wins the booking.</p>
+
+            <div class="problem-grid">
+                <div class="problem-card fade-in">
+                    <div class="problem-icon"><svg width="24" height="24" fill="none" stroke="var(--orange)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+                    <h3>Slow Response Times</h3>
+                    <p>Inquiries arrive during peak service hours when no one can respond. Hours become days, and the lead goes cold.</p>
+                </div>
+                <div class="problem-card fade-in">
+                    <div class="problem-icon"><svg width="24" height="24" fill="none" stroke="var(--orange)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+                    <h3>Lost & Buried Leads</h3>
+                    <p>Event emails get buried in overflowing inboxes, forgotten between shifts, or lost during staff handoffs.</p>
+                </div>
+                <div class="problem-card fade-in">
+                    <div class="problem-icon"><svg width="24" height="24" fill="none" stroke="var(--orange)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+                    <h3>Inconsistent Messaging</h3>
+                    <p>Every manager answers differently. Pricing gets quoted wrong. Availability information conflicts. Guests get confused.</p>
+                </div>
+                <div class="problem-card fade-in">
+                    <div class="problem-icon"><svg width="24" height="24" fill="none" stroke="var(--orange)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+                    <h3>Staff Turnover</h3>
+                    <p>When your sales manager leaves, years of venue knowledge walks out the door. Training replacements takes months.</p>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
-      <div class="testimonial-controls">
-        <button class="testimonial-btn" onclick="slideTestimonials(-1)" aria-label="Previous">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 19l-7-7 7-7"/></svg>
-        </button>
-        <div class="testimonial-dots" id="testimonial-dots"></div>
-        <button class="testimonial-btn" onclick="slideTestimonials(1)" aria-label="Next">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg>
-        </button>
-      </div>
-    </div>
-  </div>
-</section>
+    </section>
 
-<!-- ── FAQ ──────────────────────────────────────────────────────────── -->
-<section id="faq">
-  <div class="max-w">
-    <div class="section-header centered fade-up">
-      <div class="section-label">FAQ</div>
-      <h2 class="section-title">Frequently asked questions</h2>
-      <p class="section-sub">Everything you need to know about getting started with EventFlow.</p>
-    </div>
-    <div class="faq-grid fade-up">
-      <div class="faq-item">
-        <button class="faq-question" onclick="toggleFaq(this)">How long does setup take?<div class="faq-icon"><svg viewBox="0 0 14 14"><line x1="7" y1="2" x2="7" y2="12"/><line x1="2" y1="7" x2="12" y2="7"/></svg></div></button>
-        <div class="faq-answer"><p>Most venues are live within 3–5 business days. We handle everything — connecting your inbox, building your knowledge base from your PDFs and menus, and configuring your escalation rules.</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-question" onclick="toggleFaq(this)">Will guests know they're talking to AI?<div class="faq-icon"><svg viewBox="0 0 14 14"><line x1="7" y1="2" x2="7" y2="12"/><line x1="2" y1="7" x2="12" y2="7"/></svg></div></button>
-        <div class="faq-answer"><p>No. EventFlow responses are warm, professional, and written in your brand's voice. We use your venue's actual menu links, pricing, and policies — guests experience it as a fast, helpful reply from your team.</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-question" onclick="toggleFaq(this)">What email providers do you support?<div class="faq-icon"><svg viewBox="0 0 14 14"><line x1="7" y1="2" x2="7" y2="12"/><line x1="2" y1="7" x2="12" y2="7"/></svg></div></button>
-        <div class="faq-answer"><p>EventFlow currently integrates with Gmail and Google Workspace. Outlook/Microsoft 365 support is coming soon. We connect directly to your existing sales inbox.</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-question" onclick="toggleFaq(this)">What happens with really big inquiries?<div class="faq-icon"><svg viewBox="0 0 14 14"><line x1="7" y1="2" x2="7" y2="12"/><line x1="2" y1="7" x2="12" y2="7"/></svg></div></button>
-        <div class="faq-answer"><p>Any inquiry for 29+ guests is automatically classified as Tier A and escalated to your sales manager via Slack. EventFlow sends a professional holding reply while alerting your team with full context.</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-question" onclick="toggleFaq(this)">Can I customize what EventFlow sends?<div class="faq-icon"><svg viewBox="0 0 14 14"><line x1="7" y1="2" x2="7" y2="12"/><line x1="2" y1="7" x2="12" y2="7"/></svg></div></button>
-        <div class="faq-answer"><p>Yes. The knowledge base is built from your own documents — menus, PDFs, policies. You control the group size thresholds, which menus are sent at each tier, and the escalation rules.</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-question" onclick="toggleFaq(this)">Is there a contract or commitment?<div class="faq-icon"><svg viewBox="0 0 14 14"><line x1="7" y1="2" x2="7" y2="12"/><line x1="2" y1="7" x2="12" y2="7"/></svg></div></button>
-        <div class="faq-answer"><p>No long-term contracts. All plans are month-to-month and you can cancel anytime. We include full onboarding and setup at no extra charge.</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-question" onclick="toggleFaq(this)">Do you integrate with our CRM?<div class="faq-icon"><svg viewBox="0 0 14 14"><line x1="7" y1="2" x2="7" y2="12"/><line x1="2" y1="7" x2="12" y2="7"/></svg></div></button>
-        <div class="faq-answer"><p>TripleSeat integration is available on the Pro plan. Every inquiry is also logged to a Google Sheet with full details so you always have pipeline visibility.</p></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ── About ─────────────────────────────────────────────────────────── -->
-<section id="about">
-  <div class="max-w">
-    <div class="about-grid">
-      <div class="about-visual fade-up">
-        <div class="about-card">
-          <p class="about-card-quote">"Restaurants lose bookings every night to slow response times. EventFlow fixes that — permanently."</p>
-          <div class="about-card-author">
-            <div class="author-avatar">MW</div>
-            <div>
-              <div class="author-name">Mitchell Wilson</div>
-              <div class="author-role">Founder, EventFlow</div>
+    <!-- ==================== FEATURES ==================== -->
+    <section id="features">
+        <div class="container">
+            <div class="features-header">
+                <div class="section-label"><span class="line"></span> Features</div>
+                <h2 class="section-title">Everything a sales manager does.<br>None of the overhead.</h2>
+                <p class="section-subtitle">EventFlow handles the entire event inquiry lifecycle — from first response to final follow-up — so your team can focus on hospitality.</p>
             </div>
-          </div>
-          <div class="stat-mini-grid">
-            <div class="stat-mini"><div class="stat-mini-num">&lt; 60s</div><div class="stat-mini-label">Avg. reply time</div></div>
-            <div class="stat-mini"><div class="stat-mini-num">24/7</div><div class="stat-mini-label">Coverage</div></div>
-            <div class="stat-mini"><div class="stat-mini-num">0</div><div class="stat-mini-label">Missed leads</div></div>
-            <div class="stat-mini"><div class="stat-mini-num">4</div><div class="stat-mini-label">Lead tiers</div></div>
-          </div>
+
+            <!-- Feature 1: Instant Response -->
+            <div class="feature-row fade-in">
+                <div class="feature-text">
+                    <div class="feature-number">Feature 01</div>
+                    <h3>Instant AI Responses</h3>
+                    <p>Every event inquiry gets a professional, knowledgeable response within minutes — not hours or days. EventFlow reads the inquiry, searches your venue's knowledge base, and crafts the perfect reply.</p>
+                    <ul class="feature-list">
+                        <li><span class="check"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> Pricing, capacity, and room options answered automatically</li>
+                        <li><span class="check"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> Real-time availability via CRM integration</li>
+                        <li><span class="check"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> Consistent, on-brand messaging every time</li>
+                    </ul>
+                </div>
+                <div class="feature-visual">
+                    <div class="mock-ui">
+                        <div class="mock-email">
+                            <div class="mock-email-header">
+                                <div class="mock-avatar"></div>
+                                <span class="mock-email-from">Sarah Johnson</span>
+                                <span class="mock-email-time">2 min ago</span>
+                            </div>
+                            <div class="mock-email-body">
+                                Hi, I'm looking to host a corporate dinner for 45 guests on March 15th. Do you have private dining availability? We'd also need a projector setup. Budget is around $5,000.
+                            </div>
+                        </div>
+                        <div class="mock-response">
+                            <div class="mock-response-header">
+                                <span class="mock-ai-badge">EVENTFLOW AI</span>
+                                <span class="mock-response-time">Replied in 47 seconds</span>
+                            </div>
+                            <div class="mock-response-body">
+                                Thank you for your interest, Sarah! Our Skyline Room seats up to 50 guests and is available on March 15th. A/V setup including a projector is included. The minimum spend for that space is $4,500, which fits perfectly within your budget...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feature 2: Lead Qualification -->
+            <div class="feature-row reverse fade-in">
+                <div class="feature-text">
+                    <div class="feature-number">Feature 02</div>
+                    <h3>Smart Lead Qualification</h3>
+                    <p>EventFlow doesn't just respond — it qualifies. Every inquiry is scored and categorized so your team knows exactly which leads to prioritize and which are ready to close.</p>
+                    <ul class="feature-list">
+                        <li><span class="check"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> A/B/C/D lead scoring based on event details</li>
+                        <li><span class="check"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> Captures date, guest count, budget, and preferences</li>
+                        <li><span class="check"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> Creates structured lead profiles for your CRM</li>
+                    </ul>
+                </div>
+                <div class="feature-visual">
+                    <div class="mock-ui">
+                        <div class="mock-qualify">
+                            <div class="mock-qualify-header">Lead Qualification Summary</div>
+                            <div class="qualify-item">
+                                <span class="qualify-label">Event Type</span>
+                                <span class="qualify-value">Corporate Dinner</span>
+                            </div>
+                            <div class="qualify-item">
+                                <span class="qualify-label">Guest Count</span>
+                                <span class="qualify-value">45 guests</span>
+                            </div>
+                            <div class="qualify-item">
+                                <span class="qualify-label">Event Date</span>
+                                <span class="qualify-value">March 15, 2026</span>
+                            </div>
+                            <div class="qualify-item">
+                                <span class="qualify-label">Budget</span>
+                                <span class="qualify-value">$5,000</span>
+                            </div>
+                            <div class="qualify-item">
+                                <span class="qualify-label">Lead Score</span>
+                                <span class="qualify-score"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> A-Grade Lead</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feature 3: Follow-Up -->
+            <div class="feature-row fade-in">
+                <div class="feature-text">
+                    <div class="feature-number">Feature 03</div>
+                    <h3>Automated Follow-Up Sequences</h3>
+                    <p>Most bookings aren't won on the first email. EventFlow automatically follows up with leads on a proven timeline — turning silence into signed contracts.</p>
+                    <ul class="feature-list">
+                        <li><span class="check"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> Day 0: Instant initial response</li>
+                        <li><span class="check"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> Day 2: Friendly follow-up with additional details</li>
+                        <li><span class="check"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> Day 5: Final availability check before releasing the date</li>
+                    </ul>
+                </div>
+                <div class="feature-visual">
+                    <div class="mock-ui">
+                        <div class="mock-timeline">
+                            <div class="timeline-item">
+                                <div class="timeline-dot-col">
+                                    <div class="timeline-dot active"></div>
+                                    <div class="timeline-line"></div>
+                                </div>
+                                <div class="timeline-content">
+                                    <h4>Initial Response Sent</h4>
+                                    <p>Professional reply with availability, pricing, and room options</p>
+                                    <span class="tag tag-sent">Sent &bull; 47s response time</span>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-dot-col">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-line"></div>
+                                </div>
+                                <div class="timeline-content">
+                                    <h4>Follow-Up #1</h4>
+                                    <p>Friendly check-in with menu options and event planning tips</p>
+                                    <span class="tag tag-opened">Opened &bull; Day 2</span>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-dot-col">
+                                    <div class="timeline-dot"></div>
+                                </div>
+                                <div class="timeline-content">
+                                    <h4>Follow-Up #2</h4>
+                                    <p>Final availability check — creates urgency to secure the date</p>
+                                    <span class="tag tag-scheduled">Scheduled &bull; Day 5</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="about-text fade-up">
-        <div class="section-label">Our Story</div>
-        <h2 class="section-title">Built for restaurants,<br/>by someone who gets it</h2>
-        <p>EventFlow was built after watching countless private dining opportunities slip through the cracks — not because venues weren't interested, but because no one responded fast enough.</p>
-        <p>A group of 40 emails at 9pm on a Friday shouldn't have to wait until Monday morning. EventFlow makes sure it doesn't.</p>
-        <div class="about-values">
-          <div class="about-value">
-            <div class="value-icon">⚡</div>
-            <div class="value-text"><h4>Speed closes deals</h4><p>The first venue to respond wins. We make sure that's always you.</p></div>
-          </div>
-          <div class="about-value">
-            <div class="value-icon">🎯</div>
-            <div class="value-text"><h4>Smart, not robotic</h4><p>Responses are warm, professional, and tailored — guests never feel like they're talking to a bot.</p></div>
-          </div>
-          <div class="about-value">
-            <div class="value-icon">🔒</div>
-            <div class="value-text"><h4>Your team stays in control</h4><p>EventFlow handles the routine. Your team focuses on the conversations that matter.</p></div>
-          </div>
+    </section>
+
+    <!-- ==================== HOW IT WORKS ==================== -->
+    <section class="how-section">
+        <div class="container">
+            <div class="how-header">
+                <div class="section-label"><span class="line"></span> How It Works</div>
+                <h2 class="section-title">Up and running in minutes, not months</h2>
+                <p class="section-subtitle">No complex integrations. No code. Just connect your inbox and let EventFlow handle the rest.</p>
+            </div>
+            <div class="how-grid">
+                <div class="how-step fade-in">
+                    <div class="how-step-number">1</div>
+                    <h3>Connect Your Inbox</h3>
+                    <p>Link your Gmail or Outlook account. EventFlow monitors for event inquiries automatically.</p>
+                </div>
+                <div class="how-step fade-in">
+                    <div class="how-step-number">2</div>
+                    <h3>Upload Your Knowledge</h3>
+                    <p>Add your event packets, menus, pricing docs, and policies. EventFlow learns your venue inside and out.</p>
+                </div>
+                <div class="how-step fade-in">
+                    <div class="how-step-number">3</div>
+                    <h3>Watch Bookings Grow</h3>
+                    <p>EventFlow responds instantly, qualifies leads, and follows up automatically. You focus on creating great events.</p>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  </div>
-</section>
+    </section>
 
-<!-- ── Contact ──────────────────────────────────────────────────────── -->
-<section id="contact">
-  <div class="contact-grid">
-    <div class="contact-info fade-up">
-      <div class="section-label">Get In Touch</div>
-      <h2 class="section-title">Ready to never miss<br/>another booking?</h2>
-      <p>Book a 20-minute demo and see EventFlow working live on a real inbox. Or start a free trial and see the difference yourself.</p>
-      <ul class="contact-points">
-        <li><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.28h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6.09 6.09l1.08-1.09a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>20-min demo, no pressure</li>
-        <li><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>mitchell@eventflowsales.com</li>
-        <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Setup takes less than a week</li>
-      </ul>
-    </div>
-    <div class="fade-up">
-      <div class="form-tabs">
-        <button class="form-tab active" onclick="switchFormTab('demo', this)">Book a Demo</button>
-        <button class="form-tab" onclick="switchFormTab('trial', this)">Start Free Trial</button>
-      </div>
-      <div class="form-panel active" id="form-demo">
-        <form class="contact-form" onsubmit="handleSubmit(event, 'demo')">
-          <div class="form-row">
-            <div class="form-group"><label>First Name</label><input type="text" placeholder="Sarah" required /></div>
-            <div class="form-group"><label>Last Name</label><input type="text" placeholder="Johnson" required /></div>
-          </div>
-          <div class="form-group"><label>Work Email</label><input type="email" placeholder="sarah@yourrestaurant.com" required /></div>
-          <div class="form-group"><label>Restaurant / Venue Name</label><input type="text" placeholder="The Grand Room" required /></div>
-          <div class="form-group"><label>Your Role</label><select><option value="">Select your role…</option><option>General Manager</option><option>Sales Manager</option><option>Director of Operations</option><option>Events Manager</option><option>Owner / Founder</option><option>Other</option></select></div>
-          <div class="form-group"><label>Monthly private event inquiries (approx.)</label><select><option value="">Select range…</option><option>Less than 10</option><option>10–30</option><option>30–60</option><option>60+</option></select></div>
-          <div class="form-group"><label>Anything else? (optional)</label><textarea placeholder="Tell us about your venue or what you're hoping to solve…"></textarea></div>
-          <button type="submit" class="form-submit">Book My Demo →</button>
-        </form>
-      </div>
-      <div class="form-panel" id="form-trial">
-        <form class="contact-form" onsubmit="handleSubmit(event, 'trial')">
-          <div class="form-row">
-            <div class="form-group"><label>First Name</label><input type="text" placeholder="Sarah" required /></div>
-            <div class="form-group"><label>Last Name</label><input type="text" placeholder="Johnson" required /></div>
-          </div>
-          <div class="form-group"><label>Work Email</label><input type="email" placeholder="sarah@yourrestaurant.com" required /></div>
-          <div class="form-group"><label>Restaurant / Venue Name</label><input type="text" placeholder="The Grand Room" required /></div>
-          <div class="form-group"><label>Your Role</label><select><option value="">Select your role…</option><option>General Manager</option><option>Sales Manager</option><option>Director of Operations</option><option>Events Manager</option><option>Owner / Founder</option><option>Other</option></select></div>
-          <div class="form-group"><label>Which plan?</label><select><option value="">Select a plan…</option><option>Essentials — $149/mo</option><option>Pro — $299/mo</option><option>Not sure yet</option></select></div>
-          <button type="submit" class="form-submit">Start My Free Trial →</button>
-        </form>
-      </div>
-    </div>
-  </div>
-</section>
+    <!-- ==================== PRICING ==================== -->
+    <section id="pricing">
+        <div class="container">
+            <div class="pricing-header">
+                <div class="section-label"><span class="line"></span> Pricing</div>
+                <h2 class="section-title">Simple pricing that scales<br>with your venue</h2>
+                <p class="section-subtitle">No hidden fees. No per-email charges. Just straightforward monthly pricing for hospitality businesses.</p>
+            </div>
 
-<!-- ── Footer ─────────────────────────────────────────────────────────── -->
-<footer>
-  <div class="footer-top">
-    <div class="footer-brand">
-      <div class="footer-logo">
-        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="50" cy="50" r="44" stroke="#001524" stroke-width="3"/>
-          <path d="M6 52 C18 36,34 68,50 55 C66 42,80 63,94 50" stroke="#15616D" stroke-width="3" fill="none" stroke-linecap="round"/>
-          <circle cx="78" cy="14" r="8" fill="#FF7D00"/>
-        </svg>
-        EventFlow
-      </div>
-      <p>AI-powered sales automation for restaurants and hospitality venues. Never miss another private dining inquiry.</p>
-    </div>
-    <div class="footer-col">
-      <h4>Product</h4>
-      <a href="#features">Features</a>
-      <a href="#solutions">Solutions</a>
-      <a href="#pricing">Pricing</a>
-      <a href="/onboarding">Client Dashboard</a>
-    </div>
-    <div class="footer-col">
-      <h4>Resources</h4>
-      <a href="#faq">FAQ</a>
-      <a href="#testimonials">Testimonials</a>
-      <a href="#about">About Us</a>
-    </div>
-    <div class="footer-col">
-      <h4>Contact</h4>
-      <a href="#contact">Book a Demo</a>
-      <a href="mailto:mitchell@eventflowsales.com">Email Us</a>
-    </div>
-  </div>
-  <div class="footer-bottom">
-    <span>&copy; 2026 EventFlow. All rights reserved.</span>
-    <div style="display:flex;gap:1.5rem;">
-      <a href="#">Privacy</a>
-      <a href="#">Terms</a>
-    </div>
-  </div>
-</footer>
-<div class="footer-bar"></div>
+            <div class="pricing-grid">
+                <!-- Tier 1 — Autopilot -->
+                <div class="pricing-card fade-in">
+                    <div class="pricing-tier">Tier 1</div>
+                    <div class="pricing-name">Autopilot</div>
+                    <div class="pricing-desc">AI-powered inbound email response with venue knowledge built in.</div>
+                    <div class="pricing-amount">
+                        <span class="pricing-dollar">$</span>
+                        <span class="pricing-value">149</span>
+                        <span class="pricing-period">/mo</span>
+                    </div>
+                    <div class="pricing-note">Per venue, billed monthly</div>
+                    <div class="pricing-divider"></div>
+                    <ul class="pricing-features">
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> AI replies to inbound emails</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Knowledge base ingestion (PDFs + website)</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Tally onboarding form</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Error handling + Google Sheets logging</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> TripleSeat / CRM read integration</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Live availability answers</li>
+                    </ul>
+                    <a href="#contact" class="pricing-btn pricing-btn-secondary">Get Started</a>
+                </div>
 
-<script>
-// Nav scroll
-const navbar = document.getElementById('navbar');
-window.addEventListener('scroll', () => { navbar.classList.toggle('scrolled', window.scrollY > 20); });
+                <!-- Tier 2 — Autopilot Pro -->
+                <div class="pricing-card featured fade-in">
+                    <div class="pricing-tier">Tier 2</div>
+                    <div class="pricing-name">Autopilot Pro</div>
+                    <div class="pricing-desc">Automated follow-ups, smart detection, and proactive venue management.</div>
+                    <div class="pricing-amount">
+                        <span class="pricing-dollar">$</span>
+                        <span class="pricing-value">299</span>
+                        <span class="pricing-period">/mo</span>
+                    </div>
+                    <div class="pricing-note">Per venue, billed monthly</div>
+                    <div class="pricing-divider"></div>
+                    <ul class="pricing-features">
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Everything in Autopilot</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Automated follow-up sequences</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Smart reply detection (no double follow-ups)</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> KB freshness alerts (stale menu / pricing)</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Inquiry source tracking &amp; attribution</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Tentative hold management &amp; auto expiry</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> SMS escalation alerts (Twilio)</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> BEO draft generation (PDF output)</li>
+                    </ul>
+                    <a href="#contact" class="pricing-btn pricing-btn-primary">Get Started</a>
+                </div>
 
-// Fade-in
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach((e, i) => { if (e.isIntersecting) setTimeout(() => e.target.classList.add('visible'), i * 80); });
-}, { threshold: 0.12 });
-document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+                <!-- Tier 3 — Autopilot Premium -->
+                <div class="pricing-card fade-in">
+                    <div class="pricing-tier">Tier 3</div>
+                    <div class="pricing-name">Autopilot Premium</div>
+                    <div class="pricing-desc">Full AI sales automation with multi-location management and revenue tools.</div>
+                    <div class="pricing-amount">
+                        <span class="pricing-dollar">$</span>
+                        <span class="pricing-value">499</span>
+                        <span class="pricing-period">+/mo</span>
+                    </div>
+                    <div class="pricing-note">Per venue, custom pricing available</div>
+                    <div class="pricing-divider"></div>
+                    <ul class="pricing-features">
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Everything in Autopilot Pro</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Confidence-based review queue (web UI)</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Multi-location management</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> TripleSeat auto-booking from qualified leads</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Deposit &amp; contract collection (DocuSign)</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Menu &amp; package upselling (AI-suggested)</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Post-event follow-up &amp; review requests</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Ownership inquiry digest (weekly report)</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Priority support &amp; custom escalation rules</li>
+                    </ul>
+                    <a href="#contact" class="pricing-btn pricing-btn-secondary">Contact Sales</a>
+                </div>
+            </div>
+        </div>
+    </section>
 
-// Form tabs
-function switchFormTab(tab, btn) {
-  document.querySelectorAll('.form-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('form-' + tab).classList.add('active');
-}
+    <!-- ==================== QUOTE ==================== -->
+    <section class="quote-section">
+        <div class="container">
+            <div class="quote-card fade-in">
+                <p class="quote-text">The first venue to respond wins the booking. EventFlow makes sure that venue is always yours.</p>
+                <p class="quote-author">Built for the hospitality industry</p>
+                <p class="quote-role">By people who understand restaurant operations</p>
+            </div>
+        </div>
+    </section>
 
-// Form submit
-function handleSubmit(e, type) {
-  e.preventDefault();
-  const btn = e.target.querySelector('.form-submit');
-  btn.textContent = type === 'demo' ? '✓ Submitted! We\'ll be in touch soon.' : '✓ Welcome! Check your email.';
-  btn.style.background = 'var(--teal-lt)';
-  btn.disabled = true;
-}
+    <!-- ==================== CONTACT ==================== -->
+    <section id="contact">
+        <div class="container">
+            <div class="cta-card">
+                <div class="section-label"><span class="line"></span> Get Started</div>
+                <h2 class="section-title">Ready to never miss another<br>event inquiry?</h2>
+                <p class="section-subtitle">Join the restaurants already using EventFlow to respond faster, book more events, and grow revenue on autopilot.</p>
 
-// FAQ
-function toggleFaq(btn) {
-  const item = btn.parentElement;
-  const isOpen = item.classList.contains('open');
-  document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
-  if (!isOpen) item.classList.add('open');
-}
 
-// Testimonial slider
-let testimonialIndex = 0;
-const track = document.getElementById('testimonials-track');
-const cards = track.querySelectorAll('.testimonial-card');
-const dotsContainer = document.getElementById('testimonial-dots');
+                <a href="https://tally.so/r/BzBPgR" target="_blank" rel="noopener noreferrer" class="btn-primary" style="display: inline-flex; justify-content: center; padding: 18px 48px; font-size: 1.1rem; margin-top: 8px;">
+                    Request a Demo
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </a>
+                <p style="font-size: 0.85rem; color: var(--gray-600); margin-top: 16px;">Takes less than 2 minutes to complete</p>
+            </div>
+        </div>
+    </section>
 
-function getMaxIndex() {
-  const cardWidth = cards[0].offsetWidth + 20;
-  const visibleWidth = track.parentElement.offsetWidth;
-  return Math.max(0, cards.length - Math.floor(visibleWidth / cardWidth));
-}
-function buildDots() {
-  dotsContainer.innerHTML = '';
-  const max = getMaxIndex();
-  for (let i = 0; i <= max; i++) {
-    const dot = document.createElement('div');
-    dot.className = 'testimonial-dot' + (i === testimonialIndex ? ' active' : '');
-    dot.onclick = () => { testimonialIndex = i; updateSlider(); };
-    dotsContainer.appendChild(dot);
-  }
-}
-function updateSlider() {
-  const max = getMaxIndex();
-  if (testimonialIndex < 0) testimonialIndex = max;
-  if (testimonialIndex > max) testimonialIndex = 0;
-  const cardWidth = cards[0].offsetWidth + 20;
-  track.style.transform = `translateX(-${testimonialIndex * cardWidth}px)`;
-  buildDots();
-}
-function slideTestimonials(dir) { testimonialIndex += dir; updateSlider(); }
-buildDots();
-window.addEventListener('resize', updateSlider);
-</script>
+    <!-- ==================== FOOTER ==================== -->
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="#home" class="nav-logo">
+                        <img src="logo.svg" alt="EventFlow" style="height:36px;width:36px;border-radius:10px;">
+                        EventFlow
+                    </a>
+                    <p>AI-powered sales automation for restaurants and hospitality venues. Smarter bookings. Fuller rooms.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Product</h4>
+                    <a href="#features">Features</a>
+                    <a href="#pricing">Pricing</a>
+                    <a href='/integrations'>Integrations</a>
+                    <a href='/changelog'>Changelog</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Company</h4>
+                    <a href='/about'>About</a>
+                    <a href='/blog'>Blog</a>
+                    <a href='/careers'>Careers</a>
+                    <a href="#contact">Contact</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Resources</h4>
+                    <a href='/documentation'>Documentation</a>
+                    <a href='/help'>Help Center</a>
+                    <a href='/privacy'>Privacy Policy</a>
+                    <a href='/terms'>Terms of Service</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>&copy; 2026 EventFlow. All rights reserved.</span>
+                <span>Smarter bookings. Fuller rooms.</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ==================== SCRIPTS ==================== -->
+    <script>
+        // ===== HERO PARTICLE ANIMATION =====
+        (function() {
+            const canvas = document.getElementById('heroCanvas');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            let animationId;
+            let w, h;
+
+            function resize() {
+                const section = document.getElementById('home');
+                w = canvas.width = section.offsetWidth;
+                h = canvas.height = section.offsetHeight;
+            }
+
+            // Particle class
+            class Particle {
+                constructor() {
+                    this.reset();
+                }
+
+                reset() {
+                    this.x = Math.random() * w;
+                    this.y = Math.random() * h;
+                    this.radius = Math.random() * 2.5 + 1;
+                    // Mix of teal and orange particles
+                    const isTeal = Math.random() > 0.3;
+                    if (isTeal) {
+                        this.color = `rgba(21, 97, 109, ${Math.random() * 0.4 + 0.15})`;
+                        this.lineColor = 'rgba(21, 97, 109,';
+                    } else {
+                        this.color = `rgba(255, 125, 0, ${Math.random() * 0.4 + 0.15})`;
+                        this.lineColor = 'rgba(255, 125, 0,';
+                    }
+                    // Gentle drift
+                    this.vx = (Math.random() - 0.5) * 0.4;
+                    this.vy = (Math.random() - 0.5) * 0.3;
+                    // Subtle pulse
+                    this.pulseSpeed = Math.random() * 0.02 + 0.005;
+                    this.pulseOffset = Math.random() * Math.PI * 2;
+                }
+
+                update(t) {
+                    this.x += this.vx;
+                    this.y += this.vy;
+
+                    // Wrap around edges
+                    if (this.x < -20) this.x = w + 20;
+                    if (this.x > w + 20) this.x = -20;
+                    if (this.y < -20) this.y = h + 20;
+                    if (this.y > h + 20) this.y = -20;
+
+                    // Pulse radius
+                    this.displayRadius = this.radius + Math.sin(t * this.pulseSpeed + this.pulseOffset) * 0.8;
+                }
+
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, Math.max(0.5, this.displayRadius), 0, Math.PI * 2);
+                    ctx.fillStyle = this.color;
+                    ctx.fill();
+                }
+            }
+
+            function init() {
+                resize();
+                particles = [];
+                // Scale particle count to screen size, cap for performance
+                const count = Math.min(Math.floor((w * h) / 12000), 80);
+                for (let i = 0; i < count; i++) {
+                    particles.push(new Particle());
+                }
+            }
+
+            const connectionDist = 150;
+
+            function drawConnections() {
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < connectionDist) {
+                            const opacity = (1 - dist / connectionDist) * 0.12;
+                            ctx.beginPath();
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.strokeStyle = particles[i].lineColor + opacity + ')';
+                            ctx.lineWidth = 0.6;
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+
+            let time = 0;
+            function animate() {
+                time++;
+                ctx.clearRect(0, 0, w, h);
+
+                drawConnections();
+
+                for (const p of particles) {
+                    p.update(time);
+                    p.draw();
+                }
+
+                animationId = requestAnimationFrame(animate);
+            }
+
+            // Only animate when hero is visible
+            const heroObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        if (!animationId) animate();
+                    } else {
+                        if (animationId) {
+                            cancelAnimationFrame(animationId);
+                            animationId = null;
+                        }
+                    }
+                });
+            }, { threshold: 0.05 });
+
+            window.addEventListener('resize', () => {
+                resize();
+            });
+
+            init();
+            heroObserver.observe(document.getElementById('home'));
+        })();
+
+        // Navbar scroll effect
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            navbar.classList.toggle('scrolled', window.scrollY > 20);
+        });
+
+        // Scroll-triggered fade-in
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+        // Close mobile nav on link click
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', () => {
+                document.getElementById('navLinks').classList.remove('open');
+            });
+        });
+
+
+
+        // Smooth scroll for Safari
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
 </body>
 </html>
+
