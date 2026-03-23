@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integrations — EventFlow</title>
+    <meta name="description" content="See how EventFlow integrates with Gmail, TripleSeat, SevenRooms, Slack, and more to automate your restaurant event sales.">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Integrations — EventFlow">
+    <meta property="og:description" content="See how EventFlow integrates with Gmail, TripleSeat, SevenRooms, Slack, and more to automate your restaurant event sales.">
+    <meta property="og:url" content="https://eventflowsales.com">
+    <meta property="og:site_name" content="EventFlow">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Integrations — EventFlow">
+    <meta name="twitter:description" content="See how EventFlow integrates with Gmail, TripleSeat, SevenRooms, Slack, and more to automate your restaurant event sales.">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y5L9CGEL9S"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-Y5L9CGEL9S');
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --teal-dark: #0f4a54;
+            --teal: #15616d;
+            --teal-light: #1b7a89;
+            --orange: #ff7d00;
+            --orange-light: #ff9b3d;
+            --burnt: #78290f;
+            --dark: #001524;
+            --dark-card: #001e30;
+            --cream: #ffecd1;
+            --gray-900: #011b2d;
+            --gray-800: #0a2a3f;
+            --gray-700: #1a3d54;
+            --gray-600: #3a6070;
+            --gray-400: #8faab8;
+            --gray-300: #c5d8e2;
+            --gray-100: #e8f0f4;
+            --white: #ffecd1;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: var(--font);
+            color: var(--gray-300);
+            background: var(--dark);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+        a { text-decoration: none; color: inherit; }
+        img { max-width: 100%; display: block; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+        /* NAV */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            background: rgba(255, 236, 209, 0.95);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 21, 36, 0.08);
+        }
+        .nav-inner {
+            max-width: 1200px; margin: 0 auto; padding: 0 24px;
+            display: flex; align-items: center; justify-content: space-between; height: 72px;
+        }
+        .nav-logo {
+            display: flex; align-items: center; gap: 12px;
+            font-weight: 700; font-size: 1.25rem; color: var(--dark);
+        }
+        .nav-logo img { height: 40px; width: 40px; border-radius: 10px; }
+        .nav-links { display: flex; align-items: center; gap: 36px; list-style: none; }
+        .nav-links a {
+            font-size: 0.9rem; font-weight: 500; color: var(--dark);
+            opacity: 0.7; transition: opacity 0.2s; position: relative;
+        }
+        .nav-links a::after {
+            content: ''; position: absolute; bottom: -4px; left: 0;
+            width: 0; height: 2px; background: var(--orange); transition: width 0.3s ease;
+        }
+        .nav-links a:hover { opacity: 1; }
+        .nav-links a:hover::after { width: 100%; }
+        .nav-cta {
+            background: var(--orange); color: var(--cream) !important;
+            padding: 10px 24px; border-radius: 8px; font-weight: 600; font-size: 0.9rem;
+            opacity: 1 !important; transition: all 0.2s;
+        }
+        .nav-cta:hover { background: var(--orange-light); transform: translateY(-1px); box-shadow: 0 4px 15px rgba(255, 125, 0, 0.4); }
+        .nav-cta::after { display: none !important; }
+        .mobile-toggle { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 8px; }
+        .mobile-toggle span { width: 24px; height: 2px; background: var(--dark); border-radius: 2px; }
+
+        /* PAGE HEADER */
+        .page-header {
+            padding: 140px 0 80px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .page-header::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(21, 97, 109, 0.12) 0%, transparent 60%);
+        }
+        .page-header h1 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 800; color: var(--white);
+            letter-spacing: -0.03em; margin-bottom: 16px;
+            position: relative;
+        }
+        .page-header p {
+            font-size: 1.1rem; color: var(--gray-400);
+            max-width: 600px; margin: 0 auto;
+            position: relative; line-height: 1.7;
+        }
+
+        /* CONTENT SECTIONS */
+        .page-content { padding: 80px 0 120px; }
+        .content-block { max-width: 800px; margin: 0 auto; }
+        .content-block h2 {
+            font-size: 1.5rem; font-weight: 700; color: var(--white);
+            margin: 48px 0 16px; letter-spacing: -0.02em;
+        }
+        .content-block h2:first-child { margin-top: 0; }
+        .content-block h3 {
+            font-size: 1.15rem; font-weight: 600; color: var(--white);
+            margin: 32px 0 12px;
+        }
+        .content-block p {
+            font-size: 1rem; color: var(--gray-300);
+            line-height: 1.8; margin-bottom: 16px;
+        }
+        .content-block ul {
+            list-style: none; margin: 16px 0; padding: 0;
+        }
+        .content-block ul li {
+            padding: 8px 0 8px 24px; position: relative;
+            font-size: 0.95rem; color: var(--gray-300);
+        }
+        .content-block ul li::before {
+            content: ''; position: absolute; left: 0; top: 16px;
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--teal);
+        }
+        .content-block a {
+            color: var(--orange); transition: color 0.2s;
+        }
+        .content-block a:hover { color: var(--orange-light); }
+
+        /* CARDS GRID */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px; margin: 40px 0;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px; padding: 32px;
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(21, 97, 109, 0.2);
+            transform: translateY(-4px);
+        }
+        .card h3 { font-size: 1.1rem; font-weight: 600; color: var(--white); margin-bottom: 10px; }
+        .card p { font-size: 0.95rem; color: var(--gray-400); line-height: 1.6; margin: 0; }
+        .card-icon {
+            width: 48px; height: 48px; border-radius: 12px;
+            background: rgba(21, 97, 109, 0.15);
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 20px;
+        }
+        .card-tag {
+            display: inline-block; font-size: 0.75rem; font-weight: 600;
+            padding: 4px 12px; border-radius: 6px; margin-bottom: 16px;
+            background: rgba(255, 125, 0, 0.12); color: var(--orange);
+        }
+        .card-tag.coming { background: rgba(21, 97, 109, 0.15); color: var(--teal-light); }
+
+        /* COMING SOON */
+        .coming-soon {
+            text-align: center; padding: 120px 0;
+        }
+        .coming-soon-icon {
+            width: 80px; height: 80px; border-radius: 20px;
+            background: linear-gradient(135deg, rgba(21, 97, 109, 0.15), rgba(255, 125, 0, 0.1));
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 32px;
+        }
+        .coming-soon h2 {
+            font-size: 1.8rem; font-weight: 700; color: var(--white); margin-bottom: 12px;
+        }
+        .coming-soon p {
+            font-size: 1.05rem; color: var(--gray-400); max-width: 480px; margin: 0 auto 32px; line-height: 1.7;
+        }
+        .email-signup {
+            display: flex; gap: 12px; max-width: 420px; margin: 0 auto;
+            flex-wrap: wrap; justify-content: center;
+        }
+        .email-signup input {
+            flex: 1; min-width: 200px; padding: 14px 18px; border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--white); font-size: 0.95rem; font-family: var(--font); outline: none;
+        }
+        .email-signup input:focus {
+            border-color: var(--teal);
+            box-shadow: 0 0 0 3px rgba(21, 97, 109, 0.15);
+        }
+        .email-signup input::placeholder { color: var(--gray-600); }
+        .btn-primary {
+            background: var(--orange); color: var(--cream);
+            padding: 14px 28px; border-radius: 10px; font-weight: 600;
+            font-size: 0.95rem; border: none; cursor: pointer;
+            transition: all 0.25s; display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-primary:hover {
+            background: var(--orange-light); transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 125, 0, 0.35);
+        }
+
+        /* LEGAL */
+        .legal-updated {
+            font-size: 0.85rem; color: var(--gray-600);
+            margin-bottom: 40px; text-align: center;
+        }
+
+        /* FOOTER */
+        footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 60px 0 40px;
+        }
+        .footer-grid {
+            display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 48px; margin-bottom: 48px;
+        }
+        .footer-brand p {
+            font-size: 0.9rem; color: var(--gray-400);
+            line-height: 1.6; margin-top: 16px; max-width: 300px;
+        }
+        .footer-col h4 {
+            font-size: 0.85rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.1em; color: var(--white); margin-bottom: 20px;
+        }
+        .footer-col a {
+            display: block; font-size: 0.9rem; color: var(--gray-400);
+            padding: 6px 0; transition: color 0.2s;
+        }
+        .footer-col a:hover { color: var(--white); }
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 24px; display: flex; justify-content: space-between;
+            align-items: center; font-size: 0.85rem; color: var(--gray-600);
+        }
+
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .mobile-toggle { display: flex; }
+            .nav-links.open {
+                display: flex; flex-direction: column; position: absolute;
+                top: 72px; left: 0; right: 0; background: rgba(255, 236, 209, 0.98);
+                padding: 24px; gap: 20px;
+                border-bottom: 1px solid rgba(0, 21, 36, 0.08);
+            }
+            .footer-grid { grid-template-columns: 1fr; gap: 32px; }
+            .footer-bottom { flex-direction: column; gap: 12px; text-align: center; }
+            .cards-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-inner">
+            <a class='nav-logo' href='/'>
+                <img src="logo.svg" alt="EventFlow Logo">
+                EventFlow
+            </a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href='/'>Home</a></li>
+                <li><a href='/#features'>Features</a></li>
+                <li><a href='/#pricing'>Pricing</a></li>
+                <li><a href='/#contact'>Contact</a></li>
+                <li><a class='nav-cta' href='/#contact'>Get Started</a></li>
+            </ul>
+            <div class="mobile-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+    </nav>
+
+
+    <div class="page-header">
+        <div class="container">
+            <h1>Integrations</h1>
+            <p>EventFlow connects with the tools your restaurant already uses — no complex setup required.</p>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="container">
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-tag">Live</div>
+                    <div class="card-icon"><svg width="24" height="24" fill="none" stroke="var(--teal-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+                    <h3>Gmail</h3>
+                    <p>Monitor your inbox for event inquiries and send AI-crafted responses automatically through your existing Gmail account.</p>
+                </div>
+                <div class="card">
+                    <div class="card-tag">Live</div>
+                    <div class="card-icon"><svg width="24" height="24" fill="none" stroke="var(--teal-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+                    <h3>Knowledge Base (PDF + Web)</h3>
+                    <p>Upload event packets, menus, and pricing docs. EventFlow ingests PDFs and crawls your website to build a complete venue knowledge base.</p>
+                </div>
+                <div class="card">
+                    <div class="card-tag">Live</div>
+                    <div class="card-icon"><svg width="24" height="24" fill="none" stroke="var(--teal-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></div>
+                    <h3>Google Sheets</h3>
+                    <p>Every inquiry, lead score, and response is logged to Google Sheets in real time for full transparency and reporting.</p>
+                </div>
+                <div class="card">
+                    <div class="card-tag">Live</div>
+                    <div class="card-icon"><svg width="24" height="24" fill="none" stroke="var(--teal-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+                    <h3>Slack</h3>
+                    <p>Get instant Slack notifications when high-priority inquiries arrive, leads are qualified, or follow-ups are sent.</p>
+                </div>
+                <div class="card">
+                    <div class="card-tag coming">In Progress</div>
+                    <div class="card-icon"><svg width="24" height="24" fill="none" stroke="var(--teal-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+                    <h3>TripleSeat</h3>
+                    <p>Read access for live availability answers. EventFlow checks your CRM in real time to confirm room and date availability before responding.</p>
+                </div>
+                <div class="card">
+                    <div class="card-tag coming">Coming Soon</div>
+                    <div class="card-icon"><svg width="24" height="24" fill="none" stroke="var(--teal-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+                    <h3>Outlook</h3>
+                    <p>Full Microsoft Outlook integration for venues that run on the Microsoft ecosystem.</p>
+                </div>
+                <div class="card">
+                    <div class="card-tag coming">Coming Soon</div>
+                    <div class="card-icon"><svg width="24" height="24" fill="none" stroke="var(--teal-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+                    <h3>SevenRooms</h3>
+                    <p>Native SevenRooms integration for venues using SevenRooms as their primary event and reservation management platform.</p>
+                </div>
+                <div class="card">
+                    <div class="card-tag coming">Coming Soon</div>
+                    <div class="card-icon"><svg width="24" height="24" fill="none" stroke="var(--teal-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
+                    <h3>Twilio (SMS)</h3>
+                    <p>SMS escalation alerts and follow-up sequences for time-sensitive inquiries and high-value leads.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a class='nav-logo' href='/'>
+                        <img src="logo.svg" alt="EventFlow" style="height:36px;width:36px;border-radius:10px;">
+                        EventFlow
+                    </a>
+                    <p>AI-powered sales automation for restaurants and hospitality venues. Smarter bookings. Fuller rooms.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Product</h4>
+                    <a href='/#features'>Features</a>
+                    <a href='/#pricing'>Pricing</a>
+                    <a href='/integrations'>Integrations</a>
+                    <a href='/changelog'>Changelog</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Company</h4>
+                    <a href='/about'>About</a>
+                    <a href='/blog'>Blog</a>
+                    <a href='/careers'>Careers</a>
+                    <a href='/#contact'>Contact</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Resources</h4>
+                    <a href='/documentation'>Documentation</a>
+                    <a href='/help'>Help Center</a>
+                    <a href='/privacy'>Privacy Policy</a>
+                    <a href='/terms'>Terms of Service</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>&copy; 2026 EventFlow. All rights reserved.</span>
+                <span>Smarter bookings. Fuller rooms.</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', () => {
+                document.getElementById('navLinks').classList.remove('open');
+            });
+        });
+    </script>
+</body>
+</html>
