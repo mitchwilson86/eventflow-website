@@ -779,6 +779,112 @@
             background: linear-gradient(180deg, transparent, rgba(21, 97, 109, 0.03), transparent);
         }
 
+        /* ============================================
+           FEATURE 04 & 05 MOCK UIs
+           ============================================ */
+        .mock-campaign {
+            background: var(--dark-card); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px; padding: 24px;
+        }
+        .mock-campaign-header { font-size: 0.8rem; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; }
+        .mock-campaign-stats { display: flex; gap: 12px; margin-bottom: 20px; }
+        .mock-campaign-stat { flex: 1; background: rgba(255,255,255,0.04); border-radius: 8px; padding: 12px; text-align: center; }
+        .mock-campaign-stat .mc-val { font-size: 1.3rem; font-weight: 700; color: var(--cream); }
+        .mock-campaign-stat .mc-label { font-size: 0.7rem; color: var(--gray-400); margin-top: 2px; }
+        .mock-ab-row { display: flex; gap: 12px; margin-bottom: 12px; }
+        .mock-ab-card { flex: 1; background: rgba(255,255,255,0.04); border-radius: 8px; padding: 12px; }
+        .mock-ab-card .ab-label { font-size: 0.7rem; font-weight: 600; color: var(--gray-400); margin-bottom: 4px; }
+        .mock-ab-card .ab-subject { font-size: 0.8rem; color: var(--cream); margin-bottom: 8px; }
+        .mock-ab-bar { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.1); overflow: hidden; }
+        .mock-ab-bar .ab-fill { height: 100%; border-radius: 3px; }
+        .mock-ab-bar .ab-fill.a { background: var(--teal-light); }
+        .mock-ab-bar .ab-fill.b { background: var(--orange); }
+        .mock-ab-rate { font-size: 0.7rem; color: var(--gray-400); margin-top: 4px; }
+        .mock-ab-winner { display: inline-block; font-size: 0.65rem; font-weight: 600; color: var(--orange); background: rgba(255,125,0,0.15); padding: 2px 8px; border-radius: 99px; margin-left: 6px; }
+
+        .mock-pipeline { background: var(--dark-card); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 24px; }
+        .mock-pipeline-header { font-size: 0.8rem; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; }
+        .mock-pipeline-stages { display: flex; gap: 8px; }
+        .mock-pipeline-stage { flex: 1; background: rgba(255,255,255,0.04); border-radius: 8px; padding: 12px 10px; text-align: center; border-top: 3px solid var(--teal-dark); }
+        .mock-pipeline-stage:nth-child(2) { border-color: var(--teal); }
+        .mock-pipeline-stage:nth-child(3) { border-color: var(--teal-light); }
+        .mock-pipeline-stage:nth-child(4) { border-color: var(--orange); }
+        .mock-pipeline-stage .ps-name { font-size: 0.7rem; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.3px; }
+        .mock-pipeline-stage .ps-count { font-size: 1.4rem; font-weight: 700; color: var(--cream); margin: 6px 0 2px; }
+        .mock-pipeline-stage .ps-value { font-size: 0.75rem; color: var(--teal-light); }
+        .mock-pipeline-leads { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; }
+        .mock-lead-card { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.04); border-radius: 6px; padding: 8px 12px; font-size: 0.75rem; }
+        .mock-lead-card .lead-name { color: var(--cream); }
+        .mock-lead-card .lead-val { color: var(--teal-light); font-weight: 600; }
+
+        /* ============================================
+           PLATFORM CAPABILITIES
+           ============================================ */
+        .platform-section { padding: 100px 0; background: rgba(255,255,255,0.01); }
+        .platform-section .section-label { text-align: center; }
+        .platform-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 48px;
+        }
+        .platform-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
+            padding: 28px;
+            transition: all 0.3s ease;
+        }
+        .platform-card:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(27,122,137,0.3);
+            transform: translateY(-4px);
+        }
+        .platform-icon {
+            width: 44px; height: 44px;
+            border-radius: 10px;
+            background: rgba(21,97,109,0.2);
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 16px;
+            font-size: 1.2rem;
+        }
+        .platform-card h3 { font-size: 1rem; font-weight: 600; color: var(--white); margin-bottom: 8px; }
+        .platform-card p { font-size: 0.9rem; color: var(--gray-400); line-height: 1.6; }
+
+        /* ============================================
+           PRICING ADD-ON
+           ============================================ */
+        .pricing-addon {
+            margin-top: 32px;
+            background: rgba(255,125,0,0.04);
+            border: 1px solid rgba(255,125,0,0.2);
+            border-radius: 16px;
+            padding: 36px 40px;
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+        .pricing-addon-badge {
+            display: inline-block; font-size: 0.7rem; font-weight: 700;
+            color: var(--orange); background: rgba(255,125,0,0.15);
+            padding: 3px 12px; border-radius: 99px; text-transform: uppercase;
+            letter-spacing: 0.5px; margin-bottom: 8px;
+        }
+        .pricing-addon-info { flex: 1; }
+        .pricing-addon-info h3 { font-size: 1.3rem; font-weight: 700; color: var(--cream); margin-bottom: 6px; }
+        .pricing-addon-info > p { font-size: 0.9rem; color: var(--gray-400); margin-bottom: 16px; }
+        .addon-features {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px;
+            list-style: none; margin-bottom: 0;
+        }
+        .addon-features li { font-size: 0.85rem; color: var(--gray-300); display: flex; align-items: center; gap: 8px; }
+        .addon-features .check-icon { color: var(--orange); flex-shrink: 0; }
+        .pricing-addon-price { text-align: center; min-width: 180px; }
+        .pricing-addon-price .pa-amount { font-size: 1.6rem; font-weight: 800; color: var(--cream); }
+        .pricing-addon-price .pa-period { font-size: 0.85rem; color: var(--gray-400); margin-top: 2px; }
+        .pricing-addon-price .pa-note { font-size: 0.75rem; color: var(--gray-600); margin-top: 4px; }
+        .pricing-addon-price .pricing-btn { margin-top: 14px; display: inline-block; }
+
         .how-header {
             text-align: center;
             margin-bottom: 72px;
@@ -791,7 +897,7 @@
 
         .how-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 32px;
         }
 
@@ -1229,8 +1335,8 @@
             }
 
             .how-grid {
-                grid-template-columns: 1fr;
-                max-width: 440px;
+                grid-template-columns: repeat(2, 1fr);
+                max-width: 640px;
                 margin: 0 auto;
             }
 
@@ -1269,6 +1375,22 @@
                 grid-template-columns: 1fr;
                 gap: 32px;
             }
+
+            .how-grid {
+                grid-template-columns: 1fr;
+                max-width: 440px;
+            }
+
+            .pricing-addon {
+                flex-direction: column;
+                text-align: center;
+                gap: 24px;
+                padding: 28px 24px;
+            }
+            .addon-features { grid-template-columns: 1fr; }
+
+            .mock-pipeline-stages { flex-wrap: wrap; }
+            .mock-pipeline-stage { min-width: 45%; }
 
             .cta-card {
                 padding: 48px 24px;
@@ -1329,7 +1451,7 @@
             </div>
             <div class="hero-stats">
                 <div class="hero-stat">
-                    <div class="hero-stat-value">&lt; 2 min</div>
+                    <div class="hero-stat-value">&lt; 60s</div>
                     <div class="hero-stat-label">Average response time</div>
                 </div>
                 <div class="hero-stat">
@@ -1337,8 +1459,8 @@
                     <div class="hero-stat-label">Always-on coverage</div>
                 </div>
                 <div class="hero-stat">
-                    <div class="hero-stat-value">3x</div>
-                    <div class="hero-stat-label">More bookings converted</div>
+                    <div class="hero-stat-value">100%</div>
+                    <div class="hero-stat-label">Inquiry coverage</div>
                 </div>
             </div>
         </div>
@@ -1382,8 +1504,8 @@
         <div class="container">
             <div class="features-header">
                 <div class="section-label"><span class="line"></span> Features</div>
-                <h2 class="section-title">Everything a sales manager does.<br>None of the overhead.</h2>
-                <p class="section-subtitle">EventFlow handles the entire event inquiry lifecycle — from first response to final follow-up — so your team can focus on hospitality.</p>
+                <h2 class="section-title">Everything a sales team does.<br>None of the overhead.</h2>
+                <p class="section-subtitle">EventFlow handles the entire event sales lifecycle — from first response to outbound campaigns to pipeline tracking — so your team can focus on hospitality.</p>
             </div>
 
             <!-- Feature 1: Instant Response -->
@@ -1433,6 +1555,7 @@
                         <li><span class="check"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> A/B/C/D lead scoring based on event details</li>
                         <li><span class="check"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> Captures date, guest count, budget, and preferences</li>
                         <li><span class="check"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> Creates structured lead profiles for your CRM</li>
+                        <li><span class="check"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> Automatic pipeline stage tracking with revenue estimates</li>
                     </ul>
                 </div>
                 <div class="feature-visual">
@@ -1515,6 +1638,152 @@
                     </div>
                 </div>
             </div>
+            <!-- Feature 4: Outbound Email Campaigns -->
+            <div class="feature-row reverse fade-in">
+                <div class="feature-text">
+                    <div class="feature-number">Feature 04</div>
+                    <h3>Outbound Email Campaigns</h3>
+                    <p>Go beyond inbound. EventFlow generates and sends personalized HTML email campaigns to past guests, segmented by loyalty, winback potential, and event interest — all powered by AI.</p>
+                    <ul class="feature-list">
+                        <li><span class="check"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> AI-generated personalized emails per guest</li>
+                        <li><span class="check"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> Smart segmentation: loyalty, winback, event upsell</li>
+                        <li><span class="check"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> A/B subject line testing with auto winner detection</li>
+                        <li><span class="check"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> Campaign scheduling and open rate tracking</li>
+                    </ul>
+                </div>
+                <div class="feature-visual">
+                    <div class="mock-ui">
+                        <div class="mock-campaign">
+                            <div class="mock-campaign-header">Campaign Performance</div>
+                            <div class="mock-campaign-stats">
+                                <div class="mock-campaign-stat">
+                                    <div class="mc-val">1,247</div>
+                                    <div class="mc-label">Emails Sent</div>
+                                </div>
+                                <div class="mock-campaign-stat">
+                                    <div class="mc-val" style="color:var(--teal-light);">41%</div>
+                                    <div class="mc-label">Open Rate</div>
+                                </div>
+                                <div class="mock-campaign-stat">
+                                    <div class="mc-val" style="color:var(--orange);">3</div>
+                                    <div class="mc-label">Segments</div>
+                                </div>
+                            </div>
+                            <div class="mock-ab-row">
+                                <div class="mock-ab-card">
+                                    <div class="ab-label">Subject A</div>
+                                    <div class="ab-subject">"Your next private event awaits"</div>
+                                    <div class="mock-ab-bar"><div class="ab-fill a" style="width:32%;"></div></div>
+                                    <div class="mock-ab-rate">32% open rate</div>
+                                </div>
+                                <div class="mock-ab-card">
+                                    <div class="ab-label">Subject B <span class="mock-ab-winner">Winner</span></div>
+                                    <div class="ab-subject">"We saved your favorite table"</div>
+                                    <div class="mock-ab-bar"><div class="ab-fill b" style="width:41%;"></div></div>
+                                    <div class="mock-ab-rate">41% open rate</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feature 5: Pipeline & Revenue Tracking -->
+            <div class="feature-row fade-in">
+                <div class="feature-text">
+                    <div class="feature-number">Feature 05</div>
+                    <h3>Pipeline &amp; Revenue Tracking</h3>
+                    <p>Track every lead from first touch to signed contract. Real-time visibility into your event revenue funnel — no spreadsheets required.</p>
+                    <ul class="feature-list">
+                        <li><span class="check"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> Visual pipeline with stage-by-stage tracking</li>
+                        <li><span class="check"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> Revenue estimates per lead and per stage</li>
+                        <li><span class="check"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> Automatic stage progression as leads engage</li>
+                        <li><span class="check"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> Health metrics and revenue forecasting</li>
+                    </ul>
+                </div>
+                <div class="feature-visual">
+                    <div class="mock-ui">
+                        <div class="mock-pipeline">
+                            <div class="mock-pipeline-header">Event Pipeline</div>
+                            <div class="mock-pipeline-stages">
+                                <div class="mock-pipeline-stage">
+                                    <div class="ps-name">New</div>
+                                    <div class="ps-count">12</div>
+                                    <div class="ps-value">$18,400</div>
+                                </div>
+                                <div class="mock-pipeline-stage">
+                                    <div class="ps-name">Qualified</div>
+                                    <div class="ps-count">8</div>
+                                    <div class="ps-value">$24,200</div>
+                                </div>
+                                <div class="mock-pipeline-stage">
+                                    <div class="ps-name">Proposal</div>
+                                    <div class="ps-count">5</div>
+                                    <div class="ps-value">$31,500</div>
+                                </div>
+                                <div class="mock-pipeline-stage">
+                                    <div class="ps-name">Booked</div>
+                                    <div class="ps-count">3</div>
+                                    <div class="ps-value">$22,000</div>
+                                </div>
+                            </div>
+                            <div class="mock-pipeline-leads">
+                                <div class="mock-lead-card">
+                                    <span class="lead-name">Corporate Dinner — 45 guests</span>
+                                    <span class="lead-val">$4,500</span>
+                                </div>
+                                <div class="mock-lead-card">
+                                    <span class="lead-name">Wedding Reception — 120 guests</span>
+                                    <span class="lead-val">$18,000</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== PLATFORM CAPABILITIES ==================== -->
+    <section class="platform-section">
+        <div class="container">
+            <div style="text-align:center; margin-bottom: 48px;">
+                <div class="section-label"><span class="line"></span> Platform</div>
+                <h2 class="section-title">Built-in tools for the<br>entire operation</h2>
+                <p class="section-subtitle">Beyond AI email responses — EventFlow gives your venue a complete operations toolkit.</p>
+            </div>
+            <div class="platform-grid">
+                <div class="platform-card fade-in">
+                    <div class="platform-icon">&#128202;</div>
+                    <h3>Client Dashboard</h3>
+                    <p>Real-time KPIs, campaign performance, AI confidence scoring, and a live activity feed — all in one view.</p>
+                </div>
+                <div class="platform-card fade-in">
+                    <div class="platform-icon">&#9881;</div>
+                    <h3>Admin Command Center</h3>
+                    <p>Multi-client overview, workflow health monitoring, date filtering, and CSV export for your internal team.</p>
+                </div>
+                <div class="platform-card fade-in">
+                    <div class="platform-icon">&#127960;</div>
+                    <h3>Multi-Venue Architecture</h3>
+                    <p>Config-driven provisioning with per-venue knowledge bases. Onboard a new location in minutes, not weeks.</p>
+                </div>
+                <div class="platform-card fade-in">
+                    <div class="platform-icon">&#128246;</div>
+                    <h3>Marketing Content Studio</h3>
+                    <p>AI-generated LinkedIn posts, Instagram captions, and TikTok concepts — drafted daily, approved by you.</p>
+                </div>
+                <div class="platform-card fade-in">
+                    <div class="platform-icon">&#128154;</div>
+                    <h3>Client Success Monitoring</h3>
+                    <p>Automated health checks, churn risk alerts, and personalized check-in emails to keep clients engaged.</p>
+                </div>
+                <div class="platform-card fade-in">
+                    <div class="platform-icon">&#128269;</div>
+                    <h3>Competitive Intelligence</h3>
+                    <p>Weekly automated scans of your competitive landscape with AI-synthesized insights and trend reports.</p>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -1539,8 +1808,13 @@
                 </div>
                 <div class="how-step fade-in">
                     <div class="how-step-number">3</div>
-                    <h3>Watch Bookings Grow</h3>
-                    <p>EventFlow responds instantly, qualifies leads, and follows up automatically. You focus on creating great events.</p>
+                    <h3>Activate Campaigns &amp; Pipeline</h3>
+                    <p>Set up guest segments, launch outbound campaigns, and track every lead through your revenue pipeline.</p>
+                </div>
+                <div class="how-step fade-in">
+                    <div class="how-step-number">4</div>
+                    <h3>Watch Revenue Grow</h3>
+                    <p>EventFlow responds, follows up, re-engages past guests, and tracks every booking. You focus on hospitality.</p>
                 </div>
             </div>
         </div>
@@ -1628,6 +1902,29 @@
                         <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Priority support &amp; custom escalation rules</li>
                     </ul>
                     <a href="#contact" class="pricing-btn pricing-btn-secondary">Contact Sales</a>
+                </div>
+            </div>
+
+            <!-- Email Campaigns Add-On -->
+            <div class="pricing-addon fade-in">
+                <div class="pricing-addon-info">
+                    <span class="pricing-addon-badge">Add-On</span>
+                    <h3>Outbound Email Campaigns</h3>
+                    <p>Re-engage past guests and fill your event calendar with AI-powered outbound campaigns.</p>
+                    <ul class="addon-features">
+                        <li><span class="check-icon"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> AI-generated personalized emails</li>
+                        <li><span class="check-icon"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> A/B subject line testing</li>
+                        <li><span class="check-icon"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> Guest segmentation (loyalty, winback, upsell)</li>
+                        <li><span class="check-icon"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> Open rate tracking &amp; analytics</li>
+                        <li><span class="check-icon"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> Campaign scheduling &amp; queuing</li>
+                        <li><span class="check-icon"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> Performance dashboard with A/B winner</li>
+                    </ul>
+                </div>
+                <div class="pricing-addon-price">
+                    <div class="pa-amount">$99–$199</div>
+                    <div class="pa-period">per month</div>
+                    <div class="pa-note">Based on send volume. Available with any plan.</div>
+                    <a href="#contact" class="pricing-btn pricing-btn-primary">Add to Any Plan</a>
                 </div>
             </div>
         </div>
