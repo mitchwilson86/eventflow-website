@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -59,6 +60,12 @@
     }
     .login-box button:hover { background: #2563eb; }
     .login-error { color: var(--red); font-size: 13px; text-align: center; margin-top: 12px; display: none; }
+    .login-divider { display: flex; align-items: center; margin: 24px 0 20px; color: var(--text-dim); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+    .login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: var(--navy-border); }
+    .login-divider::before { margin-right: 12px; }
+    .login-divider::after { margin-left: 12px; }
+    #google-signin-btn { display: flex; justify-content: center; margin-bottom: 20px; }
+    .login-session-msg { text-align: center; color: var(--text-dim); font-size: 13px; margin-top: 8px; display: none; }
 
     /* ── Dashboard Shell ──────────────────────────────────────── */
     #dashboard { display: none; }
@@ -185,13 +192,16 @@
 <div id="login-screen">
   <div class="login-box">
     <div class="logo">EventFlow</div>
-    <div class="subtitle">Client Onboarding Dashboard</div>
+    <div class="subtitle">Client Dashboard</div>
+    <div id="google-signin-btn"></div>
+    <div class="login-error" id="login-error">Access denied. Your Google account is not authorized for any venue.</div>
+    <div class="login-session-msg" id="session-msg">Signing you in...</div>
+    <div class="login-divider">or sign in manually</div>
     <label for="username">Username</label>
     <input type="text" id="username" placeholder="Enter username" autocomplete="username" />
     <label for="password">Password</label>
     <input type="password" id="password" placeholder="Enter password" autocomplete="current-password" />
     <button id="login-btn" onclick="doLogin()">Sign In</button>
-    <div class="login-error" id="login-error">Invalid username or password</div>
   </div>
 </div>
 
@@ -328,6 +338,7 @@ const CLIENTS = {
   sunda: {
     username: 'sunda',
     password: 'eventflow2026',
+    gmail_address: 'sales@eventflowsales.com',
     venue: 'Sunda Nashville',
     data: {
       kpis: { emails: 147, responses: 132, confidence: '91%', staff: 6 },
@@ -420,9 +431,65 @@ const CLIENTS = {
 
 const SMS_URL = 'https://script.google.com/macros/s/AKfycbwKAV1Yb8Ye32G2rJpZC4QndqU3LinVj4Efa2COsnvyuRqxFlbJOwWobAfhV9lS5Y9Z/exec';
 const DATA_URL = 'https://script.google.com/macros/s/AKfycbxEpfGswzFnPTFLaKWlt332kv6Jy7vdagPcDEDMXbEDwrrFzpoPLc8wrmTW5UEB2xVj8w/exec';
+const GOOGLE_CLIENT_ID = '551797277858-ne7qntlo2jgmdp36o2lpcnv8qr6u7ofv.apps.googleusercontent.com';
 let currentClient = null;
 
-/* ═══ AUTH ═════════════════════════════════════════════════════ */
+/* ═══ GOOGLE SIGN-IN ═════════════════════════════════════════ */
+function initGoogleSignIn() {
+  if (typeof google === 'undefined' || !google.accounts) {
+    // Library not loaded yet, retry
+    setTimeout(initGoogleSignIn, 500);
+    return;
+  }
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleGoogleSignIn,
+    auto_select: true
+  });
+  google.accounts.id.renderButton(
+    document.getElementById('google-signin-btn'),
+    { theme: 'outline', size: 'large', width: 340, text: 'signin_with', shape: 'rectangular' }
+  );
+  // Check for existing session
+  const savedEmail = sessionStorage.getItem('ef_user_email');
+  if (savedEmail) {
+    const client = Object.values(CLIENTS).find(c => c.gmail_address === savedEmail);
+    if (client) {
+      document.getElementById('session-msg').style.display = 'block';
+      currentClient = client;
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      renderDashboard(client);
+    }
+  }
+}
+
+function handleGoogleSignIn(response) {
+  // Decode the JWT to get the email
+  const payload = JSON.parse(atob(response.credential.split('.')[1]));
+  const email = payload.email;
+  const errEl = document.getElementById('login-error');
+
+  // Look up client by email
+  const client = Object.values(CLIENTS).find(c => c.gmail_address === email);
+  if (!client) {
+    errEl.textContent = 'Access denied. ' + email + ' is not authorized for any venue.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  errEl.style.display = 'none';
+  sessionStorage.setItem('ef_user_email', email);
+  currentClient = client;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  renderDashboard(client);
+}
+
+// Initialize Google Sign-In when page loads
+window.addEventListener('load', initGoogleSignIn);
+
+/* ═══ AUTH (MANUAL FALLBACK) ═════════════════════════════════ */
 function doLogin() {
   const u = document.getElementById('username').value.trim().toLowerCase();
   const p = document.getElementById('password').value;
@@ -438,6 +505,10 @@ function doLogin() {
 
 function doLogout() {
   currentClient = null;
+  sessionStorage.removeItem('ef_user_email');
+  if (typeof google !== 'undefined' && google.accounts) {
+    google.accounts.id.disableAutoSelect();
+  }
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('username').value = '';
