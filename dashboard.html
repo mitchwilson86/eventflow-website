@@ -335,7 +335,8 @@
 
 <script>
 /* ═══ CLIENT DATA ═════════════════════════════════════════════ */
-const CLIENTS = {
+// Hardcoded as instant fallback; loadDynamicClients() adds new clients from API
+let CLIENTS = {
   sunda: {
     username: 'sunda',
     password: 'eventflow2026',
@@ -488,7 +489,47 @@ function handleGoogleSignIn(response) {
 }
 
 // Initialize Google Sign-In when page loads
-window.addEventListener('load', initGoogleSignIn);
+window.addEventListener('load', function() {
+  initGoogleSignIn();
+  loadDynamicClients();
+});
+
+/* ═══ DYNAMIC CLIENT LOADING ═════════════════════════════════ */
+function loadDynamicClients() {
+  fetch(DATA_URL + '?type=client_list')
+    .then(r => r.json())
+    .then(data => {
+      if (!data.clients || !data.clients.length) return;
+      let added = 0;
+      for (const c of data.clients) {
+        // Skip clients already in CLIENTS object
+        const existing = Object.values(CLIENTS).find(cl => cl.gmail_address === c.gmail || cl.venue === c.venue);
+        if (existing) continue;
+        // Skip clients without active status
+        if (c.status !== 'active') continue;
+        // Add new client dynamically
+        const slug = c.slug.replace(/[^a-z0-9]/g, '');
+        CLIENTS[slug] = {
+          username: slug,
+          password: '',
+          gmail_address: c.gmail || '',
+          venue: c.venue || c.slug,
+          data: {
+            kpis: { emails: 0, responses: 0, confidence: '--', staff: 0 },
+            confidence: [],
+            weeklyEmails: [],
+            quickStats: { bookings: 0, revenue: '$0', responseTime: '< 2 min' },
+            activity: [],
+            snapshot: [],
+            campaigns: []
+          }
+        };
+        added++;
+      }
+      if (added > 0) console.log('Dynamic clients loaded:', added, 'new');
+    })
+    .catch(err => console.warn('Dynamic client load failed:', err));
+}
 
 /* ═══ AUTH (MANUAL FALLBACK) ═════════════════════════════════ */
 function doLogin() {
