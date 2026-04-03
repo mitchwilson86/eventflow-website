@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EventFlow — Admin Dashboard</title>
+  <title>EventFlow — Admin Command Center</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -22,6 +23,7 @@
       --burnt: #78290f;
       --green: #22c55e;
       --red: #ef4444;
+      --yellow: #eab308;
       --gray-900: #011b2d;
       --gray-800: #0a2a3f;
       --gray-700: #1a3d54;
@@ -46,37 +48,67 @@
       border-radius: 16px; padding: 48px 40px; width: 100%; max-width: 420px;
       box-shadow: 0 8px 32px rgba(0,0,0,.5);
     }
-    .login-box .logo { font-size: 28px; font-weight: 700; color: var(--cream); text-align: center; margin-bottom: 8px; }
-    .login-box .subtitle { text-align: center; color: var(--gray-400); font-size: 14px; margin-bottom: 32px; }
-    .login-box label { display: block; font-size: 12px; font-weight: 600; color: var(--gray-400); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
-    .login-box input {
-      width: 100%; padding: 12px 16px; background: var(--dark); border: 1px solid var(--dark-border);
-      border-radius: 8px; color: var(--gray-100); font-family: var(--font); font-size: 15px;
-      margin-bottom: 20px; transition: border-color .2s;
-    }
-    .login-box input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(21,97,109,.25); }
-    .login-box button {
-      width: 100%; padding: 14px; background: var(--orange); color: var(--dark); border: none;
-      border-radius: 50px; font-family: var(--font); font-size: 15px; font-weight: 600;
-      cursor: pointer; transition: background .2s;
-    }
-    .login-box button:hover { background: var(--orange-light); }
+    .login-box .logo { font-size: 28px; font-weight: 700; color: var(--cream); text-align: center; margin-bottom: 4px; }
+    .login-box .subtitle { text-align: center; color: var(--gray-400); font-size: 14px; margin-bottom: 8px; }
+    .login-box .admin-label { text-align: center; font-size: 11px; font-weight: 600; color: var(--orange); background: rgba(255,125,0,.12); padding: 3px 14px; border-radius: 50px; display: inline-block; margin: 0 auto 28px; text-transform: uppercase; letter-spacing: .5px; }
+    .login-box .admin-label-wrap { text-align: center; margin-bottom: 28px; }
+    #google-signin-btn { display: flex; justify-content: center; margin-bottom: 16px; }
     .login-error { color: var(--red); font-size: 13px; text-align: center; margin-top: 12px; display: none; }
+    .login-session-msg { text-align: center; color: var(--gray-400); font-size: 13px; margin-top: 8px; display: none; }
 
     /* ── Dashboard Shell ──────────────────────────────────────── */
     #dashboard { display: none; }
     .dash-header {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 20px 32px; border-bottom: 1px solid var(--dark-border);
-      background: var(--gray-900);
+      padding: 16px 32px; border-bottom: 1px solid var(--dark-border);
+      background: var(--gray-900); flex-wrap: wrap; gap: 12px;
     }
+    .dash-header .brand-group { display: flex; align-items: center; }
     .dash-header .brand { font-size: 22px; font-weight: 700; color: var(--cream); }
     .dash-header .admin-badge { font-size: 11px; font-weight: 600; color: var(--orange); background: rgba(255,125,0,.12); padding: 3px 10px; border-radius: 50px; margin-left: 12px; text-transform: uppercase; letter-spacing: .5px; }
-    .dash-header .logout { font-size: 13px; color: var(--gray-400); cursor: pointer; padding: 8px 16px; border: 1px solid var(--dark-border); border-radius: 50px; background: transparent; font-family: var(--font); transition: border-color .2s; }
-    .dash-header .logout:hover { border-color: var(--gray-400); color: var(--gray-300); }
-    .dash-body { max-width: 1280px; margin: 0 auto; padding: 32px; }
+    .dash-header .controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .dash-header input[type="date"] {
+      background: var(--dark); border: 1px solid var(--dark-border); color: var(--gray-300);
+      padding: 6px 10px; border-radius: 6px; font-family: var(--font); font-size: 12px;
+    }
+    .dash-header input[type="date"]:focus { outline: none; border-color: var(--teal); }
+    .preset-btn {
+      background: transparent; border: 1px solid var(--dark-border); color: var(--gray-400);
+      padding: 5px 10px; border-radius: 6px; font-family: var(--font); font-size: 12px;
+      cursor: pointer; transition: all .2s;
+    }
+    .preset-btn:hover, .preset-btn.active { border-color: var(--teal); color: var(--teal-light); background: rgba(21,97,109,.1); }
+    .export-btn {
+      position: relative; background: var(--teal-dark); border: 1px solid var(--teal); color: var(--teal-light);
+      padding: 6px 14px; border-radius: 6px; font-family: var(--font); font-size: 12px; font-weight: 500;
+      cursor: pointer; transition: all .2s;
+    }
+    .export-btn:hover { background: var(--teal); color: var(--cream); }
+    .export-menu {
+      display: none; position: absolute; top: 100%; right: 0; margin-top: 4px;
+      background: var(--dark-card); border: 1px solid var(--dark-border); border-radius: 8px;
+      min-width: 180px; z-index: 100; box-shadow: 0 8px 24px rgba(0,0,0,.5);
+    }
+    .export-menu.open { display: block; }
+    .export-menu button {
+      display: block; width: 100%; text-align: left; background: none; border: none;
+      color: var(--gray-300); padding: 10px 16px; font-family: var(--font); font-size: 13px;
+      cursor: pointer; transition: background .15s;
+    }
+    .export-menu button:hover { background: rgba(21,97,109,.15); }
+    .export-menu button:first-child { border-radius: 8px 8px 0 0; }
+    .export-menu button:last-child { border-radius: 0 0 8px 8px; }
+    .header-user { display: flex; align-items: center; gap: 10px; }
+    .header-user .user-email { font-size: 12px; color: var(--gray-400); }
+    .logout {
+      font-size: 12px; color: var(--gray-400); cursor: pointer; padding: 6px 14px;
+      border: 1px solid var(--dark-border); border-radius: 50px; background: transparent;
+      font-family: var(--font); transition: border-color .2s;
+    }
+    .logout:hover { border-color: var(--gray-400); color: var(--gray-300); }
+    .dash-body { max-width: 1400px; margin: 0 auto; padding: 28px 32px; }
 
-    /* ── Loading State ─────────────────────────────────────────── */
+    /* ── Loading & Error ──────────────────────────────────────── */
     .loading-state { text-align: center; padding: 80px 32px; color: var(--gray-400); }
     .loading-state .spinner { display: inline-block; width: 32px; height: 32px; border: 3px solid var(--dark-border); border-top-color: var(--teal); border-radius: 50%; animation: spin .8s linear infinite; margin-bottom: 16px; }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -84,23 +116,29 @@
     /* ── Alerts ────────────────────────────────────────────────── */
     .alerts { margin-bottom: 24px; }
     .alert {
-      display: flex; align-items: center; gap: 12px; padding: 14px 20px;
+      display: flex; align-items: center; gap: 12px; padding: 12px 18px;
       border-radius: var(--radius); margin-bottom: 8px; font-size: 13px; font-weight: 500;
     }
     .alert-warn { background: rgba(255,125,0,.1); border: 1px solid rgba(255,125,0,.25); color: var(--orange-light); }
     .alert-danger { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.25); color: #fca5a5; }
     .alert-ok { background: rgba(34,197,94,.08); border: 1px solid rgba(34,197,94,.2); color: var(--green); }
     .alert-icon { font-size: 16px; flex-shrink: 0; }
+    .alert .dismiss { margin-left: auto; cursor: pointer; opacity: .5; font-size: 16px; background: none; border: none; color: inherit; }
+    .alert .dismiss:hover { opacity: 1; }
+
+    /* ── Section Header ───────────────────────────────────────── */
+    .section-title { font-size: 16px; font-weight: 600; color: var(--cream); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .section-title .icon { font-size: 18px; }
 
     /* ── KPI Cards ─────────────────────────────────────────────── */
-    .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 32px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
     .kpi-card {
       background: var(--dark-card); border: 1px solid var(--dark-border);
-      border-radius: var(--radius); padding: 24px;
+      border-radius: var(--radius); padding: 20px 22px;
     }
-    .kpi-card .kpi-label { font-size: 12px; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
-    .kpi-card .kpi-value { font-size: 36px; font-weight: 700; color: var(--cream); }
-    .kpi-card .kpi-sub { font-size: 12px; color: var(--gray-600); margin-top: 4px; }
+    .kpi-card .kpi-label { font-size: 11px; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+    .kpi-card .kpi-value { font-size: 32px; font-weight: 700; color: var(--cream); line-height: 1.1; }
+    .kpi-card .kpi-sub { font-size: 11px; color: var(--gray-600); margin-top: 4px; }
     .kpi-card.accent-teal { border-left: 3px solid var(--teal); }
     .kpi-card.accent-orange { border-left: 3px solid var(--orange); }
     .kpi-card.accent-teal-light { border-left: 3px solid var(--teal-light); }
@@ -111,133 +149,214 @@
     /* ── Panels ────────────────────────────────────────────────── */
     .panel {
       background: var(--dark-card); border: 1px solid var(--dark-border);
-      border-radius: var(--radius); padding: 24px; margin-bottom: 24px;
+      border-radius: var(--radius); padding: 22px; margin-bottom: 24px;
     }
-    .panel h3 { font-size: 18px; font-weight: 600; color: var(--cream); margin-bottom: 20px; }
+    .panel h3 { font-size: 16px; font-weight: 600; color: var(--cream); margin-bottom: 16px; }
     .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
 
+    /* ── Mini KPI row (inside panels) ─────────────────────────── */
+    .mini-kpi-row { display: flex; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
+    .mini-kpi { flex: 1; min-width: 120px; text-align: center; padding: 12px; background: var(--dark); border-radius: 8px; }
+    .mini-kpi .mk-val { font-size: 24px; font-weight: 700; color: var(--orange); }
+    .mini-kpi .mk-label { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+
     /* ── Confidence Breakdown ──────────────────────────────────── */
-    .conf-row { display: flex; align-items: center; margin-bottom: 14px; }
-    .conf-row .cat-label { width: 140px; font-size: 13px; color: var(--gray-400); flex-shrink: 0; }
-    .conf-row .bar-bg { flex: 1; height: 8px; background: var(--dark); border-radius: 4px; overflow: hidden; margin: 0 12px; }
+    .conf-row { display: flex; align-items: center; margin-bottom: 12px; }
+    .conf-row .cat-label { width: 130px; font-size: 12px; color: var(--gray-400); flex-shrink: 0; }
+    .conf-row .bar-bg { flex: 1; height: 7px; background: var(--dark); border-radius: 4px; overflow: hidden; margin: 0 12px; }
     .conf-row .bar-fill { height: 100%; border-radius: 4px; transition: width 1.2s ease; }
-    .conf-row .conf-val { width: 48px; text-align: right; font-size: 13px; font-weight: 600; color: var(--cream); }
+    .conf-row .conf-val { width: 44px; text-align: right; font-size: 12px; font-weight: 600; color: var(--cream); }
 
     /* ── Chart ─────────────────────────────────────────────────── */
-    .chart-container { position: relative; height: 220px; display: flex; align-items: flex-end; gap: 12px; padding-top: 20px; }
+    .chart-container { position: relative; height: 200px; display: flex; align-items: flex-end; gap: 10px; padding-top: 20px; }
     .chart-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; }
-    .chart-bar { width: 100%; border-radius: 6px 6px 0 0; transition: height 1s ease; position: relative; }
-    .chart-bar .bar-val { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 600; color: var(--gray-400); }
-    .chart-label { font-size: 11px; color: var(--gray-400); margin-top: 8px; }
+    .chart-bar { width: 100%; border-radius: 5px 5px 0 0; transition: height 1s ease; position: relative; }
+    .chart-bar .bar-val { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: 600; color: var(--gray-400); }
+    .chart-label { font-size: 10px; color: var(--gray-400); margin-top: 6px; }
 
-    /* ── Quick Stats ───────────────────────────────────────────── */
-    .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-    .stat-item { text-align: center; padding: 16px; background: var(--dark); border-radius: 8px; }
-    .stat-item .stat-val { font-size: 28px; font-weight: 700; color: var(--orange); }
-    .stat-item .stat-label { font-size: 12px; color: var(--gray-400); margin-top: 4px; }
-
-    /* ── Activity Table ────────────────────────────────────────── */
+    /* ── Tables ────────────────────────────────────────────────── */
     .table-wrap { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    thead th { text-align: left; padding: 10px 12px; color: var(--gray-400); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; font-size: 11px; border-bottom: 1px solid var(--dark-border); }
-    tbody td { padding: 10px 12px; border-bottom: 1px solid rgba(10,42,63,.5); color: var(--gray-300); }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    thead th {
+      text-align: left; padding: 9px 10px; color: var(--gray-400); font-weight: 600;
+      text-transform: uppercase; letter-spacing: .5px; font-size: 10px;
+      border-bottom: 1px solid var(--dark-border); cursor: pointer; user-select: none;
+      white-space: nowrap;
+    }
+    thead th:hover { color: var(--teal-light); }
+    thead th .sort-arrow { font-size: 9px; margin-left: 3px; opacity: .4; }
+    thead th.sorted .sort-arrow { opacity: 1; color: var(--orange); }
+    tbody td { padding: 9px 10px; border-bottom: 1px solid rgba(10,42,63,.5); color: var(--gray-300); }
     tbody tr:hover { background: rgba(21,97,109,.08); }
-    .badge { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+    .badge { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 10px; font-weight: 600; }
     .badge-teal { background: rgba(21,97,109,.2); color: var(--teal-light); }
     .badge-orange { background: rgba(255,125,0,.15); color: var(--orange); }
     .badge-green { background: rgba(34,197,94,.15); color: var(--green); }
     .badge-red { background: rgba(239,68,68,.15); color: #fca5a5; }
+    .badge-yellow { background: rgba(234,179,8,.15); color: var(--yellow); }
     .badge-gray { background: rgba(143,170,184,.12); color: var(--gray-400); }
 
+    /* ── Health indicator ──────────────────────────────────────── */
+    .health-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+    .health-dot.green { background: var(--green); }
+    .health-dot.yellow { background: var(--yellow); }
+    .health-dot.red { background: var(--red); }
+
+    /* ── Activity Feed ─────────────────────────────────────────── */
+    .feed-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(10,42,63,.3); }
+    .feed-item:last-child { border-bottom: none; }
+    .feed-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+    .feed-text { font-size: 13px; color: var(--gray-300); }
+    .feed-time { font-size: 11px; color: var(--gray-600); margin-top: 2px; }
+
     /* ── Responsive ────────────────────────────────────────────── */
-    @media (max-width: 900px) {
+    @media (max-width: 1100px) {
       .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 900px) {
       .two-col { grid-template-columns: 1fr; }
-      .stat-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 600px) {
       .kpi-grid { grid-template-columns: 1fr; }
-      .dash-header { flex-direction: column; gap: 12px; text-align: center; }
+      .dash-header { flex-direction: column; text-align: center; padding: 16px; }
       .dash-body { padding: 16px; }
+      .mini-kpi-row { flex-direction: column; }
     }
   </style>
 </head>
 <body>
 
-<!-- ═══ LOGIN ══════════════════════════════════════════════════ -->
+<!-- LOGIN -->
 <div id="login-screen">
   <div class="login-box">
     <div class="logo">EventFlow</div>
-    <div class="subtitle">Admin Dashboard</div>
-    <label for="password">Password</label>
-    <input type="password" id="password" placeholder="Enter admin password" autocomplete="current-password" />
-    <button onclick="doLogin()">Sign In</button>
-    <div class="login-error" id="login-error">Invalid password</div>
+    <div class="subtitle">Admin Command Center</div>
+    <div class="admin-label-wrap"><span class="admin-label">Internal Only</span></div>
+    <div id="google-signin-btn"></div>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-session-msg" id="session-msg">Resuming session...</div>
   </div>
 </div>
 
-<!-- ═══ DASHBOARD ═════════════════════════════════════════════ -->
+<!-- DASHBOARD -->
 <div id="dashboard">
   <div class="dash-header">
-    <div style="display:flex;align-items:center;">
+    <div class="brand-group">
       <span class="brand">EventFlow</span>
       <span class="admin-badge">Admin</span>
     </div>
-    <button class="logout" onclick="doLogout()">Sign Out</button>
+    <div class="controls">
+      <input type="date" id="date-start" title="Start date" />
+      <span style="color:var(--gray-600);font-size:12px;">to</span>
+      <input type="date" id="date-end" title="End date" />
+      <button class="preset-btn active" onclick="setPreset('30d')">30d</button>
+      <button class="preset-btn" onclick="setPreset('7d')">7d</button>
+      <button class="preset-btn" onclick="setPreset('90d')">90d</button>
+      <button class="preset-btn" onclick="setPreset('all')">All</button>
+      <div style="position:relative;">
+        <button class="export-btn" onclick="toggleExportMenu()">Export CSV</button>
+        <div class="export-menu" id="export-menu">
+          <button onclick="exportCSV('clients')">Clients Overview</button>
+          <button onclick="exportCSV('workflows')">Workflow Health</button>
+          <button onclick="exportCSV('campaigns')">Campaign Analytics</button>
+          <button onclick="exportCSV('pipeline')">Pipeline</button>
+        </div>
+      </div>
+    </div>
+    <div class="header-user">
+      <span class="user-email" id="user-email"></span>
+      <button class="logout" onclick="doLogout()">Sign Out</button>
+    </div>
   </div>
-  <div class="dash-body">
 
+  <div class="dash-body">
     <!-- Loading -->
     <div class="loading-state" id="loading">
       <div class="spinner"></div>
-      <div>Loading live data from Email Log...</div>
+      <div>Loading admin data...</div>
     </div>
 
-    <!-- Content (hidden until loaded) -->
+    <!-- Content -->
     <div id="content" style="display:none;">
 
-      <!-- Alerts -->
+      <!-- 1. Alerts -->
       <div class="alerts" id="alerts"></div>
 
-      <!-- KPIs -->
-      <div class="kpi-grid">
+      <!-- 2. Platform KPIs -->
+      <div class="section-title">Platform Overview</div>
+      <div class="kpi-grid" id="kpi-grid">
         <div class="kpi-card accent-teal">
-          <div class="kpi-label">Total Emails</div>
-          <div class="kpi-value" id="kpi-emails">--</div>
-          <div class="kpi-sub">Last 30 days</div>
+          <div class="kpi-label">Active Clients</div>
+          <div class="kpi-value" id="kpi-clients">--</div>
+          <div class="kpi-sub">Venues onboarded</div>
         </div>
         <div class="kpi-card accent-orange">
-          <div class="kpi-label">AI Responses</div>
-          <div class="kpi-value" id="kpi-responses">--</div>
-          <div class="kpi-sub">Valid parses</div>
+          <div class="kpi-label">Total Emails</div>
+          <div class="kpi-value" id="kpi-emails">--</div>
+          <div class="kpi-sub">All clients</div>
+        </div>
+        <div class="kpi-card accent-cream">
+          <div class="kpi-label">Pipeline Value</div>
+          <div class="kpi-value" id="kpi-pipeline">--</div>
+          <div class="kpi-sub">Estimated revenue</div>
         </div>
         <div class="kpi-card accent-teal-light">
           <div class="kpi-label">Avg Confidence</div>
           <div class="kpi-value" id="kpi-confidence">--</div>
           <div class="kpi-sub">AI accuracy</div>
         </div>
-        <div class="kpi-card accent-cream">
-          <div class="kpi-label">Escalation Rate</div>
-          <div class="kpi-value" id="kpi-escalation">--</div>
-          <div class="kpi-sub">Handed to human</div>
-        </div>
         <div class="kpi-card accent-green">
-          <div class="kpi-label">Auto-Send Rate</div>
-          <div class="kpi-value" id="kpi-autosend">--</div>
-          <div class="kpi-sub">High confidence replies</div>
+          <div class="kpi-label">Avg Open Rate</div>
+          <div class="kpi-value" id="kpi-openrate">--</div>
+          <div class="kpi-sub">Campaign emails</div>
         </div>
         <div class="kpi-card accent-burnt">
-          <div class="kpi-label">SMS Enrolled</div>
-          <div class="kpi-value" id="kpi-sms">--</div>
-          <div class="kpi-sub">Staff opt-ins</div>
+          <div class="kpi-label">Workflow Health</div>
+          <div class="kpi-value" id="kpi-wfhealth">--</div>
+          <div class="kpi-sub">Success rate</div>
         </div>
       </div>
 
-      <!-- Confidence + Chart -->
+      <!-- 3. Multi-Client Overview -->
+      <div class="panel">
+        <h3>Client Overview</h3>
+        <div class="table-wrap">
+          <table id="clients-table">
+            <thead>
+              <tr>
+                <th onclick="sortTable('clients-table',0)">Venue <span class="sort-arrow">&#9650;</span></th>
+                <th onclick="sortTable('clients-table',1)">Emails <span class="sort-arrow">&#9650;</span></th>
+                <th onclick="sortTable('clients-table',2)">Confidence <span class="sort-arrow">&#9650;</span></th>
+                <th onclick="sortTable('clients-table',3)">Pipeline <span class="sort-arrow">&#9650;</span></th>
+                <th onclick="sortTable('clients-table',4)">Health <span class="sort-arrow">&#9650;</span></th>
+                <th onclick="sortTable('clients-table',5)">Last Activity <span class="sort-arrow">&#9650;</span></th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="clients-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 4. Workflow Health + Email Volume -->
       <div class="two-col">
         <div class="panel">
-          <h3>Confidence by Category</h3>
-          <div id="confidence-bars"></div>
+          <h3>Workflow Health</h3>
+          <div class="table-wrap">
+            <table id="workflows-table">
+              <thead>
+                <tr>
+                  <th onclick="sortTable('workflows-table',0)">Workflow <span class="sort-arrow">&#9650;</span></th>
+                  <th onclick="sortTable('workflows-table',1)">Runs <span class="sort-arrow">&#9650;</span></th>
+                  <th onclick="sortTable('workflows-table',2)">Pass <span class="sort-arrow">&#9650;</span></th>
+                  <th onclick="sortTable('workflows-table',3)">Fail <span class="sort-arrow">&#9650;</span></th>
+                  <th onclick="sortTable('workflows-table',4)">Health <span class="sort-arrow">&#9650;</span></th>
+                  <th>Last Run</th>
+                </tr>
+              </thead>
+              <tbody id="workflows-tbody"></tbody>
+            </table>
+          </div>
         </div>
         <div class="panel">
           <h3>Email Volume (7 Weeks)</h3>
@@ -245,43 +364,55 @@
         </div>
       </div>
 
-      <!-- Quick Stats -->
+      <!-- 5. Campaign Analytics -->
       <div class="panel">
-        <h3>Follow-up Stats</h3>
-        <div class="stat-grid">
-          <div class="stat-item">
-            <div class="stat-val" id="stat-followup1">--</div>
-            <div class="stat-label">Follow-up #1 Sent</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-val" id="stat-followup2">--</div>
-            <div class="stat-label">Follow-up #2 Sent</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-val" id="stat-total">--</div>
-            <div class="stat-label">Total Emails All Time</div>
-          </div>
+        <h3>Campaign Analytics</h3>
+        <div class="mini-kpi-row" id="campaign-kpis"></div>
+        <div class="table-wrap">
+          <table id="campaigns-table">
+            <thead>
+              <tr>
+                <th onclick="sortTable('campaigns-table',0)">Campaign <span class="sort-arrow">&#9650;</span></th>
+                <th onclick="sortTable('campaigns-table',1)">Date <span class="sort-arrow">&#9650;</span></th>
+                <th onclick="sortTable('campaigns-table',2)">Goal <span class="sort-arrow">&#9650;</span></th>
+                <th onclick="sortTable('campaigns-table',3)">Sent <span class="sort-arrow">&#9650;</span></th>
+                <th onclick="sortTable('campaigns-table',4)">Opens <span class="sort-arrow">&#9650;</span></th>
+                <th onclick="sortTable('campaigns-table',5)">Open Rate <span class="sort-arrow">&#9650;</span></th>
+                <th>Segments</th>
+                <th>A/B Winner</th>
+              </tr>
+            </thead>
+            <tbody id="campaigns-tbody"></tbody>
+          </table>
         </div>
       </div>
 
-      <!-- Recent Activity Table -->
+      <!-- 6. Pipeline Overview -->
       <div class="panel">
-        <h3>Recent Activity</h3>
+        <h3>Pipeline Overview</h3>
+        <div class="mini-kpi-row" id="pipeline-kpis"></div>
         <div class="table-wrap">
-          <table>
+          <table id="pipeline-table">
             <thead>
               <tr>
-                <th>Time</th>
-                <th>From</th>
-                <th>Subject</th>
-                <th>Type</th>
-                <th>Confidence</th>
-                <th>Status</th>
+                <th onclick="sortTable('pipeline-table',0)">Venue <span class="sort-arrow">&#9650;</span></th>
+                <th onclick="sortTable('pipeline-table',1)">Contact <span class="sort-arrow">&#9650;</span></th>
+                <th onclick="sortTable('pipeline-table',2)">Stage <span class="sort-arrow">&#9650;</span></th>
+                <th onclick="sortTable('pipeline-table',3)">Tier <span class="sort-arrow">&#9650;</span></th>
+                <th onclick="sortTable('pipeline-table',4)">Event Date <span class="sort-arrow">&#9650;</span></th>
+                <th onclick="sortTable('pipeline-table',5)">Guests <span class="sort-arrow">&#9650;</span></th>
+                <th onclick="sortTable('pipeline-table',6)">Est. Value <span class="sort-arrow">&#9650;</span></th>
               </tr>
             </thead>
-            <tbody id="activity-tbody"></tbody>
+            <tbody id="pipeline-tbody"></tbody>
           </table>
         </div>
+      </div>
+
+      <!-- 7. Activity Feed -->
+      <div class="panel">
+        <h3>Recent Activity</h3>
+        <div id="activity-feed"></div>
       </div>
 
     </div>
@@ -289,143 +420,377 @@
 </div>
 
 <script>
-const ADMIN_PASSWORD = '!efs.u55204945!';
-const SMS_URL = 'https://script.google.com/macros/s/AKfycbwKAV1Yb8Ye32G2rJpZC4QndqU3LinVj4Efa2COsnvyuRqxFlbJOwWobAfhV9lS5Y9Z/exec';
-const ADMIN_URL = SMS_URL + '?action=admin';
+const DATA_URL = 'https://script.google.com/macros/s/AKfycbxEpfGswzFnPTFLaKWlt332kv6Jy7vdagPcDEDMXbEDwrrFzpoPLc8wrmTW5UEB2xVj8w/exec';
+const GOOGLE_CLIENT_ID = '551797277858-ne7qntlo2jgmdp36o2lpcnv8qr6u7ofv.apps.googleusercontent.com';
+const ADMIN_EMAILS = ['mitchwilson@eventflowsales.com'];
 
-/* ═══ AUTH ═════════════════════════════════════════════════════ */
-function doLogin() {
-  const p = document.getElementById('password').value;
-  if (p !== ADMIN_PASSWORD) {
-    document.getElementById('login-error').style.display = 'block';
+let adminData = null; // cached API response for export
+
+/* ═══ GOOGLE SIGN-IN ═══════════════════════════════════════════ */
+function initGoogleSignIn() {
+  if (typeof google === 'undefined' || !google.accounts) {
+    setTimeout(initGoogleSignIn, 500);
     return;
   }
-  document.getElementById('login-error').style.display = 'none';
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleGoogleSignIn,
+    auto_select: true
+  });
+  google.accounts.id.renderButton(
+    document.getElementById('google-signin-btn'),
+    { theme: 'outline', size: 'large', width: 340, text: 'signin_with', shape: 'rectangular' }
+  );
+  // Check for existing session
+  const savedEmail = sessionStorage.getItem('ef_admin_email');
+  if (savedEmail && ADMIN_EMAILS.includes(savedEmail)) {
+    document.getElementById('session-msg').style.display = 'block';
+    document.getElementById('user-email').textContent = savedEmail;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    initDateRange();
+    loadAdminData();
+  }
+}
+
+function handleGoogleSignIn(response) {
+  const payload = JSON.parse(atob(response.credential.split('.')[1]));
+  const email = payload.email;
+  const errEl = document.getElementById('login-error');
+
+  if (!ADMIN_EMAILS.includes(email)) {
+    errEl.textContent = 'Access denied. ' + email + ' is not authorized for admin access.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  errEl.style.display = 'none';
+  sessionStorage.setItem('ef_admin_email', email);
+  document.getElementById('user-email').textContent = email;
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
-  loadData();
+  initDateRange();
+  loadAdminData();
 }
 
 function doLogout() {
+  sessionStorage.removeItem('ef_admin_email');
+  if (typeof google !== 'undefined' && google.accounts) {
+    google.accounts.id.disableAutoSelect();
+  }
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('password').value = '';
 }
 
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') doLogin();
+window.addEventListener('load', initGoogleSignIn);
+
+/* ═══ DATE RANGE ═══════════════════════════════════════════════ */
+function initDateRange() {
+  const end = new Date();
+  const start = new Date();
+  start.setDate(start.getDate() - 30);
+  document.getElementById('date-start').value = fmt(start);
+  document.getElementById('date-end').value = fmt(end);
+}
+
+function fmt(d) {
+  return d.toISOString().split('T')[0];
+}
+
+function setPreset(p) {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  const end = new Date();
+  const start = new Date();
+  if (p === '7d') start.setDate(end.getDate() - 7);
+  else if (p === '30d') start.setDate(end.getDate() - 30);
+  else if (p === '90d') start.setDate(end.getDate() - 90);
+  else { start.setFullYear(2025); } // "all"
+  document.getElementById('date-start').value = fmt(start);
+  document.getElementById('date-end').value = fmt(end);
+  loadAdminData();
+}
+
+// Reload on manual date change
+document.addEventListener('change', e => {
+  if (e.target.id === 'date-start' || e.target.id === 'date-end') {
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    loadAdminData();
+  }
 });
 
-/* ═══ LOAD DATA ═══════════════════════════════════════════════ */
-async function loadData() {
+/* ═══ LOAD DATA ════════════════════════════════════════════════ */
+async function loadAdminData() {
+  const startDate = document.getElementById('date-start').value;
+  const endDate = document.getElementById('date-end').value;
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('content').style.display = 'none';
+
   try {
-    const [adminRes, smsRes] = await Promise.all([
-      fetch(ADMIN_URL).then(r => r.json()),
-      fetch(SMS_URL).then(r => r.json())
-    ]);
+    const url = DATA_URL + '?type=admin_overview&start=' + startDate + '&end=' + endDate;
+    const res = await fetch(url);
+    const data = await res.json();
 
-    const d = adminRes;
-    const smsRows = smsRes.rows || [];
+    if (data.error) throw new Error(data.error);
 
+    adminData = data;
     document.getElementById('loading').style.display = 'none';
     document.getElementById('content').style.display = 'block';
-
-    // KPIs
-    document.getElementById('kpi-emails').textContent = d.totalEmails || 0;
-    document.getElementById('kpi-responses').textContent = d.totalResponses || 0;
-    const avgConf = d.avgConfidence ? Math.round(d.avgConfidence * 100) + '%' : '--';
-    document.getElementById('kpi-confidence').textContent = avgConf;
-    const escRate = d.escalationRate ? Math.round(d.escalationRate * 100) + '%' : '--';
-    document.getElementById('kpi-escalation').textContent = escRate;
-    const autoRate = d.autoSendRate ? Math.round(d.autoSendRate * 100) + '%' : '--';
-    document.getElementById('kpi-autosend').textContent = autoRate;
-    document.getElementById('kpi-sms').textContent = smsRows.length;
-
-    // Alerts
-    const alerts = [];
-    if (d.avgConfidence && d.avgConfidence < 0.8) {
-      alerts.push({ type: 'warn', icon: '\u26A0', text: `Average confidence is ${Math.round(d.avgConfidence*100)}% — below 80% threshold. Review recent drafts.` });
-    }
-    if (d.escalationRate && d.escalationRate > 0.2) {
-      alerts.push({ type: 'danger', icon: '\u26A0', text: `Escalation rate is ${Math.round(d.escalationRate*100)}% — above 20%. AI may need knowledge base update.` });
-    }
-    if (d.daysSinceLastEmail && d.daysSinceLastEmail > 3) {
-      alerts.push({ type: 'warn', icon: '\u26A0', text: `No inbound emails in ${d.daysSinceLastEmail} days. Check Gmail trigger.` });
-    }
-    if (alerts.length === 0) {
-      alerts.push({ type: 'ok', icon: '\u2713', text: 'All systems healthy. No alerts.' });
-    }
-    document.getElementById('alerts').innerHTML = alerts.map(a =>
-      `<div class="alert alert-${a.type}"><span class="alert-icon">${a.icon}</span>${a.text}</div>`
-    ).join('');
-
-    // Confidence by category
-    const barsEl = document.getElementById('confidence-bars');
-    const cats = d.byEventType || {};
-    const catColors = { 'private dining': 'var(--teal)', 'corporate': 'var(--teal-light)', 'wedding': 'var(--orange)', 'buyout': 'var(--orange-light)', 'social': 'var(--teal)', 'birthday': 'var(--teal-light)', 'rehearsal dinner': 'var(--orange)', 'other': 'var(--gray-600)' };
-    barsEl.innerHTML = Object.entries(cats).map(([cat, info]) => {
-      const pct = Math.round((info.avgConfidence || 0) * 100);
-      const color = catColors[cat] || 'var(--teal)';
-      const label = cat.split(' ').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
-      return `<div class="conf-row">
-        <span class="cat-label">${label} (${info.count})</span>
-        <div class="bar-bg"><div class="bar-fill" style="width:0%;background:${color}" data-width="${pct}%"></div></div>
-        <span class="conf-val">${pct}%</span>
-      </div>`;
-    }).join('');
-    requestAnimationFrame(() => {
-      setTimeout(() => { barsEl.querySelectorAll('.bar-fill').forEach(b => { b.style.width = b.dataset.width; }); }, 100);
-    });
-
-    // Email volume chart
-    const chartEl = document.getElementById('email-chart');
-    const weeks = d.weeklyVolume || [];
-    const maxVal = Math.max(...weeks.map(w => w.count), 1);
-    chartEl.innerHTML = weeks.map(w => {
-      const pct = (w.count / maxVal) * 180;
-      return `<div class="chart-bar-wrap">
-        <div class="chart-bar" style="height:0px;background:var(--teal);" data-height="${pct}px">
-          <span class="bar-val">${w.count}</span>
-        </div>
-        <span class="chart-label">${w.week}</span>
-      </div>`;
-    }).join('');
-    requestAnimationFrame(() => {
-      setTimeout(() => { chartEl.querySelectorAll('.chart-bar').forEach(b => { b.style.height = b.dataset.height; }); }, 200);
-    });
-
-    // Follow-up stats
-    const fu = d.followUpStats || {};
-    document.getElementById('stat-followup1').textContent = fu.followUp1Sent || 0;
-    document.getElementById('stat-followup2').textContent = fu.followUp2Sent || 0;
-    document.getElementById('stat-total').textContent = d.totalEmailsAllTime || d.totalEmails || 0;
-
-    // Recent activity table
-    const recent = d.recentActivity || [];
-    const tbody = document.getElementById('activity-tbody');
-    tbody.innerHTML = recent.map(r => {
-      const ts = r.timestamp ? new Date(r.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '--';
-      const conf = r.confidence ? Math.round(r.confidence * 100) : 0;
-      const confClass = conf >= 80 ? 'badge-green' : conf >= 60 ? 'badge-orange' : 'badge-red';
-      const escBadge = r.escalated ? '<span class="badge badge-red">Escalated</span>' : '<span class="badge badge-teal">Auto</span>';
-      const typeLabel = (r.eventType || 'unknown').split(' ').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
-      return `<tr>
-        <td>${ts}</td>
-        <td>${esc(r.from || '--')}</td>
-        <td>${esc(r.subject || '--')}</td>
-        <td><span class="badge badge-gray">${typeLabel}</span></td>
-        <td><span class="badge ${confClass}">${conf}%</span></td>
-        <td>${escBadge}</td>
-      </tr>`;
-    }).join('');
-
+    renderAll(data);
   } catch (err) {
-    document.getElementById('loading').innerHTML = `<div style="color:var(--red);">Failed to load data. ${esc(err.message)}</div>`;
+    document.getElementById('loading').innerHTML =
+      '<div style="color:var(--red);">Failed to load data: ' + esc(err.message) + '</div>' +
+      '<div style="margin-top:12px;color:var(--gray-400);font-size:13px;">Make sure the admin_overview endpoint is deployed in Apps Script.</div>';
     console.error('Admin load error:', err);
   }
 }
 
-function esc(s) { const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+/* ═══ RENDER ALL ═══════════════════════════════════════════════ */
+function renderAll(data) {
+  renderAlerts(data.alerts || []);
+  renderKPIs(data.platform_kpis || {});
+  renderClients(data.clients || []);
+  renderWorkflows(data.workflows || []);
+  renderEmailChart(data.weekly_volume || []);
+  renderCampaigns(data.campaigns || []);
+  renderPipeline(data.pipeline || []);
+  renderActivity(data.activity || []);
+}
+
+/* ── Alerts ────────────────────────────────────────────────── */
+function renderAlerts(alerts) {
+  const el = document.getElementById('alerts');
+  if (!alerts.length) {
+    el.innerHTML = '<div class="alert alert-ok"><span class="alert-icon">&#10003;</span>All systems healthy. No alerts.</div>';
+    return;
+  }
+  el.innerHTML = alerts.map(a => {
+    const cls = a.type === 'danger' ? 'alert-danger' : 'alert-warn';
+    return '<div class="alert ' + cls + '"><span class="alert-icon">&#9888;</span>' + esc(a.message) +
+      '<button class="dismiss" onclick="this.parentElement.remove()">&times;</button></div>';
+  }).join('');
+}
+
+/* ── Platform KPIs ─────────────────────────────────────────── */
+function renderKPIs(k) {
+  document.getElementById('kpi-clients').textContent = k.total_clients || 0;
+  document.getElementById('kpi-emails').textContent = k.total_emails || 0;
+  document.getElementById('kpi-pipeline').textContent = k.total_pipeline_value || '$0';
+  document.getElementById('kpi-confidence').textContent = k.avg_confidence || '--';
+  document.getElementById('kpi-openrate').textContent = k.avg_open_rate || '--';
+  document.getElementById('kpi-wfhealth').textContent = k.workflow_health_pct || '--';
+}
+
+/* ── Clients ───────────────────────────────────────────────── */
+function renderClients(clients) {
+  const tbody = document.getElementById('clients-tbody');
+  if (!clients.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--gray-600);">No client data</td></tr>'; return; }
+  tbody.innerHTML = clients.map(c => {
+    const healthColor = (c.health_score || 0) >= 80 ? 'green' : (c.health_score || 0) >= 50 ? 'yellow' : 'red';
+    const statusCls = c.status === 'active' ? 'badge-green' : c.status === 'onboarding' ? 'badge-yellow' : 'badge-gray';
+    return '<tr>' +
+      '<td><strong>' + esc(c.venue || c.slug) + '</strong></td>' +
+      '<td>' + (c.email_count || 0) + '</td>' +
+      '<td>' + (c.avg_confidence || '--') + '</td>' +
+      '<td>' + (c.pipeline_value || '$0') + '</td>' +
+      '<td><span class="health-dot ' + healthColor + '"></span>' + (c.health_score || '--') + '</td>' +
+      '<td>' + esc(c.last_activity || '--') + '</td>' +
+      '<td><span class="badge ' + statusCls + '">' + esc(c.status || 'unknown') + '</span></td>' +
+      '</tr>';
+  }).join('');
+}
+
+/* ── Workflows ─────────────────────────────────────────────── */
+function renderWorkflows(workflows) {
+  const tbody = document.getElementById('workflows-tbody');
+  if (!workflows.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--gray-600);">No workflow data</td></tr>'; return; }
+  tbody.innerHTML = workflows.map(w => {
+    const healthPct = w.health_pct || 0;
+    const healthColor = healthPct >= 95 ? 'green' : healthPct >= 80 ? 'yellow' : 'red';
+    const healthBadge = healthPct >= 95 ? 'badge-green' : healthPct >= 80 ? 'badge-yellow' : 'badge-red';
+    return '<tr>' +
+      '<td><span class="health-dot ' + healthColor + '"></span>' + esc(w.name) + '</td>' +
+      '<td>' + (w.total || 0) + '</td>' +
+      '<td>' + (w.success || 0) + '</td>' +
+      '<td>' + (w.failed || 0) + '</td>' +
+      '<td><span class="badge ' + healthBadge + '">' + healthPct + '%</span></td>' +
+      '<td>' + esc(w.last_run || '--') + '</td>' +
+      '</tr>';
+  }).join('');
+}
+
+/* ── Email Volume Chart ────────────────────────────────────── */
+function renderEmailChart(weeks) {
+  const chartEl = document.getElementById('email-chart');
+  if (!weeks.length) { chartEl.innerHTML = '<div style="color:var(--gray-600);text-align:center;width:100%;padding-top:60px;">No data</div>'; return; }
+  const maxVal = Math.max(...weeks.map(w => w.count), 1);
+  chartEl.innerHTML = weeks.map(w => {
+    const pct = (w.count / maxVal) * 170;
+    return '<div class="chart-bar-wrap">' +
+      '<div class="chart-bar" style="height:0px;background:var(--teal);" data-height="' + pct + 'px">' +
+      '<span class="bar-val">' + w.count + '</span></div>' +
+      '<span class="chart-label">' + esc(w.week) + '</span></div>';
+  }).join('');
+  requestAnimationFrame(() => {
+    setTimeout(() => { chartEl.querySelectorAll('.chart-bar').forEach(b => { b.style.height = b.dataset.height; }); }, 200);
+  });
+}
+
+/* ── Campaigns ─────────────────────────────────────────────── */
+function renderCampaigns(campaigns) {
+  // Mini KPIs
+  const kpiEl = document.getElementById('campaign-kpis');
+  const totalSent = campaigns.reduce((s, c) => s + (c.sent || 0), 0);
+  const avgOpen = campaigns.length ? Math.round(campaigns.reduce((s, c) => s + (c.open_rate || 0), 0) / campaigns.length) : 0;
+  const abCount = campaigns.filter(c => c.ab).length;
+  kpiEl.innerHTML = [
+    { val: campaigns.length, label: 'Total Campaigns' },
+    { val: totalSent, label: 'Total Sent' },
+    { val: avgOpen + '%', label: 'Avg Open Rate' },
+    { val: abCount, label: 'A/B Tests' }
+  ].map(k => '<div class="mini-kpi"><div class="mk-val">' + k.val + '</div><div class="mk-label">' + k.label + '</div></div>').join('');
+
+  // Table
+  const tbody = document.getElementById('campaigns-tbody');
+  if (!campaigns.length) { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--gray-600);">No campaigns</td></tr>'; return; }
+  tbody.innerHTML = campaigns.map(c => {
+    const openRate = c.open_rate || 0;
+    const openColor = openRate >= 50 ? 'var(--green)' : openRate >= 25 ? 'var(--orange)' : 'var(--gray-400)';
+    const segs = c.segments ? (typeof c.segments === 'string' ? c.segments : Object.entries(c.segments).map(([k,v]) => k + ':' + v).join(', ')) : '--';
+    const abWinner = c.ab ? '<span class="badge ' + (c.ab.winner === 'A' ? 'badge-green' : 'badge-yellow') + '">' + c.ab.winner + '</span>' : '<span class="badge badge-gray">N/A</span>';
+    return '<tr>' +
+      '<td>' + esc(c.id || '--') + '</td>' +
+      '<td>' + esc(c.date || '--') + '</td>' +
+      '<td>' + esc(c.goal || '--') + '</td>' +
+      '<td>' + (c.sent || 0) + '</td>' +
+      '<td>' + (c.opens || 0) + '</td>' +
+      '<td style="color:' + openColor + ';font-weight:600;">' + openRate + '%</td>' +
+      '<td style="font-size:11px;">' + esc(segs) + '</td>' +
+      '<td>' + abWinner + '</td>' +
+      '</tr>';
+  }).join('');
+}
+
+/* ── Pipeline ──────────────────────────────────────────────── */
+function renderPipeline(pipeline) {
+  // Mini KPIs
+  const kpiEl = document.getElementById('pipeline-kpis');
+  const totalLeads = pipeline.length;
+  const qualified = pipeline.filter(p => p.stage === 'qualified' || p.stage === 'proposal').length;
+  const totalValue = pipeline.reduce((s, p) => s + (parseFloat(String(p.estimated_value).replace(/[^0-9.]/g, '')) || 0), 0);
+  const avgGuests = pipeline.length ? Math.round(pipeline.reduce((s, p) => s + (parseInt(p.guest_count) || 0), 0) / pipeline.length) : 0;
+  kpiEl.innerHTML = [
+    { val: totalLeads, label: 'Total Leads' },
+    { val: qualified, label: 'Qualified' },
+    { val: '$' + totalValue.toLocaleString(), label: 'Est. Revenue' },
+    { val: avgGuests, label: 'Avg Guests' }
+  ].map(k => '<div class="mini-kpi"><div class="mk-val">' + k.val + '</div><div class="mk-label">' + k.label + '</div></div>').join('');
+
+  // Table
+  const tbody = document.getElementById('pipeline-tbody');
+  if (!pipeline.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--gray-600);">No pipeline data</td></tr>'; return; }
+  tbody.innerHTML = pipeline.map(p => {
+    const stageCls = p.stage === 'qualified' ? 'badge-green' : p.stage === 'proposal' ? 'badge-teal' : p.stage === 'new' ? 'badge-orange' : 'badge-gray';
+    const tierCls = p.lead_tier === 'A' ? 'badge-green' : p.lead_tier === 'B' ? 'badge-teal' : p.lead_tier === 'C' ? 'badge-yellow' : 'badge-gray';
+    return '<tr>' +
+      '<td>' + esc(p.venue || '--') + '</td>' +
+      '<td>' + esc(p.contact || '--') + '</td>' +
+      '<td><span class="badge ' + stageCls + '">' + esc(p.stage || '--') + '</span></td>' +
+      '<td><span class="badge ' + tierCls + '">Tier ' + esc(p.lead_tier || '?') + '</span></td>' +
+      '<td>' + esc(p.event_date || '--') + '</td>' +
+      '<td>' + (p.guest_count || '--') + '</td>' +
+      '<td>' + esc(p.estimated_value || '--') + '</td>' +
+      '</tr>';
+  }).join('');
+}
+
+/* ── Activity Feed ─────────────────────────────────────────── */
+function renderActivity(activity) {
+  const el = document.getElementById('activity-feed');
+  if (!activity.length) { el.innerHTML = '<div style="color:var(--gray-600);text-align:center;padding:24px;">No recent activity</div>'; return; }
+  el.innerHTML = activity.map(a =>
+    '<div class="feed-item">' +
+    '<div class="feed-dot" style="background:' + (a.color || 'var(--teal)') + '"></div>' +
+    '<div><div class="feed-text">' + esc(a.text) + '</div>' +
+    '<div class="feed-time">' + esc(a.time) + '</div></div></div>'
+  ).join('');
+}
+
+/* ═══ TABLE SORTING ════════════════════════════════════════════ */
+function sortTable(tableId, colIdx) {
+  const table = document.getElementById(tableId);
+  const tbody = table.querySelector('tbody');
+  const rows = Array.from(tbody.rows);
+  const th = table.querySelectorAll('thead th')[colIdx];
+  const asc = !th.classList.contains('sorted') || th.dataset.dir === 'desc';
+
+  // Clear sort state from other columns
+  table.querySelectorAll('thead th').forEach(h => { h.classList.remove('sorted'); h.dataset.dir = ''; });
+  th.classList.add('sorted');
+  th.dataset.dir = asc ? 'asc' : 'desc';
+  th.querySelector('.sort-arrow').textContent = asc ? '\u25B2' : '\u25BC';
+
+  rows.sort((a, b) => {
+    let va = a.cells[colIdx].textContent.trim();
+    let vb = b.cells[colIdx].textContent.trim();
+    // Try numeric
+    const na = parseFloat(va.replace(/[^0-9.\-]/g, ''));
+    const nb = parseFloat(vb.replace(/[^0-9.\-]/g, ''));
+    if (!isNaN(na) && !isNaN(nb)) {
+      return asc ? na - nb : nb - na;
+    }
+    return asc ? va.localeCompare(vb) : vb.localeCompare(va);
+  });
+
+  rows.forEach(r => tbody.appendChild(r));
+}
+
+/* ═══ CSV EXPORT ═══════════════════════════════════════════════ */
+function toggleExportMenu() {
+  document.getElementById('export-menu').classList.toggle('open');
+}
+
+// Close export menu when clicking outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('.export-btn') && !e.target.closest('.export-menu')) {
+    document.getElementById('export-menu').classList.remove('open');
+  }
+});
+
+function exportCSV(tableType) {
+  document.getElementById('export-menu').classList.remove('open');
+  const tableId = tableType === 'clients' ? 'clients-table' :
+                  tableType === 'workflows' ? 'workflows-table' :
+                  tableType === 'campaigns' ? 'campaigns-table' : 'pipeline-table';
+  const table = document.getElementById(tableId);
+  if (!table) return;
+
+  const rows = [];
+  // Headers
+  const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.replace(/[^\w\s]/g, '').trim());
+  rows.push(headers.join(','));
+  // Body
+  table.querySelectorAll('tbody tr').forEach(tr => {
+    const cells = Array.from(tr.cells).map(td => {
+      let val = td.textContent.trim();
+      if (val.includes(',') || val.includes('"')) val = '"' + val.replace(/"/g, '""') + '"';
+      return val;
+    });
+    rows.push(cells.join(','));
+  });
+
+  const csv = rows.join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'eventflow_' + tableType + '_' + new Date().toISOString().split('T')[0] + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ═══ UTIL ═════════════════════════════════════════════════════ */
+function esc(s) { const d = document.createElement('div'); d.textContent = String(s || ''); return d.innerHTML; }
 </script>
 </body>
 </html>
