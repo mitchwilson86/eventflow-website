@@ -283,7 +283,8 @@
               <th>Date</th>
               <th>Goal</th>
               <th>Sent</th>
-              <th>Skipped</th>
+              <th>Opens</th>
+              <th>Open Rate</th>
               <th>Segments</th>
               <th>A/B Winner</th>
             </tr>
@@ -637,12 +638,16 @@ function renderCampaigns(campaigns) {
   tbody.innerHTML = campaigns.map(c => {
     const segs = Object.entries(c.segments).map(([k, v]) => `${k}: ${v}`).join(', ');
     const abWinner = c.ab ? `<span class="badge ${c.ab.winner === 'A' ? 'badge-green' : 'badge-yellow'}">${c.ab.winner}</span>` : '<span class="badge badge-gray">N/A</span>';
+    const opens = c.opens || 0;
+    const openRate = c.open_rate || (c.sent > 0 ? Math.round((opens / c.sent) * 100) : 0);
+    const openRateColor = openRate >= 50 ? 'var(--green)' : openRate >= 25 ? 'var(--gold)' : 'var(--text-dim)';
     return `<tr>
       <td>${esc(c.id)}</td>
       <td>${esc(c.date)}</td>
       <td>${esc(c.goal)}</td>
       <td>${c.sent}</td>
-      <td>${c.skipped}</td>
+      <td>${opens}</td>
+      <td style="color:${openRateColor};font-weight:600;">${openRate}%</td>
       <td style="font-size:12px;">${esc(segs)}</td>
       <td>${abWinner}</td>
     </tr>`;
@@ -663,14 +668,14 @@ function renderCampaigns(campaigns) {
         <div style="font-size:13px;color:var(--text-dim);margin-bottom:8px;">A/B Test: ${esc(c.id)} (${esc(c.date)})</div>
         <div class="ab-compare">
           <div class="ab-card">
-            <div class="ab-label">Variant A${c.ab.winner === 'A' ? ' &#9733; Winner' : ''}</div>
+            <div class="ab-label">Variant A${c.ab.winner === 'A' ? ' &#9733; Winner' : ''}${c.ab.winner_by_opens === 'A' ? ' (by opens)' : ''}</div>
             <div class="ab-subject">${esc(c.ab.subject_a)}</div>
-            <div class="ab-count blue">${c.ab.a_sent} sent</div>
+            <div class="ab-count blue">${c.ab.a_sent} sent${c.ab.a_opens !== undefined ? ' / ' + c.ab.a_opens + ' opens' : ''}</div>
           </div>
           <div class="ab-card variant-b">
-            <div class="ab-label">Variant B${c.ab.winner === 'B' ? ' &#9733; Winner' : ''}</div>
+            <div class="ab-label">Variant B${c.ab.winner === 'B' ? ' &#9733; Winner' : ''}${c.ab.winner_by_opens === 'B' ? ' (by opens)' : ''}</div>
             <div class="ab-subject">${esc(c.ab.subject_b)}</div>
-            <div class="ab-count gold">${c.ab.b_sent} sent</div>
+            <div class="ab-count gold">${c.ab.b_sent} sent${c.ab.b_opens !== undefined ? ' / ' + c.ab.b_opens + ' opens' : ''}</div>
           </div>
         </div>
         <div class="ab-bar-wrap">
