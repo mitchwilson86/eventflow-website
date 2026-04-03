@@ -829,11 +829,13 @@
         .platform-section { padding: 100px 0; background: rgba(255,255,255,0.01); }
         .platform-section .section-label { text-align: center; }
         .platform-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            display: flex;
+            flex-wrap: wrap;
             gap: 20px;
             margin-top: 48px;
+            justify-content: center;
         }
+        .platform-card { width: calc(33.333% - 14px); }
         .platform-card {
             background: rgba(255,255,255,0.03);
             border: 1px solid rgba(255,255,255,0.06);
