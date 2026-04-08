@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EventFlow — Settings</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy: #0b1120; --navy-light: #131b2e; --navy-card: #182035; --navy-border: #1f2b45;
+      --blue: #3b82f6; --blue-glow: rgba(59,130,246,.15); --gold: #f59e0b; --gold-glow: rgba(245,158,11,.12);
+      --green: #22c55e; --red: #ef4444; --purple: #a855f7; --cyan: #06b6d4;
+      --text: #e2e8f0; --text-dim: #94a3b8; --text-bright: #f8fafc;
+      --font: 'DM Sans', sans-serif; --serif: 'DM Serif Display', serif; --radius: 12px;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font); background: var(--navy); color: var(--text); -webkit-font-smoothing: antialiased; min-height: 100vh; }
+    a { color: var(--blue); text-decoration: none; }
+
+    /* ── Login ── */
+    #login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+    .login-box { background: var(--navy-card); border: 1px solid var(--navy-border); border-radius: 16px; padding: 48px 40px; width: 100%; max-width: 420px; box-shadow: 0 8px 32px rgba(0,0,0,.4); }
+    .login-box .logo { font-family: var(--serif); font-size: 28px; color: var(--text-bright); text-align: center; margin-bottom: 8px; }
+    .login-box .subtitle { text-align: center; color: var(--text-dim); font-size: 14px; margin-bottom: 32px; }
+    .login-box label { display: block; font-size: 13px; font-weight: 500; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+    .login-box input { width: 100%; padding: 12px 16px; background: var(--navy); border: 1px solid var(--navy-border); border-radius: 8px; color: var(--text-bright); font-family: var(--font); font-size: 15px; margin-bottom: 20px; transition: border-color .2s; }
+    .login-box input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-glow); }
+    .login-box button { width: 100%; padding: 14px; background: var(--blue); color: #fff; border: none; border-radius: 8px; font-family: var(--font); font-size: 15px; font-weight: 600; cursor: pointer; transition: background .2s; }
+    .login-box button:hover { background: #2563eb; }
+    .login-error { color: var(--red); font-size: 13px; text-align: center; margin-top: 12px; display: none; }
+    .login-divider { display: flex; align-items: center; margin: 24px 0 20px; color: var(--text-dim); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+    .login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: var(--navy-border); }
+    .login-divider::before { margin-right: 12px; } .login-divider::after { margin-left: 12px; }
+    #google-signin-btn { display: flex; justify-content: center; margin-bottom: 20px; }
+    .login-session-msg { text-align: center; color: var(--text-dim); font-size: 13px; margin-top: 8px; display: none; }
+
+    /* ── Shell ── */
+    #dashboard { display: none; }
+    .dash-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 32px; border-bottom: 1px solid var(--navy-border); background: var(--navy-light); }
+    .dash-header .brand { font-family: var(--serif); font-size: 22px; color: var(--text-bright); }
+    .dash-header .venue-name { font-size: 14px; color: var(--text-dim); margin-left: 16px; }
+    .dash-header .logout { font-size: 13px; color: var(--text-dim); cursor: pointer; padding: 8px 16px; border: 1px solid var(--navy-border); border-radius: 6px; background: transparent; font-family: var(--font); transition: border-color .2s; }
+    .dash-header .logout:hover { border-color: var(--text-dim); color: var(--text); }
+    .dash-body { max-width: 1280px; margin: 0 auto; padding: 32px; }
+    .settings-toggle { font-size: 13px; color: var(--text-dim); cursor: pointer; padding: 8px 16px; border: 1px solid var(--navy-border); border-radius: 6px; background: transparent; font-family: var(--font); transition: border-color .2s; margin-right: 8px; }
+    .settings-toggle:hover { border-color: var(--text-dim); color: var(--text); }
+
+    /* ── Panel ── */
+    .panel { background: var(--navy-card); border: 1px solid var(--navy-border); border-radius: var(--radius); padding: 24px; margin-bottom: 24px; }
+    .panel h3 { font-family: var(--serif); font-size: 20px; color: var(--text-bright); margin-bottom: 20px; }
+
+    /* ── Settings Form ── */
+    .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .settings-field label { display: block; font-size: 12px; font-weight: 500; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+    .settings-field input, .settings-field textarea { width: 100%; padding: 10px 14px; background: var(--navy); border: 1px solid var(--navy-border); border-radius: 8px; color: var(--text-bright); font-family: var(--font); font-size: 14px; transition: border-color .2s; }
+    .settings-field input:focus, .settings-field textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-glow); }
+    .settings-field textarea { min-height: 80px; resize: vertical; }
+    .settings-field.full { grid-column: 1 / -1; }
+    .settings-actions { margin-top: 20px; display: flex; align-items: center; gap: 12px; }
+    .settings-save { padding: 12px 28px; background: var(--blue); color: #fff; border: none; border-radius: 8px; font-family: var(--font); font-size: 14px; font-weight: 600; cursor: pointer; transition: background .2s; }
+    .settings-save:hover { background: #2563eb; }
+    .settings-save:disabled { opacity: .5; cursor: not-allowed; }
+    .settings-status { font-size: 13px; color: var(--green); }
+    .menu-row { display: flex; gap: 12px; margin-bottom: 8px; }
+    .menu-row input:first-child { flex: 1; }
+    .menu-row input:last-child { flex: 2; }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) { .settings-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 600px) { .dash-header { flex-direction: column; gap: 12px; text-align: center; } .dash-body { padding: 16px; } }
+  </style>
+</head>
+<body>
+
+<!-- ═══ LOGIN ═══ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="logo">EventFlow</div>
+    <div class="subtitle">Settings</div>
+    <div id="google-signin-btn"></div>
+    <div class="login-error" id="login-error">Access denied.</div>
+    <div class="login-session-msg" id="session-msg">Signing you in...</div>
+    <div class="login-divider">or sign in manually</div>
+    <label for="username">Username</label>
+    <input type="text" id="username" placeholder="Enter username" autocomplete="username" />
+    <label for="password">Password</label>
+    <input type="password" id="password" placeholder="Enter password" autocomplete="current-password" />
+    <button id="login-btn" onclick="doLogin()">Sign In</button>
+  </div>
+</div>
+
+<!-- ═══ SETTINGS PAGE ═══ -->
+<div id="dashboard">
+  <div class="dash-header">
+    <div style="display:flex;align-items:baseline;">
+      <span class="brand">EventFlow</span>
+      <span class="venue-name" id="venue-name"></span>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="settings-toggle" onclick="window.location.href='/dashboard'">Dashboard</button>
+      <button class="settings-toggle" onclick="window.location.href='/campaigns'">Campaigns</button>
+      <button class="logout" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+  <div class="dash-body">
+
+    <h2 style="font-family:var(--serif);font-size:24px;color:var(--text-bright);margin-bottom:24px;">Venue Settings</h2>
+
+    <div class="panel">
+      <div class="settings-grid">
+        <div class="settings-field">
+          <label>Venue Name</label>
+          <input type="text" id="set-venue-name" placeholder="Your Restaurant Name" />
+        </div>
+        <div class="settings-field">
+          <label>Website URL</label>
+          <input type="url" id="set-website" placeholder="https://yourrestaurant.com" />
+        </div>
+        <div class="settings-field full">
+          <label>AI Tone (how the AI sounds in emails)</label>
+          <textarea id="set-ai-tone" placeholder="e.g., warm, polished, friendly, conversational"></textarea>
+        </div>
+        <div class="settings-field full">
+          <label>Brand Voice (specific personality instructions)</label>
+          <textarea id="set-brand-voice" placeholder="e.g., You sound like a real person who genuinely wants to help guests plan a great event."></textarea>
+        </div>
+        <div class="settings-field">
+          <label>Escalation Guest Count (triggers manager handoff)</label>
+          <input type="number" id="set-escalation-threshold" min="1" max="500" />
+        </div>
+        <div class="settings-field">
+          <label>Escalation Contact Name</label>
+          <input type="text" id="set-escalation-name" placeholder="Manager name" />
+        </div>
+        <div class="settings-field">
+          <label>Escalation Contact Email</label>
+          <input type="email" id="set-escalation-email" placeholder="manager@restaurant.com" />
+        </div>
+        <div class="settings-field">
+          <label>&nbsp;</label>
+        </div>
+        <div class="settings-field full">
+          <label>Menu Links</label>
+          <div id="menu-rows"></div>
+          <button onclick="addMenuRow()" style="margin-top:8px;background:none;border:1px solid var(--navy-border);color:var(--text-dim);padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;">+ Add Menu</button>
+        </div>
+      </div>
+      <div class="settings-actions">
+        <button class="settings-save" id="save-settings-btn" onclick="saveSettings()">Save Settings</button>
+        <span class="settings-status" id="settings-status"></span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ═══ CLIENT DATA ═══ */
+var CLIENTS = {
+  sunda: { username: 'sunda', password: 'eventflow2026', gmail_address: 'sales@eventflowsales.com', venue: 'Sunda Nashville', data: {} },
+  demo: { username: 'demo', password: 'demo2026', venue: 'Demo Restaurant', data: {} }
+};
+
+var DATA_URL = 'https://script.google.com/macros/s/AKfycbxEpfGswzFnPTFLaKWlt332kv6Jy7vdagPcDEDMXbEDwrrFzpoPLc8wrmTW5UEB2xVj8w/exec';
+var GOOGLE_CLIENT_ID = '551797277858-ne7qntlo2jgmdp36o2lpcnv8qr6u7ofv.apps.googleusercontent.com';
+var currentClient = null;
+
+/* ═══ AUTH ═══ */
+function initGoogleSignIn() {
+  if (typeof google === 'undefined' || !google.accounts) { setTimeout(initGoogleSignIn, 500); return; }
+  google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleGoogleSignIn, auto_select: true });
+  google.accounts.id.renderButton(document.getElementById('google-signin-btn'), { theme: 'outline', size: 'large', width: 340, text: 'signin_with', shape: 'rectangular' });
+  var savedEmail = sessionStorage.getItem('ef_user_email');
+  if (savedEmail) {
+    var client = Object.values(CLIENTS).find(function(c) { return c.gmail_address === savedEmail; });
+    if (client) {
+      document.getElementById('session-msg').style.display = 'block';
+      currentClient = client;
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      renderPage(client);
+    }
+  }
+}
+
+function handleGoogleSignIn(response) {
+  var payload = JSON.parse(atob(response.credential.split('.')[1]));
+  var email = payload.email;
+  var errEl = document.getElementById('login-error');
+  var client = Object.values(CLIENTS).find(function(c) { return c.gmail_address === email; });
+  if (!client) { errEl.textContent = 'Access denied. ' + email + ' is not authorized.'; errEl.style.display = 'block'; return; }
+  errEl.style.display = 'none';
+  sessionStorage.setItem('ef_user_email', email);
+  currentClient = client;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  renderPage(client);
+}
+
+window.addEventListener('load', function() { initGoogleSignIn(); loadDynamicClients(); });
+
+function loadDynamicClients() {
+  fetch(DATA_URL + '?type=client_list').then(function(r) { return r.json(); }).then(function(data) {
+    if (!data.clients || !data.clients.length) return;
+    for (var i = 0; i < data.clients.length; i++) {
+      var c = data.clients[i];
+      var existing = Object.values(CLIENTS).find(function(cl) { return cl.gmail_address === c.gmail || cl.venue === c.venue; });
+      if (existing) continue;
+      if (c.status !== 'active') continue;
+      var slug = c.slug.replace(/[^a-z0-9]/g, '');
+      CLIENTS[slug] = { username: slug, password: '', gmail_address: c.gmail || '', venue: c.venue || c.slug, data: {} };
+    }
+  }).catch(function() {});
+}
+
+function doLogin() {
+  var u = document.getElementById('username').value.trim().toLowerCase();
+  var p = document.getElementById('password').value;
+  var errEl = document.getElementById('login-error');
+  var client = Object.values(CLIENTS).find(function(c) { return c.username === u && c.password === p; });
+  if (!client) { errEl.style.display = 'block'; return; }
+  errEl.style.display = 'none';
+  if (client.gmail_address) sessionStorage.setItem('ef_user_email', client.gmail_address);
+  currentClient = client;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  renderPage(client);
+}
+
+function doLogout() {
+  currentClient = null;
+  sessionStorage.removeItem('ef_user_email');
+  if (typeof google !== 'undefined' && google.accounts) google.accounts.id.disableAutoSelect();
+  window.location.href = '/dashboard';
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') doLogin();
+});
+
+/* ═══ RENDER ═══ */
+function renderPage(client) {
+  document.getElementById('venue-name').textContent = client.venue;
+  loadSettings();
+}
+
+/* ═══ SETTINGS ═══ */
+function loadSettings() {
+  if (!currentClient) return;
+  fetch(DATA_URL + '?type=client_list')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var c = (data.clients || []).find(function(cl) { return cl.venue === currentClient.venue || cl.gmail === currentClient.gmail_address; });
+      if (!c) return;
+      document.getElementById('set-venue-name').value = c.venue || '';
+      document.getElementById('set-website').value = c.website_url || '';
+      document.getElementById('set-ai-tone').value = c.ai_tone || '';
+      document.getElementById('set-brand-voice').value = c.brand_voice || '';
+      document.getElementById('set-escalation-threshold').value = c.escalation_threshold || 29;
+      document.getElementById('set-escalation-name').value = c.escalation_contact_name || '';
+      document.getElementById('set-escalation-email').value = c.escalation_contact_email || '';
+      var menuContainer = document.getElementById('menu-rows');
+      menuContainer.innerHTML = '';
+      try {
+        var menus = JSON.parse(c.menus_json || '[]');
+        menus.forEach(function(m) { addMenuRow(m.name, m.url); });
+      } catch(e) { addMenuRow('', ''); }
+      if (menuContainer.children.length === 0) addMenuRow('', '');
+      currentClient._slug = c.slug;
+    })
+    .catch(function(err) { console.warn('Settings load failed:', err); });
+}
+
+function addMenuRow(name, url) {
+  var container = document.getElementById('menu-rows');
+  var row = document.createElement('div');
+  row.className = 'menu-row';
+  row.innerHTML = '<input type="text" placeholder="Menu name" value="' + esc(name || '') + '" /><input type="url" placeholder="https://menu-link.com" value="' + esc(url || '') + '" />';
+  container.appendChild(row);
+}
+
+function saveSettings() {
+  if (!currentClient || !currentClient._slug) {
+    document.getElementById('settings-status').textContent = 'Error: no client selected';
+    return;
+  }
+  var btn = document.getElementById('save-settings-btn');
+  var status = document.getElementById('settings-status');
+  btn.disabled = true;
+  status.textContent = 'Saving...';
+  status.style.color = 'var(--text-dim)';
+
+  var menuRows = document.getElementById('menu-rows').querySelectorAll('.menu-row');
+  var menus = [];
+  menuRows.forEach(function(row) {
+    var inputs = row.querySelectorAll('input');
+    var name = inputs[0].value.trim();
+    var url = inputs[1].value.trim();
+    if (name || url) menus.push({ name: name, url: url, description: '' });
+  });
+
+  var payload = {
+    client_slug: currentClient._slug,
+    venue_name: document.getElementById('set-venue-name').value.trim(),
+    website_url: document.getElementById('set-website').value.trim(),
+    ai_tone: document.getElementById('set-ai-tone').value.trim(),
+    brand_voice: document.getElementById('set-brand-voice').value.trim(),
+    escalation_threshold: parseInt(document.getElementById('set-escalation-threshold').value) || 29,
+    escalation_contact_name: document.getElementById('set-escalation-name').value.trim(),
+    escalation_contact_email: document.getElementById('set-escalation-email').value.trim(),
+    menus_json: JSON.stringify(menus)
+  };
+
+  fetch(DATA_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      btn.disabled = false;
+      if (data.success) {
+        status.textContent = 'Settings saved! Changes take effect on the next email.';
+        status.style.color = 'var(--green)';
+      } else {
+        status.textContent = 'Error: ' + (data.error || 'unknown');
+        status.style.color = 'var(--red)';
+      }
+    })
+    .catch(function(err) {
+      btn.disabled = false;
+      status.textContent = 'Save failed: ' + err.message;
+      status.style.color = 'var(--red)';
+    });
+}
+
+function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+</script>
+</body>
+</html>
