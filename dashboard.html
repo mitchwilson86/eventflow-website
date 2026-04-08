@@ -275,7 +275,7 @@
       <span class="venue-name" id="venue-name"></span>
     </div>
     <div style="display:flex;gap:8px;">
-      <button class="settings-toggle" onclick="toggleCampaigns()">Campaigns</button>
+      <button class="settings-toggle" onclick="window.location.href='/campaigns'">Campaigns</button>
       <button class="settings-toggle" onclick="toggleSettings()">Settings</button>
       <button class="logout" onclick="doLogout()">Sign Out</button>
     </div>
@@ -335,30 +335,6 @@
           <div class="stat-label">Avg Response Time</div>
         </div>
       </div>
-    </div>
-
-    <!-- Campaign Performance -->
-    <div class="panel">
-      <h3>Campaign Performance</h3>
-      <div class="campaign-kpi-grid" id="campaign-kpis"></div>
-      <div class="table-wrap">
-        <table id="campaign-table" style="display:none;">
-          <thead>
-            <tr>
-              <th>Campaign</th>
-              <th>Date</th>
-              <th>Goal</th>
-              <th>Sent</th>
-              <th>Opens</th>
-              <th>Open Rate</th>
-              <th>Segments</th>
-              <th>A/B Winner</th>
-            </tr>
-          </thead>
-          <tbody id="campaign-tbody"></tbody>
-        </table>
-      </div>
-      <div id="ab-results"></div>
     </div>
 
     <!-- SMS Enrollment Table -->
@@ -440,49 +416,6 @@
       <div class="settings-actions">
         <button class="settings-save" id="save-settings-btn" onclick="saveSettings()">Save Settings</button>
         <span class="settings-status" id="settings-status"></span>
-      </div>
-    </div>
-
-    <!-- Campaigns Panel -->
-    <div id="campaigns-panel" class="panel">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-        <h3 style="margin:0;">Campaigns<span class="plan-badge" id="plan-badge"></span></h3>
-      </div>
-      <div class="campaigns-content" id="campaigns-content">
-        <!-- Gate overlay (shown for non-outbound clients) -->
-        <div class="gate-overlay" id="campaigns-gate" style="display:none;">
-          <div class="gate-icon">&#128274;</div>
-          <div class="gate-title">Outbound Campaigns Add-On</div>
-          <div class="gate-sub">Upload flyers, run email campaigns, and track performance. Contact your account manager to enable this feature.</div>
-          <div class="gate-badge">Upgrade to Unlock</div>
-        </div>
-
-        <!-- Upload section -->
-        <div id="upload-section">
-          <h4 style="font-size:14px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;">Upload Campaign Flyer</h4>
-          <div class="upload-zone" id="upload-zone" onclick="document.getElementById('flyer-file').click()">
-            <div class="upload-icon">&#128196;</div>
-            <div class="upload-text"><strong>Click to choose a file</strong> or drag and drop<br>JPG, PNG, GIF, or WEBP</div>
-            <input type="file" id="flyer-file" accept=".jpg,.jpeg,.png,.gif,.webp" style="display:none;" onchange="handleFileSelect(this)" />
-          </div>
-          <div class="upload-form" id="upload-form" style="display:none;">
-            <div style="flex:1;">
-              <label style="display:block;font-size:12px;color:var(--text-dim);margin-bottom:4px;">SELECTED FILE</label>
-              <div id="selected-file-name" style="font-size:14px;color:var(--text-bright);"></div>
-            </div>
-            <input type="text" id="flyer-label" placeholder="Campaign label (e.g., Mothers Day Brunch)" />
-            <button class="upload-btn" id="upload-btn" onclick="uploadFlyer()">Upload</button>
-          </div>
-          <div class="upload-status" id="upload-status"></div>
-        </div>
-
-        <!-- Uploaded flyers -->
-        <div id="flyers-section" style="margin-top:24px;">
-          <h4 style="font-size:14px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;">Your Flyers</h4>
-          <div class="flyer-grid" id="flyer-grid">
-            <div style="color:var(--text-dim);font-size:13px;grid-column:1/-1;">No flyers uploaded yet. Upload one above to get started.</div>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -695,6 +628,7 @@ function doLogin() {
   const client = Object.values(CLIENTS).find(c => c.username === u && c.password === p);
   if (!client) { errEl.style.display = 'block'; return; }
   errEl.style.display = 'none';
+  if (client.gmail_address) sessionStorage.setItem('ef_user_email', client.gmail_address);
   currentClient = client;
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
@@ -793,108 +727,18 @@ function renderDashboard(client) {
     </div>
   `).join('');
 
-  // Campaign performance
-  renderCampaigns(d.campaigns || []);
-
   // Load SMS enrollment
   loadSMSData();
 
   // Load live data (overwrites hardcoded on success)
   loadLiveKpis();
-  loadLiveCampaigns();
   loadLivePipeline();
   loadLiveActivity();
-}
-
-/* ═══ CAMPAIGN ANALYTICS ═════════════════════════════════════ */
-function renderCampaigns(campaigns) {
-  if (!campaigns.length) return;
-
-  const totalCampaigns = campaigns.length;
-  const totalSent = campaigns.reduce((s, c) => s + c.sent, 0);
-  const avgPerCampaign = Math.round(totalSent / totalCampaigns);
-  const abTests = campaigns.filter(c => c.ab).length;
-
-  // KPI cards
-  const kpiEl = document.getElementById('campaign-kpis');
-  kpiEl.innerHTML = [
-    { val: totalCampaigns, label: 'Campaigns Sent' },
-    { val: totalSent, label: 'Emails Delivered' },
-    { val: avgPerCampaign, label: 'Avg per Campaign' },
-    { val: abTests, label: 'A/B Tests Run' }
-  ].map(k => `
-    <div class="campaign-kpi">
-      <div class="ck-val">${k.val}</div>
-      <div class="ck-label">${k.label}</div>
-    </div>
-  `).join('');
-
-  // Campaign table
-  const table = document.getElementById('campaign-table');
-  const tbody = document.getElementById('campaign-tbody');
-  tbody.innerHTML = campaigns.map(c => {
-    const segs = Object.entries(c.segments).map(([k, v]) => `${k}: ${v}`).join(', ');
-    const abWinner = c.ab ? `<span class="badge ${c.ab.winner === 'A' ? 'badge-green' : 'badge-yellow'}">${c.ab.winner}</span>` : '<span class="badge badge-gray">N/A</span>';
-    const opens = c.opens || 0;
-    const openRate = c.open_rate || (c.sent > 0 ? Math.round((opens / c.sent) * 100) : 0);
-    const openRateColor = openRate >= 50 ? 'var(--green)' : openRate >= 25 ? 'var(--gold)' : 'var(--text-dim)';
-    return `<tr>
-      <td>${esc(c.id)}</td>
-      <td>${esc(c.date)}</td>
-      <td>${esc(c.goal)}</td>
-      <td>${c.sent}</td>
-      <td>${opens}</td>
-      <td style="color:${openRateColor};font-weight:600;">${openRate}%</td>
-      <td style="font-size:12px;">${esc(segs)}</td>
-      <td>${abWinner}</td>
-    </tr>`;
-  }).join('');
-  table.style.display = 'table';
-
-  // A/B results panel
-  const abCampaigns = campaigns.filter(c => c.ab);
-  const abEl = document.getElementById('ab-results');
-  if (abCampaigns.length === 0) { abEl.innerHTML = ''; return; }
-
-  abEl.innerHTML = abCampaigns.map(c => {
-    const total = c.ab.a_sent + c.ab.b_sent;
-    const aPct = Math.round((c.ab.a_sent / total) * 100);
-    const bPct = 100 - aPct;
-    return `
-      <div style="margin-top:20px;">
-        <div style="font-size:13px;color:var(--text-dim);margin-bottom:8px;">A/B Test: ${esc(c.id)} (${esc(c.date)})</div>
-        <div class="ab-compare">
-          <div class="ab-card">
-            <div class="ab-label">Variant A${c.ab.winner === 'A' ? ' &#9733; Winner' : ''}${c.ab.winner_by_opens === 'A' ? ' (by opens)' : ''}</div>
-            <div class="ab-subject">${esc(c.ab.subject_a)}</div>
-            <div class="ab-count blue">${c.ab.a_sent} sent${c.ab.a_opens !== undefined ? ' / ' + c.ab.a_opens + ' opens' : ''}</div>
-          </div>
-          <div class="ab-card variant-b">
-            <div class="ab-label">Variant B${c.ab.winner === 'B' ? ' &#9733; Winner' : ''}${c.ab.winner_by_opens === 'B' ? ' (by opens)' : ''}</div>
-            <div class="ab-subject">${esc(c.ab.subject_b)}</div>
-            <div class="ab-count gold">${c.ab.b_sent} sent${c.ab.b_opens !== undefined ? ' / ' + c.ab.b_opens + ' opens' : ''}</div>
-          </div>
-        </div>
-        <div class="ab-bar-wrap">
-          <div class="ab-bar-bg">
-            <div class="ab-bar-a" style="width:${aPct}%"></div>
-            <div class="ab-bar-b" style="width:${bPct}%"></div>
-          </div>
-          <div class="ab-bar-labels">
-            <span>A: ${aPct}%</span>
-            <span>B: ${bPct}%</span>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
 }
 
 /* ═══ SETTINGS PANEL ═════════════════════════════════════════ */
 function toggleSettings() {
   var panel = document.getElementById('settings-panel');
-  var campaignsPanel = document.getElementById('campaigns-panel');
-  if (campaignsPanel) campaignsPanel.style.display = 'none';
   var isVisible = panel.style.display === 'block';
   panel.style.display = isVisible ? 'none' : 'block';
   if (!isVisible) loadSettings();
@@ -995,161 +839,6 @@ function saveSettings() {
     });
 }
 
-/* ═══ CAMPAIGNS PANEL ═══════════════════════════════════════ */
-var uploadedFlyers = [];
-
-function toggleCampaigns() {
-  var panel = document.getElementById('campaigns-panel');
-  var settingsPanel = document.getElementById('settings-panel');
-  settingsPanel.style.display = 'none';
-  var isVisible = panel.style.display === 'block';
-  panel.style.display = isVisible ? 'none' : 'block';
-  if (!isVisible) loadCampaignsPanel();
-}
-
-function loadCampaignsPanel() {
-  if (!currentClient) return;
-  // Load plan info if not already loaded
-  if (!currentClient._plan) {
-    fetch(DATA_URL + '?type=client_list')
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        var c = (data.clients || []).find(function(cl) { return cl.venue === currentClient.venue || cl.gmail === currentClient.gmail_address; });
-        if (c) {
-          currentClient._plan = c.plan || 'autopilot';
-          currentClient._addon_outbound = c.addon_outbound === true;
-        }
-        renderCampaignsGate();
-      })
-      .catch(function() { renderCampaignsGate(); });
-  } else {
-    renderCampaignsGate();
-  }
-}
-
-function renderCampaignsGate() {
-  var plan = currentClient._plan || 'autopilot';
-  var hasOutbound = currentClient._addon_outbound === true;
-  var gate = document.getElementById('campaigns-gate');
-  var badge = document.getElementById('plan-badge');
-
-  // Show plan badge
-  var planLabels = { autopilot: 'Autopilot', autopilot_pro: 'Autopilot Pro', autopilot_premium: 'Autopilot Premium' };
-  badge.textContent = planLabels[plan] || plan;
-  badge.className = 'plan-badge ' + plan;
-
-  // Show/hide gate
-  if (hasOutbound) {
-    gate.style.display = 'none';
-  } else {
-    gate.style.display = 'flex';
-  }
-}
-
-function handleFileSelect(input) {
-  var file = input.files[0];
-  if (!file) return;
-  document.getElementById('selected-file-name').textContent = file.name + ' (' + Math.round(file.size / 1024) + ' KB)';
-  document.getElementById('upload-form').style.display = 'flex';
-  document.getElementById('upload-status').textContent = '';
-}
-
-// Drag and drop
-(function() {
-  document.addEventListener('DOMContentLoaded', function() {
-    var zone = document.getElementById('upload-zone');
-    if (!zone) return;
-    zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('drag-over'); });
-    zone.addEventListener('dragleave', function() { zone.classList.remove('drag-over'); });
-    zone.addEventListener('drop', function(e) {
-      e.preventDefault();
-      zone.classList.remove('drag-over');
-      var file = e.dataTransfer.files[0];
-      if (file) {
-        var input = document.getElementById('flyer-file');
-        var dt = new DataTransfer();
-        dt.items.add(file);
-        input.files = dt.files;
-        handleFileSelect(input);
-      }
-    });
-  });
-})();
-
-function uploadFlyer() {
-  var fileInput = document.getElementById('flyer-file');
-  var label = document.getElementById('flyer-label').value.trim();
-  var btn = document.getElementById('upload-btn');
-  var status = document.getElementById('upload-status');
-
-  if (!fileInput.files[0]) { status.textContent = 'Please select a file.'; status.style.color = 'var(--red)'; return; }
-  if (!label) { status.textContent = 'Please enter a campaign label.'; status.style.color = 'var(--red)'; return; }
-
-  btn.disabled = true;
-  status.textContent = 'Uploading...';
-  status.style.color = 'var(--text-dim)';
-
-  var formData = new FormData();
-  formData.append('data', fileInput.files[0]);
-  formData.append('campaign_label', label);
-
-  fetch('https://tibbling.app.n8n.cloud/webhook/eventflow-flyer-upload-api', {
-    method: 'POST',
-    body: formData
-  })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      btn.disabled = false;
-      if (data.success) {
-        status.textContent = 'Flyer uploaded!';
-        status.style.color = 'var(--green)';
-        addFlyerCard(label, data.image_url, data.view_url);
-        uploadedFlyers.push({ label: label, image_url: data.image_url, view_url: data.view_url });
-        // Reset form
-        fileInput.value = '';
-        document.getElementById('flyer-label').value = '';
-        document.getElementById('upload-form').style.display = 'none';
-        document.getElementById('selected-file-name').textContent = '';
-      } else {
-        status.textContent = 'Upload failed: ' + (data.error || 'unknown error');
-        status.style.color = 'var(--red)';
-      }
-    })
-    .catch(function(err) {
-      btn.disabled = false;
-      status.textContent = 'Upload failed: ' + err.message;
-      status.style.color = 'var(--red)';
-    });
-}
-
-function addFlyerCard(label, imageUrl, viewUrl) {
-  var grid = document.getElementById('flyer-grid');
-  // Remove "no flyers" placeholder
-  if (uploadedFlyers.length === 0) grid.innerHTML = '';
-
-  var card = document.createElement('div');
-  card.className = 'flyer-card';
-  card.innerHTML = '<img src="' + esc(imageUrl) + '" alt="' + esc(label) + '" onerror="this.style.background=\'var(--navy-light)\';this.style.height=\'100px\';this.alt=\'Preview unavailable\';" />' +
-    '<div class="flyer-info">' +
-    '<div class="flyer-name">' + esc(label) + '</div>' +
-    '<div class="flyer-url">' +
-    '<input type="text" value="' + esc(imageUrl) + '" readonly onclick="this.select()" />' +
-    '<button onclick="copyFlyerUrl(this)">Copy URL</button>' +
-    '</div></div>';
-  grid.prepend(card);
-}
-
-function copyFlyerUrl(btn) {
-  var input = btn.parentElement.querySelector('input');
-  input.select();
-  navigator.clipboard.writeText(input.value).then(function() {
-    btn.textContent = 'Copied!';
-    btn.style.color = 'var(--green)';
-    btn.style.borderColor = 'var(--green)';
-    setTimeout(function() { btn.textContent = 'Copy URL'; btn.style.color = ''; btn.style.borderColor = ''; }, 2000);
-  });
-}
-
 /* ═══ LIVE DATA LOADERS ══════════════════════════════════════ */
 function loadLiveKpis() {
   fetch(DATA_URL + '?type=email_kpis')
@@ -1193,21 +882,6 @@ function loadLiveKpis() {
       console.log('Live KPIs loaded');
     })
     .catch(err => console.warn('Live KPI fetch failed:', err));
-}
-
-function loadLiveCampaigns() {
-  fetch(DATA_URL + '?type=campaigns')
-    .then(r => r.json())
-    .then(data => {
-      if (data.error || !data.campaigns) { console.warn('Campaigns error:', data.error); return; }
-      // Only update if we have real data with sent > 0
-      const realCampaigns = data.campaigns.filter(c => c.sent > 0);
-      if (realCampaigns.length > 0) {
-        renderCampaigns(realCampaigns);
-      }
-      console.log('Live campaigns loaded:', data.campaigns.length);
-    })
-    .catch(err => console.warn('Live campaigns fetch failed:', err));
 }
 
 function loadLivePipeline() {
