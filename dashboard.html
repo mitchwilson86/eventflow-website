@@ -383,93 +383,12 @@ let CLIENTS = {
     username: 'sunda',
     password: 'eventflow2026',
     gmail_address: 'sales@eventflowsales.com',
-    venue: 'Sunda Nashville',
-    data: {
-      kpis: { emails: 147, responses: 132, confidence: '91%', responseTime: '< 2 min' },
-      confidence: [
-        { category: 'Private Dining', score: 94, color: 'var(--blue)' },
-        { category: 'Corporate Events', score: 89, color: 'var(--cyan)' },
-        { category: 'Weddings', score: 86, color: 'var(--purple)' },
-        { category: 'Buyouts', score: 78, color: 'var(--gold)' },
-        { category: 'General Inquiry', score: 95, color: 'var(--green)' },
-        { category: 'Rehearsal Dinners', score: 82, color: 'var(--blue)' }
-      ],
-      weeklyEmails: [
-        { label: 'Feb 10', value: 18 },
-        { label: 'Feb 17', value: 22 },
-        { label: 'Feb 24', value: 19 },
-        { label: 'Mar 3', value: 25 },
-        { label: 'Mar 10', value: 28 },
-        { label: 'Mar 17', value: 31 },
-        { label: 'Mar 23', value: 24 }
-      ],
-      quickStats: { bookings: 23, revenue: '$48,200', responseTime: '< 2 min' },
-      activity: [
-        { color: 'var(--green)', text: 'AI auto-replied to corporate dinner inquiry (12 guests)', time: '2 hours ago' },
-        { color: 'var(--blue)', text: 'Draft created for wedding reception (85 guests) — pending review', time: '3 hours ago' },
-        { color: 'var(--gold)', text: 'Escalated buyout request to Kendall (full venue, 200 guests)', time: '5 hours ago' },
-        { color: 'var(--green)', text: 'Follow-up #1 sent for rehearsal dinner inquiry', time: '8 hours ago' },
-        { color: 'var(--purple)', text: 'New SMS opt-in: Jordan M. (Server)', time: '1 day ago' },
-        { color: 'var(--green)', text: 'AI auto-replied to birthday party inquiry (18 guests)', time: '1 day ago' },
-        { color: 'var(--blue)', text: 'Knowledge base refreshed — 15 vectors updated from website crawler', time: '2 days ago' },
-        { color: 'var(--gold)', text: 'Escalated large corporate event (45 guests, budget TBD)', time: '3 days ago' }
-      ],
-      snapshot: [
-        { label: 'Table Utilization', value: '87%' },
-        { label: 'Private Dining Fill Rate', value: '72%' },
-        { label: 'Avg Party Size', value: '14 guests' },
-        { label: 'Repeat Inquiry Rate', value: '18%' },
-        { label: 'Escalation Rate', value: '11%' },
-        { label: 'Auto-Send Rate', value: '89%' }
-      ],
-      campaigns: [
-        { id: 'camp-001', date: 'Mar 26', goal: 'event_promo', sent: 6, skipped: 1, segments: { loyalty: 3, winback: 2, general: 1 }, ab: null },
-        { id: 'camp-002', date: 'Mar 29', goal: 'winback', sent: 12, skipped: 0, segments: { winback: 8, general: 4 }, ab: { subject_a: 'We saved you a spot, {{first_name}}', subject_b: 'Your next Sunda experience awaits', a_sent: 6, b_sent: 6, winner: 'A' } },
-        { id: 'camp-003', date: 'Apr 1', goal: 'event_promo', sent: 9, skipped: 2, segments: { loyalty: 4, event_upsell: 3, general: 2 }, ab: { subject_a: 'Private dining season is here', subject_b: 'Book your spring celebration at Sunda', a_sent: 5, b_sent: 4, winner: 'B' } }
-      ]
-    }
+    venue: 'Sunda Nashville'
   },
   demo: {
     username: 'demo',
     password: 'demo2026',
-    venue: 'Demo Restaurant',
-    data: {
-      kpis: { emails: 84, responses: 71, confidence: '88%', responseTime: '< 3 min' },
-      confidence: [
-        { category: 'Private Dining', score: 90, color: 'var(--blue)' },
-        { category: 'Corporate Events', score: 85, color: 'var(--cyan)' },
-        { category: 'Weddings', score: 80, color: 'var(--purple)' },
-        { category: 'Buyouts', score: 72, color: 'var(--gold)' },
-        { category: 'General Inquiry', score: 92, color: 'var(--green)' }
-      ],
-      weeklyEmails: [
-        { label: 'Feb 10', value: 10 },
-        { label: 'Feb 17', value: 12 },
-        { label: 'Feb 24', value: 14 },
-        { label: 'Mar 3', value: 11 },
-        { label: 'Mar 10', value: 16 },
-        { label: 'Mar 17', value: 13 },
-        { label: 'Mar 23', value: 8 }
-      ],
-      quickStats: { bookings: 9, revenue: '$18,500', responseTime: '< 3 min' },
-      activity: [
-        { color: 'var(--green)', text: 'AI auto-replied to private dining inquiry (8 guests)', time: '1 hour ago' },
-        { color: 'var(--blue)', text: 'Draft created for corporate holiday party', time: '4 hours ago' },
-        { color: 'var(--green)', text: 'Follow-up sent for birthday event', time: '1 day ago' },
-        { color: 'var(--purple)', text: 'New SMS opt-in: Alex T. (Manager)', time: '2 days ago' }
-      ],
-      snapshot: [
-        { label: 'Table Utilization', value: '74%' },
-        { label: 'Private Dining Fill Rate', value: '58%' },
-        { label: 'Avg Party Size', value: '10 guests' },
-        { label: 'Repeat Inquiry Rate', value: '12%' },
-        { label: 'Escalation Rate', value: '15%' },
-        { label: 'Auto-Send Rate', value: '85%' }
-      ],
-      campaigns: [
-        { id: 'demo-camp-001', date: 'Mar 28', goal: 'general', sent: 4, skipped: 0, segments: { loyalty: 2, general: 2 }, ab: null }
-      ]
-    }
+    venue: 'Demo Restaurant'
   }
 };
 
@@ -555,16 +474,7 @@ function loadDynamicClients() {
           username: slug,
           password: '',
           gmail_address: c.gmail || '',
-          venue: c.venue || c.slug,
-          data: {
-            kpis: { emails: 0, responses: 0, confidence: '--', staff: 0 },
-            confidence: [],
-            weeklyEmails: [],
-            quickStats: { bookings: 0, revenue: '$0', responseTime: '< 2 min' },
-            activity: [],
-            snapshot: [],
-            campaigns: []
-          }
+          venue: c.venue || c.slug
         };
         added++;
       }
@@ -607,82 +517,13 @@ document.addEventListener('keydown', e => {
 
 /* ═══ RENDER ══════════════════════════════════════════════════ */
 function renderDashboard(client) {
-  const d = client.data;
-
-  // Venue
+  // Venue name
   document.getElementById('venue-name').textContent = client.venue;
-
-  // KPIs
-  document.getElementById('kpi-emails').textContent = d.kpis.emails;
-  document.getElementById('kpi-responses').textContent = d.kpis.responses;
-  document.getElementById('kpi-confidence').textContent = d.kpis.confidence;
-
-  // Confidence bars
-  const barsEl = document.getElementById('confidence-bars');
-  barsEl.innerHTML = d.confidence.map(c => `
-    <div class="conf-row">
-      <span class="cat-label">${c.category}</span>
-      <div class="bar-bg"><div class="bar-fill" style="width:0%;background:${c.color}" data-width="${c.score}%"></div></div>
-      <span class="conf-val">${c.score}%</span>
-    </div>
-  `).join('');
-  // Animate bars
-  requestAnimationFrame(() => {
-    setTimeout(() => {
-      barsEl.querySelectorAll('.bar-fill').forEach(b => { b.style.width = b.dataset.width; });
-    }, 100);
-  });
-
-  // Email chart
-  const chartEl = document.getElementById('email-chart');
-  const maxVal = Math.max(...d.weeklyEmails.map(w => w.value));
-  chartEl.innerHTML = d.weeklyEmails.map(w => {
-    const pct = (w.value / maxVal) * 180;
-    return `
-      <div class="chart-bar-wrap">
-        <div class="chart-bar" style="height:0px;background:var(--blue);" data-height="${pct}px">
-          <span class="bar-val">${w.value}</span>
-        </div>
-        <span class="chart-label">${w.label}</span>
-      </div>
-    `;
-  }).join('');
-  requestAnimationFrame(() => {
-    setTimeout(() => {
-      chartEl.querySelectorAll('.chart-bar').forEach(b => { b.style.height = b.dataset.height; });
-    }, 200);
-  });
-
-  // Quick stats
-  document.getElementById('stat-bookings').textContent = d.quickStats.bookings;
-  document.getElementById('stat-revenue').textContent = d.quickStats.revenue;
-  document.getElementById('stat-response').textContent = d.quickStats.responseTime;
-
-  // Activity feed
-  const feedEl = document.getElementById('activity-feed');
-  feedEl.innerHTML = d.activity.map(a => `
-    <div class="feed-item">
-      <div class="feed-dot" style="background:${a.color}"></div>
-      <div>
-        <div class="feed-text">${a.text}</div>
-        <div class="feed-time">${a.time}</div>
-      </div>
-    </div>
-  `).join('');
-
-  // Business snapshot
-  const snapEl = document.getElementById('snapshot-grid');
-  snapEl.innerHTML = d.snapshot.map(s => `
-    <div class="snap-item">
-      <span class="snap-label">${s.label}</span>
-      <span class="snap-val">${s.value}</span>
-    </div>
-  `).join('');
 
   // Load SMS enrollment
   loadSMSData();
 
-  // Load live data (overwrites hardcoded on success)
+  // Load all live data from API — no hardcoded fallback
   loadLiveKpis();
   loadLivePipeline();
   loadLiveActivity();
