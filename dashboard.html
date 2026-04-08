@@ -300,9 +300,9 @@
         <div class="kpi-sub">AI response accuracy</div>
       </div>
       <div class="kpi-card purple">
-        <div class="kpi-label">Enrolled Staff</div>
-        <div class="kpi-value" id="kpi-staff">--</div>
-        <div class="kpi-sub">SMS opt-in</div>
+        <div class="kpi-label">Avg Response Time</div>
+        <div class="kpi-value" id="kpi-response-time">< 2 min</div>
+        <div class="kpi-sub">AI reply speed</div>
       </div>
     </div>
 
@@ -385,7 +385,7 @@ let CLIENTS = {
     gmail_address: 'sales@eventflowsales.com',
     venue: 'Sunda Nashville',
     data: {
-      kpis: { emails: 147, responses: 132, confidence: '91%', staff: 6 },
+      kpis: { emails: 147, responses: 132, confidence: '91%', responseTime: '< 2 min' },
       confidence: [
         { category: 'Private Dining', score: 94, color: 'var(--blue)' },
         { category: 'Corporate Events', score: 89, color: 'var(--cyan)' },
@@ -434,7 +434,7 @@ let CLIENTS = {
     password: 'demo2026',
     venue: 'Demo Restaurant',
     data: {
-      kpis: { emails: 84, responses: 71, confidence: '88%', staff: 3 },
+      kpis: { emails: 84, responses: 71, confidence: '88%', responseTime: '< 3 min' },
       confidence: [
         { category: 'Private Dining', score: 90, color: 'var(--blue)' },
         { category: 'Corporate Events', score: 85, color: 'var(--cyan)' },
@@ -616,7 +616,6 @@ function renderDashboard(client) {
   document.getElementById('kpi-emails').textContent = d.kpis.emails;
   document.getElementById('kpi-responses').textContent = d.kpis.responses;
   document.getElementById('kpi-confidence').textContent = d.kpis.confidence;
-  document.getElementById('kpi-staff').textContent = d.kpis.staff;
 
   // Confidence bars
   const barsEl = document.getElementById('confidence-bars');
