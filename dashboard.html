@@ -300,9 +300,9 @@
         <div class="kpi-sub">AI response accuracy</div>
       </div>
       <div class="kpi-card purple">
-        <div class="kpi-label">Avg Response Time</div>
-        <div class="kpi-value" id="kpi-response-time">< 2 min</div>
-        <div class="kpi-sub">AI reply speed</div>
+        <div class="kpi-label">Escalation Rate</div>
+        <div class="kpi-value" id="kpi-escalation">--</div>
+        <div class="kpi-sub">Sent to manager</div>
       </div>
     </div>
 
@@ -539,6 +539,7 @@ function loadLiveKpis() {
       document.getElementById('kpi-emails').textContent = data.totalEmails;
       document.getElementById('kpi-responses').textContent = data.totalResponses;
       document.getElementById('kpi-confidence').textContent = data.avgConfidence;
+      if (data.escalationRate) document.getElementById('kpi-escalation').textContent = data.escalationRate;
 
       // Update confidence bars
       if (data.confidence && data.confidence.length) {
