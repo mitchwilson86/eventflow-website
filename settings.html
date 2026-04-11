@@ -6,77 +6,22 @@
   <title>EventFlow — Settings</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/eventflow-shared.css" />
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --navy: #0b1120; --navy-light: #131b2e; --navy-card: #182035; --navy-border: #1f2b45;
-      --blue: #3b82f6; --blue-glow: rgba(59,130,246,.15); --gold: #f59e0b; --gold-glow: rgba(245,158,11,.12);
-      --green: #22c55e; --red: #ef4444; --purple: #a855f7; --cyan: #06b6d4;
-      --text: #e2e8f0; --text-dim: #94a3b8; --text-bright: #f8fafc;
-      --font: 'DM Sans', sans-serif; --serif: 'DM Serif Display', serif; --radius: 12px;
+    /* Settings-specific: add menu button styling */
+    .add-menu-btn {
+      margin-top: 8px; background: none; border: 1px solid var(--border);
+      color: var(--text-secondary); padding: 6px 14px; border-radius: 6px;
+      font-size: 12px; cursor: pointer; font-family: var(--font);
     }
-    html { scroll-behavior: smooth; }
-    body { font-family: var(--font); background: var(--navy); color: var(--text); -webkit-font-smoothing: antialiased; min-height: 100vh; }
-    a { color: var(--blue); text-decoration: none; }
-
-    /* ── Login ── */
-    #login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
-    .login-box { background: var(--navy-card); border: 1px solid var(--navy-border); border-radius: 16px; padding: 48px 40px; width: 100%; max-width: 420px; box-shadow: 0 8px 32px rgba(0,0,0,.4); }
-    .login-box .logo { font-family: var(--serif); font-size: 28px; color: var(--text-bright); text-align: center; margin-bottom: 8px; }
-    .login-box .subtitle { text-align: center; color: var(--text-dim); font-size: 14px; margin-bottom: 32px; }
-    .login-box label { display: block; font-size: 13px; font-weight: 500; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
-    .login-box input { width: 100%; padding: 12px 16px; background: var(--navy); border: 1px solid var(--navy-border); border-radius: 8px; color: var(--text-bright); font-family: var(--font); font-size: 15px; margin-bottom: 20px; transition: border-color .2s; }
-    .login-box input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-glow); }
-    .login-box button { width: 100%; padding: 14px; background: var(--blue); color: #fff; border: none; border-radius: 8px; font-family: var(--font); font-size: 15px; font-weight: 600; cursor: pointer; transition: background .2s; }
-    .login-box button:hover { background: #2563eb; }
-    .login-error { color: var(--red); font-size: 13px; text-align: center; margin-top: 12px; display: none; }
-    .login-divider { display: flex; align-items: center; margin: 24px 0 20px; color: var(--text-dim); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
-    .login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: var(--navy-border); }
-    .login-divider::before { margin-right: 12px; } .login-divider::after { margin-left: 12px; }
-    #google-signin-btn { display: flex; justify-content: center; margin-bottom: 20px; }
-    .login-session-msg { text-align: center; color: var(--text-dim); font-size: 13px; margin-top: 8px; display: none; }
-
-    /* ── Shell ── */
-    #dashboard { display: none; }
-    .dash-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 32px; border-bottom: 1px solid var(--navy-border); background: var(--navy-light); }
-    .dash-header .brand { font-family: var(--serif); font-size: 22px; color: var(--text-bright); }
-    .dash-header .venue-name { font-size: 14px; color: var(--text-dim); margin-left: 16px; }
-    .dash-header .logout { font-size: 13px; color: var(--text-dim); cursor: pointer; padding: 8px 16px; border: 1px solid var(--navy-border); border-radius: 6px; background: transparent; font-family: var(--font); transition: border-color .2s; }
-    .dash-header .logout:hover { border-color: var(--text-dim); color: var(--text); }
-    .dash-body { max-width: 1280px; margin: 0 auto; padding: 32px; }
-    .settings-toggle { font-size: 13px; color: var(--text-dim); cursor: pointer; padding: 8px 16px; border: 1px solid var(--navy-border); border-radius: 6px; background: transparent; font-family: var(--font); transition: border-color .2s; margin-right: 8px; }
-    .settings-toggle:hover { border-color: var(--text-dim); color: var(--text); }
-
-    /* ── Panel ── */
-    .panel { background: var(--navy-card); border: 1px solid var(--navy-border); border-radius: var(--radius); padding: 24px; margin-bottom: 24px; }
-    .panel h3 { font-family: var(--serif); font-size: 20px; color: var(--text-bright); margin-bottom: 20px; }
-
-    /* ── Settings Form ── */
-    .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .settings-field label { display: block; font-size: 12px; font-weight: 500; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
-    .settings-field input, .settings-field textarea { width: 100%; padding: 10px 14px; background: var(--navy); border: 1px solid var(--navy-border); border-radius: 8px; color: var(--text-bright); font-family: var(--font); font-size: 14px; transition: border-color .2s; }
-    .settings-field input:focus, .settings-field textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-glow); }
-    .settings-field textarea { min-height: 80px; resize: vertical; }
-    .settings-field.full { grid-column: 1 / -1; }
-    .settings-actions { margin-top: 20px; display: flex; align-items: center; gap: 12px; }
-    .settings-save { padding: 12px 28px; background: var(--blue); color: #fff; border: none; border-radius: 8px; font-family: var(--font); font-size: 14px; font-weight: 600; cursor: pointer; transition: background .2s; }
-    .settings-save:hover { background: #2563eb; }
-    .settings-save:disabled { opacity: .5; cursor: not-allowed; }
-    .settings-status { font-size: 13px; color: var(--green); }
-    .menu-row { display: flex; gap: 12px; margin-bottom: 8px; }
-    .menu-row input:first-child { flex: 1; }
-    .menu-row input:last-child { flex: 2; }
-
-    /* ── Responsive ── */
-    @media (max-width: 900px) { .settings-grid { grid-template-columns: 1fr; } }
-    @media (max-width: 600px) { .dash-header { flex-direction: column; gap: 12px; text-align: center; } .dash-body { padding: 16px; } }
+    .add-menu-btn:hover { border-color: var(--teal); color: var(--teal); }
   </style>
 </head>
 <body>
 
-<!-- ═══ LOGIN ═══ -->
+<!-- LOGIN -->
 <div id="login-screen">
   <div class="login-box">
     <div class="logo">EventFlow</div>
@@ -93,68 +38,92 @@
   </div>
 </div>
 
-<!-- ═══ SETTINGS PAGE ═══ -->
+<!-- SETTINGS PAGE -->
 <div id="dashboard">
-  <div class="dash-header">
-    <div style="display:flex;align-items:baseline;">
-      <span class="brand">EventFlow</span>
-      <span class="venue-name" id="venue-name"></span>
-    </div>
-    <div style="display:flex;gap:8px;">
-      <button class="settings-toggle" onclick="window.location.href='/dashboard'">Dashboard</button>
-      <button class="settings-toggle" onclick="window.location.href='/campaigns'">Campaigns</button>
-      <button class="logout" onclick="doLogout()">Sign Out</button>
-    </div>
-  </div>
-  <div class="dash-body">
-
-    <h2 style="font-family:var(--serif);font-size:24px;color:var(--text-bright);margin-bottom:24px;">Venue Settings</h2>
-
-    <div class="panel">
-      <div class="settings-grid">
-        <div class="settings-field">
-          <label>Venue Name</label>
-          <input type="text" id="set-venue-name" placeholder="Your Restaurant Name" />
-        </div>
-        <div class="settings-field">
-          <label>Website URL</label>
-          <input type="url" id="set-website" placeholder="https://yourrestaurant.com" />
-        </div>
-        <div class="settings-field full">
-          <label>AI Tone (how the AI sounds in emails)</label>
-          <textarea id="set-ai-tone" placeholder="e.g., warm, polished, friendly, conversational"></textarea>
-        </div>
-        <div class="settings-field full">
-          <label>Brand Voice (specific personality instructions)</label>
-          <textarea id="set-brand-voice" placeholder="e.g., You sound like a real person who genuinely wants to help guests plan a great event."></textarea>
-        </div>
-        <div class="settings-field">
-          <label>Escalation Guest Count (triggers manager handoff)</label>
-          <input type="number" id="set-escalation-threshold" min="1" max="500" />
-        </div>
-        <div class="settings-field">
-          <label>Escalation Contact Name</label>
-          <input type="text" id="set-escalation-name" placeholder="Manager name" />
-        </div>
-        <div class="settings-field">
-          <label>Escalation Contact Email</label>
-          <input type="email" id="set-escalation-email" placeholder="manager@restaurant.com" />
-        </div>
-        <div class="settings-field">
-          <label>&nbsp;</label>
-        </div>
-        <div class="settings-field full">
-          <label>Menu Links</label>
-          <div id="menu-rows"></div>
-          <button onclick="addMenuRow()" style="margin-top:8px;background:none;border:1px solid var(--navy-border);color:var(--text-dim);padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;">+ Add Menu</button>
-        </div>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-logo">EventFlow</span>
+        <span class="venue-name" id="venue-name"></span>
       </div>
-      <div class="settings-actions">
-        <button class="settings-save" id="save-settings-btn" onclick="saveSettings()">Save Settings</button>
-        <span class="settings-status" id="settings-status"></span>
+      <nav class="sidebar-nav">
+        <a href="/dashboard" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          <span>Dashboard</span>
+        </a>
+        <a href="/campaigns" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          <span>Campaigns</span>
+        </a>
+        <a href="/settings" class="nav-item active">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>Settings</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <span class="user-email" id="user-email-sidebar"></span>
+        <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+      </div>
+    </aside>
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <!-- Main -->
+    <div class="main-content">
+      <div class="top-bar">
+        <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()">&#9776;</button>
+        <span class="page-title">Venue Settings</span>
+        <div></div>
+      </div>
+      <div class="dash-body">
+
+        <div class="panel">
+          <div class="settings-grid">
+            <div class="settings-field">
+              <label>Venue Name</label>
+              <input type="text" id="set-venue-name" placeholder="Your Restaurant Name" />
+            </div>
+            <div class="settings-field">
+              <label>Website URL</label>
+              <input type="url" id="set-website" placeholder="https://yourrestaurant.com" />
+            </div>
+            <div class="settings-field full">
+              <label>AI Tone (how the AI sounds in emails)</label>
+              <textarea id="set-ai-tone" placeholder="e.g., warm, polished, friendly, conversational"></textarea>
+            </div>
+            <div class="settings-field full">
+              <label>Brand Voice (specific personality instructions)</label>
+              <textarea id="set-brand-voice" placeholder="e.g., You sound like a real person who genuinely wants to help guests plan a great event."></textarea>
+            </div>
+            <div class="settings-field">
+              <label>Escalation Guest Count (triggers manager handoff)</label>
+              <input type="number" id="set-escalation-threshold" min="1" max="500" />
+            </div>
+            <div class="settings-field">
+              <label>Escalation Contact Name</label>
+              <input type="text" id="set-escalation-name" placeholder="Manager name" />
+            </div>
+            <div class="settings-field">
+              <label>Escalation Contact Email</label>
+              <input type="email" id="set-escalation-email" placeholder="manager@restaurant.com" />
+            </div>
+            <div class="settings-field">
+              <label>&nbsp;</label>
+            </div>
+            <div class="settings-field full">
+              <label>Menu Links</label>
+              <div id="menu-rows"></div>
+              <button class="add-menu-btn" onclick="addMenuRow()">+ Add Menu</button>
+            </div>
+          </div>
+          <div class="settings-actions">
+            <button class="settings-save" id="save-settings-btn" onclick="saveSettings()">Save Settings</button>
+            <span class="settings-status" id="settings-status"></span>
+          </div>
+        </div>
+
       </div>
     </div>
-
   </div>
 </div>
 
@@ -168,6 +137,12 @@ var CLIENTS = {
 var DATA_URL = 'https://script.google.com/macros/s/AKfycbxEpfGswzFnPTFLaKWlt332kv6Jy7vdagPcDEDMXbEDwrrFzpoPLc8wrmTW5UEB2xVj8w/exec';
 var GOOGLE_CLIENT_ID = '551797277858-ne7qntlo2jgmdp36o2lpcnv8qr6u7ofv.apps.googleusercontent.com';
 var currentClient = null;
+
+/* ═══ SIDEBAR TOGGLE ═══ */
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('active');
+}
 
 /* ═══ AUTH ═══ */
 function initGoogleSignIn() {
@@ -245,6 +220,9 @@ document.addEventListener('keydown', function(e) {
 /* ═══ RENDER ═══ */
 function renderPage(client) {
   document.getElementById('venue-name').textContent = client.venue;
+  if (client.gmail_address) {
+    document.getElementById('user-email-sidebar').textContent = client.gmail_address;
+  }
   loadSettings();
 }
 
@@ -292,7 +270,7 @@ function saveSettings() {
   var status = document.getElementById('settings-status');
   btn.disabled = true;
   status.textContent = 'Saving...';
-  status.style.color = 'var(--text-dim)';
+  status.style.color = 'var(--text-muted)';
 
   var menuRows = document.getElementById('menu-rows').querySelectorAll('.menu-row');
   var menus = [];
