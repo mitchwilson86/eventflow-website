@@ -19,6 +19,9 @@
     <meta name="twitter:title" content="EventFlow — AI-Powered Sales for Hospitality">
     <meta name="twitter:description" content="Your AI sales manager for private events. Respond instantly, qualify leads, and book more events on autopilot.">
 
+    <!-- Canonical -->
+    <link rel="canonical" href="https://eventflowsales.com">
+
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -30,6 +33,22 @@
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
         gtag('config', 'G-Y5L9CGEL9S');
+    </script>
+
+    <!-- FAQPage Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {"@type": "Question", "name": "How long does it take to set up EventFlow?", "acceptedAnswer": {"@type": "Answer", "text": "Most venues are fully operational within 24-48 hours. You connect your inbox, upload your event packets and menus, and EventFlow starts responding immediately. No technical setup or code required."}},
+        {"@type": "Question", "name": "Does EventFlow integrate with my POS or CRM?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. EventFlow integrates with TripleSeat, Gmail, Google Sheets, and Slack out of the box. We're adding support for Toast, OpenTable, and other POS systems. Custom integrations are available on the Premium plan."}},
+        {"@type": "Question", "name": "How is my data kept secure?", "acceptedAnswer": {"@type": "Answer", "text": "All data is encrypted in transit and at rest. Your venue knowledge base is isolated in its own namespace — no data is shared between clients. We use SOC 2-aligned infrastructure and never train AI models on your data."}},
+        {"@type": "Question", "name": "What does pricing look like?", "acceptedAnswer": {"@type": "Answer", "text": "Plans start at $149/month per venue with no per-email fees. You pay a flat monthly rate based on the features you need. No long-term contracts required — upgrade, downgrade, or cancel anytime."}},
+        {"@type": "Question", "name": "How accurate is the AI? Does it ever get things wrong?", "acceptedAnswer": {"@type": "Answer", "text": "EventFlow operates at 85%+ confidence on average and only responds using information from your uploaded knowledge base. When the AI isn't confident, it automatically escalates to your team via Slack or SMS so a human can step in."}},
+        {"@type": "Question", "name": "Can I cancel at any time?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. All plans are month-to-month with no cancellation fees. You can pause, downgrade, or cancel from your dashboard at any time. We'll export your data on request."}}
+      ]
+    }
     </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -78,6 +97,24 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 24px;
+        }
+
+        /* ── Skip Link ──────────────────────────── */
+        .skip-link {
+            position: absolute;
+            top: -100px; left: 50%;
+            transform: translateX(-50%);
+            background: var(--orange);
+            color: var(--dark);
+            padding: 12px 24px;
+            border-radius: 0 0 8px 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            z-index: 10000;
+            transition: top 0.2s;
+        }
+        .skip-link:focus {
+            top: 0;
         }
 
         /* ============================================
@@ -154,7 +191,7 @@
 
         .nav-cta {
             background: var(--orange);
-            color: var(--white) !important;
+            color: var(--dark) !important;
             padding: 10px 24px;
             border-radius: 8px;
             font-weight: 600;
@@ -296,7 +333,7 @@
 
         .btn-primary {
             background: var(--orange);
-            color: var(--white);
+            color: var(--dark);
             padding: 14px 32px;
             border-radius: 10px;
             font-weight: 600;
@@ -394,6 +431,119 @@
             font-weight: 600;
             color: var(--gray-400);
             letter-spacing: 0.05em;
+        }
+
+        .social-proof-quote {
+            max-width: 640px;
+            margin: 32px auto 0;
+            text-align: center;
+            border: none;
+            padding: 0;
+        }
+
+        .social-proof-quote p {
+            font-size: 1.05rem;
+            color: var(--gray-300);
+            font-style: italic;
+            line-height: 1.7;
+            margin-bottom: 10px;
+        }
+
+        .social-proof-quote cite {
+            font-size: 0.85rem;
+            color: var(--gray-600);
+            font-style: normal;
+        }
+
+        /* ── Hero Video Embed ──────────────────────── */
+        .hero-video {
+            max-width: 680px;
+            margin: 0 auto 36px;
+        }
+
+        .video-wrapper {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 */
+            height: 0;
+            overflow: hidden;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: var(--dark-card);
+        }
+
+        .video-wrapper iframe {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+        }
+
+        .video-play-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: rgba(0,21,36,0.7);
+            cursor: pointer;
+            transition: background 0.3s;
+            z-index: 2;
+        }
+
+        .video-play-overlay:hover {
+            background: rgba(0,21,36,0.5);
+        }
+
+        .video-play-btn {
+            width: 64px; height: 64px;
+            border-radius: 50%;
+            background: var(--orange);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 20px rgba(255,125,0,0.4);
+            transition: transform 0.2s;
+        }
+
+        .video-play-overlay:hover .video-play-btn {
+            transform: scale(1.1);
+        }
+
+        .video-play-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--cream);
+            letter-spacing: 0.02em;
+        }
+
+        /* ── Sticky Mobile CTA ─────────────────────── */
+        .sticky-mobile-cta {
+            display: none;
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            z-index: 999;
+            background: var(--orange);
+            color: var(--dark);
+            text-align: center;
+            padding: 16px 24px;
+            font-family: var(--font);
+            font-size: 1rem;
+            font-weight: 700;
+            text-decoration: none;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+        }
+
+        .sticky-mobile-cta:hover {
+            background: var(--orange-light);
+        }
+
+        @media (max-width: 768px) {
+            .sticky-mobile-cta { display: flex; }
+            body { padding-bottom: 56px; } /* space for sticky CTA */
         }
 
         /* ============================================
@@ -1112,7 +1262,7 @@
 
         .pricing-btn-primary {
             background: var(--orange);
-            color: var(--white);
+            color: var(--dark);
         }
 
         .pricing-btn-primary:hover {
@@ -1172,6 +1322,186 @@
         .quote-role {
             font-size: 0.85rem;
             color: var(--gray-400);
+        }
+
+        /* ============================================
+           FAQ
+           ============================================ */
+        .faq-section {
+            padding: 120px 0;
+        }
+
+        .faq-header {
+            text-align: center;
+            margin-bottom: 56px;
+        }
+
+        .faq-header .section-subtitle {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .faq-grid {
+            max-width: 780px;
+            margin: 0 auto;
+        }
+
+        .faq-item {
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .faq-question {
+            width: 100%;
+            background: none;
+            border: none;
+            padding: 24px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            cursor: pointer;
+            text-align: left;
+            font-family: var(--font);
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--cream);
+            transition: color 0.2s;
+        }
+
+        .faq-question:hover { color: var(--orange); }
+
+        .faq-chevron {
+            flex-shrink: 0;
+            width: 24px; height: 24px;
+            transition: transform 0.3s;
+        }
+
+        .faq-item.open .faq-chevron {
+            transform: rotate(180deg);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.35s ease, padding 0.35s ease;
+        }
+
+        .faq-item.open .faq-answer {
+            max-height: 300px;
+        }
+
+        .faq-answer p {
+            padding: 0 0 24px;
+            font-size: 0.95rem;
+            color: var(--gray-400);
+            line-height: 1.7;
+        }
+
+        /* ============================================
+           ROI CALCULATOR
+           ============================================ */
+        .roi-section {
+            padding: 100px 0;
+            background: linear-gradient(180deg, transparent, rgba(21, 97, 109, 0.03), transparent);
+        }
+
+        .roi-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .roi-header .section-subtitle {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .roi-card {
+            max-width: 640px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 20px;
+            padding: 40px;
+        }
+
+        .roi-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .roi-field label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--gray-400);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 8px;
+        }
+
+        .roi-field input {
+            width: 100%;
+            padding: 14px 18px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.05);
+            color: var(--cream);
+            font-size: 1.1rem;
+            font-family: var(--font);
+            font-weight: 600;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+
+        .roi-field input:focus {
+            border-color: var(--teal);
+            box-shadow: 0 0 0 3px rgba(21,97,109,0.15);
+        }
+
+        .roi-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.06);
+            margin-bottom: 28px;
+        }
+
+        .roi-result {
+            text-align: center;
+        }
+
+        .roi-result-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--gray-400);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+        }
+
+        .roi-result-value {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--orange);
+            line-height: 1.1;
+            margin-bottom: 8px;
+        }
+
+        .roi-result-note {
+            font-size: 0.85rem;
+            color: var(--gray-600);
+            line-height: 1.5;
+        }
+
+        .roi-cta {
+            text-align: center;
+            margin-top: 28px;
+        }
+
+        @media (max-width: 600px) {
+            .roi-inputs { grid-template-columns: 1fr; }
+            .roi-card { padding: 28px 20px; }
+            .roi-result-value { font-size: 2.2rem; }
         }
 
         /* ============================================
@@ -1423,8 +1753,11 @@
 </head>
 <body>
 
+    <!-- Skip to content -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
     <!-- ==================== NAV ==================== -->
-    <nav id="navbar">
+    <nav id="navbar" aria-label="Main navigation">
         <div class="nav-inner">
             <a href="#home" class="nav-logo">
                 <img src="logo.svg" alt="EventFlow Logo">
@@ -1433,17 +1766,18 @@
             <ul class="nav-links" id="navLinks">
                 <li><a href="#home">Home</a></li>
                 <li><a href="#features">Features</a></li>
-                <li><a href="#pricing">Pricing</a></li>
+                <li><a href="/pricing">Pricing</a></li>
                 <li><a href="#contact">Contact</a></li>
-                <li><a href="#contact" class="nav-cta">Get Started</a></li>
+                <li><a href="https://tally.so/r/BzBPgR" target="_blank" class="nav-cta">Book a Demo</a></li>
             </ul>
-            <div class="mobile-toggle" id="mobileToggle" onclick="document.getElementById('navLinks').classList.toggle('open')">
+            <button class="mobile-toggle" id="mobileToggle" aria-label="Open navigation menu" aria-expanded="false" onclick="var nav=document.getElementById('navLinks');nav.classList.toggle('open');this.setAttribute('aria-expanded',nav.classList.contains('open'))">
                 <span></span><span></span><span></span>
-            </div>
+            </button>
         </div>
     </nav>
 
     <!-- ==================== HERO ==================== -->
+    <main id="main-content">
     <section id="home">
         <canvas id="heroCanvas"></canvas>
         <div class="hero-bg"></div>
@@ -1457,9 +1791,23 @@
             <p class="hero-sub">
                 EventFlow responds to every event inquiry instantly, qualifies leads automatically, and follows up until they book. Built exclusively for restaurants and hospitality venues.
             </p>
+            <!-- Video Embed Placeholder -->
+            <div class="hero-video" style="animation:fadeInUp 0.6s ease 0.25s forwards;opacity:0;">
+                <div class="video-wrapper">
+                    <!-- Replace src with your YouTube/Loom URL, e.g.: src="https://www.youtube.com/embed/YOUR_VIDEO_ID" -->
+                    <iframe src="about:blank" title="EventFlow 90-second demo" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+                    <div class="video-play-overlay" id="videoOverlay" role="button" tabindex="0" aria-label="Play 90-second demo video" onclick="this.style.display='none'" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.style.display='none'}"
+                        <div class="video-play-btn">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="var(--cream)" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        </div>
+                        <span class="video-play-label">Watch 90-second demo</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="hero-buttons">
-                <a href="#contact" class="btn-primary">
-                    Start Free Trial
+                <a href="https://tally.so/r/BzBPgR" target="_blank" class="btn-primary">
+                    Book a Demo
                     <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 </a>
                 <a href="#features" class="btn-secondary">
@@ -1483,6 +1831,25 @@
         </div>
     </section>
 
+
+    <!-- ==================== SOCIAL PROOF ==================== -->
+    <section class="social-proof">
+        <div class="container">
+            <p class="social-proof-label">Trusted by restaurants and hospitality venues</p>
+            <div class="social-proof-logos">
+                <!-- Replace with real client logos -->
+                <span>Sunda Nashville</span>
+                <span>The Capital Grille</span>
+                <span>Nobu</span>
+                <span>STK Steakhouse</span>
+                <span>Tao Group</span>
+            </div>
+            <blockquote class="social-proof-quote">
+                <p>"EventFlow cut our inquiry response time from 2 days to under a minute. We booked 40% more private events in the first quarter."</p>
+                <cite>— Director of Events, Fine Dining Venue &bull; Nashville, TN</cite>
+            </blockquote>
+        </div>
+    </section>
 
     <!-- ==================== THE PROBLEM ==================== -->
     <section class="problem-section">
@@ -1858,7 +2225,7 @@
                         <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> TripleSeat / CRM read integration</li>
                         <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Live availability answers</li>
                     </ul>
-                    <a href="#contact" class="pricing-btn pricing-btn-secondary">Get Started</a>
+                    <a href="https://tally.so/r/BzBPgR" target="_blank" class="pricing-btn pricing-btn-secondary">Book a Demo</a>
                 </div>
 
                 <!-- Tier 2 — Autopilot Pro -->
@@ -1883,7 +2250,7 @@
                         <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> SMS escalation alerts (Twilio)</li>
                         <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> BEO draft generation (PDF output)</li>
                     </ul>
-                    <a href="#contact" class="pricing-btn pricing-btn-primary">Get Started</a>
+                    <a href="https://tally.so/r/BzBPgR" target="_blank" class="pricing-btn pricing-btn-primary">Book a Demo</a>
                 </div>
 
                 <!-- Tier 3 — Autopilot Premium -->
@@ -1909,7 +2276,7 @@
                         <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Ownership inquiry digest (weekly report)</li>
                         <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Priority support &amp; custom escalation rules</li>
                     </ul>
-                    <a href="#contact" class="pricing-btn pricing-btn-secondary">Contact Sales</a>
+                    <a href="https://tally.so/r/BzBPgR" target="_blank" class="pricing-btn pricing-btn-secondary">Contact Sales</a>
                 </div>
             </div>
 
@@ -1932,7 +2299,7 @@
                     <div class="pa-amount">$99–$199</div>
                     <div class="pa-period">per month</div>
                     <div class="pa-note">Based on send volume. Available with any plan.</div>
-                    <a href="#contact" class="pricing-btn pricing-btn-primary">Add to Any Plan</a>
+                    <a href="https://tally.so/r/BzBPgR" target="_blank" class="pricing-btn pricing-btn-primary">Add to Any Plan</a>
                 </div>
             </div>
         </div>
@@ -1945,6 +2312,93 @@
                 <p class="quote-text">The first venue to respond wins the booking. EventFlow makes sure that venue is always yours.</p>
                 <p class="quote-author">Built for the hospitality industry</p>
                 <p class="quote-role">By people who understand restaurant operations</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== ROI CALCULATOR ==================== -->
+    <section class="roi-section">
+        <div class="container">
+            <div class="roi-header">
+                <div class="section-label"><span class="line"></span> ROI Calculator</div>
+                <h2 class="section-title">See how much revenue<br>you're leaving on the table</h2>
+                <p class="section-subtitle">Most venues lose 30% of event inquiries to slow responses. EventFlow closes that gap.</p>
+            </div>
+            <div class="roi-card fade-in">
+                <div class="roi-inputs">
+                    <div class="roi-field">
+                        <label for="roi-inquiries">Monthly event inquiries</label>
+                        <input type="number" id="roi-inquiries" value="40" min="1" max="999" oninput="calcROI()">
+                    </div>
+                    <div class="roi-field">
+                        <label for="roi-value">Average event value ($)</label>
+                        <input type="number" id="roi-value" value="3000" min="100" max="100000" step="100" oninput="calcROI()">
+                    </div>
+                </div>
+                <div class="roi-divider"></div>
+                <div class="roi-result">
+                    <div class="roi-result-label">Estimated revenue recovered per year</div>
+                    <div class="roi-result-value" id="roi-output">$432,000</div>
+                    <div class="roi-result-note">Based on recovering 30% of inquiries that would otherwise go unanswered or receive a delayed response.</div>
+                </div>
+                <div class="roi-cta">
+                    <a href="https://tally.so/r/BzBPgR" target="_blank" class="btn-primary">Book a Demo <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== FAQ ==================== -->
+    <section class="faq-section" id="faq">
+        <div class="container">
+            <div class="faq-header">
+                <div class="section-label"><span class="line"></span> FAQ</div>
+                <h2 class="section-title">Frequently asked questions</h2>
+                <p class="section-subtitle">Everything you need to know about getting started with EventFlow.</p>
+            </div>
+            <div class="faq-grid">
+                <div class="faq-item">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open');this.setAttribute('aria-expanded',this.parentElement.classList.contains('open'))" aria-expanded="false">
+                        How long does it take to set up EventFlow?
+                        <svg class="faq-chevron" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="faq-answer"><p>Most venues are fully operational within 24-48 hours. You connect your inbox, upload your event packets and menus, and EventFlow starts responding immediately. No technical setup or code required.</p></div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open');this.setAttribute('aria-expanded',this.parentElement.classList.contains('open'))" aria-expanded="false">
+                        Does EventFlow integrate with my POS or CRM?
+                        <svg class="faq-chevron" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="faq-answer"><p>Yes. EventFlow integrates with TripleSeat, Gmail, Google Sheets, and Slack out of the box. We're adding support for Toast, OpenTable, and other POS systems. Custom integrations are available on the Premium plan.</p></div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open');this.setAttribute('aria-expanded',this.parentElement.classList.contains('open'))" aria-expanded="false">
+                        How is my data kept secure?
+                        <svg class="faq-chevron" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="faq-answer"><p>All data is encrypted in transit and at rest. Your venue knowledge base is isolated in its own namespace — no data is shared between clients. We use SOC 2-aligned infrastructure and never train AI models on your data.</p></div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open');this.setAttribute('aria-expanded',this.parentElement.classList.contains('open'))" aria-expanded="false">
+                        What does pricing look like?
+                        <svg class="faq-chevron" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="faq-answer"><p>Plans start at $149/month per venue with no per-email fees. You pay a flat monthly rate based on the features you need. No long-term contracts required — upgrade, downgrade, or cancel anytime.</p></div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open');this.setAttribute('aria-expanded',this.parentElement.classList.contains('open'))" aria-expanded="false">
+                        How accurate is the AI? Does it ever get things wrong?
+                        <svg class="faq-chevron" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="faq-answer"><p>EventFlow operates at 85%+ confidence on average and only responds using information from your uploaded knowledge base — it never makes things up. When the AI isn't confident, it automatically escalates to your team via Slack or SMS so a human can step in.</p></div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open');this.setAttribute('aria-expanded',this.parentElement.classList.contains('open'))" aria-expanded="false">
+                        Can I cancel at any time?
+                        <svg class="faq-chevron" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="faq-answer"><p>Yes. All plans are month-to-month with no cancellation fees. You can pause, downgrade, or cancel from your dashboard at any time. We'll export your data on request.</p></div>
+                </div>
             </div>
         </div>
     </section>
@@ -1967,8 +2421,10 @@
         </div>
     </section>
 
+    </main>
+
     <!-- ==================== FOOTER ==================== -->
-    <footer>
+    <footer role="contentinfo">
         <div class="container">
             <div class="footer-grid">
                 <div class="footer-brand">
@@ -2006,6 +2462,12 @@
             </div>
         </div>
     </footer>
+
+    <!-- ==================== STICKY MOBILE CTA ==================== -->
+    <a href="https://tally.so/r/BzBPgR" target="_blank" class="sticky-mobile-cta" aria-label="Book a demo">
+        Book a Demo
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
 
     <!-- ==================== SCRIPTS ==================== -->
     <script>
@@ -2177,6 +2639,14 @@
                 btn.disabled = false;
                 e.target.reset();
             }, 4000);
+        }
+
+        // ROI Calculator
+        function calcROI() {
+            var inquiries = parseInt(document.getElementById('roi-inquiries').value) || 0;
+            var value = parseInt(document.getElementById('roi-value').value) || 0;
+            var recovered = Math.round(inquiries * 0.30 * value * 12);
+            document.getElementById('roi-output').textContent = '$' + recovered.toLocaleString();
         }
 
         // Smooth scroll for Safari

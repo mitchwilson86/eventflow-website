@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://eventflowsales.com/</loc><priority>1.0</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://eventflowsales.com/pricing</loc><priority>0.9</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://eventflowsales.com/about</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://eventflowsales.com/blog</loc><priority>0.7</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://eventflowsales.com/careers</loc><priority>0.5</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://eventflowsales.com/changelog</loc><priority>0.5</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://eventflowsales.com/documentation</loc><priority>0.6</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://eventflowsales.com/help</loc><priority>0.6</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://eventflowsales.com/integrations</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://eventflowsales.com/privacy</loc><priority>0.3</priority><changefreq>yearly</changefreq></url>
+  <url><loc>https://eventflowsales.com/terms</loc><priority>0.3</priority><changefreq>yearly</changefreq></url>
+</urlset>

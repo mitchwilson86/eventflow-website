@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EventFlow — Pricing | AI Sales Automation for Restaurants</title>
+    <meta name="description" content="Simple, transparent pricing for EventFlow. Plans start at $149/month per venue. No per-email fees, no long-term contracts. AI-powered event sales automation for restaurants.">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="canonical" href="https://eventflowsales.com/pricing">
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y5L9CGEL9S"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-Y5L9CGEL9S');
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --teal-dark: #0f4a54; --teal: #15616d; --teal-light: #1b7a89;
+            --orange: #ff7d00; --orange-light: #ff9b3d; --burnt: #78290f;
+            --dark: #001524; --dark-card: #001e30; --cream: #ffecd1;
+            --gray-900: #011b2d; --gray-800: #0a2a3f; --gray-700: #1a3d54;
+            --gray-600: #3a6070; --gray-400: #8faab8; --gray-300: #c5d8e2;
+            --gray-100: #e8f0f4; --white: #ffecd1;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        html { scroll-behavior: smooth; }
+        body { font-family: var(--font); color: var(--gray-300); background: var(--dark); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; color: inherit; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+        /* Nav */
+        nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(255,236,209,0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,21,36,0.08); }
+        nav.scrolled { background: rgba(255,236,209,1); box-shadow: 0 4px 30px rgba(0,21,36,0.1); }
+        .nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 72px; }
+        .nav-logo { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 1.25rem; color: var(--dark); }
+        .nav-logo img { height: 40px; width: 40px; border-radius: 10px; }
+        .nav-links { display: flex; align-items: center; gap: 36px; list-style: none; }
+        .nav-links a { font-size: 0.9rem; font-weight: 500; color: var(--dark); opacity: 0.7; transition: opacity 0.2s; position: relative; }
+        .nav-links a::after { content: ''; position: absolute; bottom: -4px; left: 0; width: 0; height: 2px; background: var(--orange); transition: width 0.3s ease; }
+        .nav-links a:hover { opacity: 1; }
+        .nav-links a:hover::after { width: 100%; }
+        .nav-cta { background: var(--orange); color: var(--dark) !important; padding: 10px 24px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; transition: all 0.2s; opacity: 1 !important; }
+        .nav-cta:hover { background: var(--orange-light); transform: translateY(-1px); box-shadow: 0 4px 15px rgba(255,125,0,0.4); }
+        .nav-cta::after { display: none !important; }
+        .mobile-toggle { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 8px; }
+        .mobile-toggle span { width: 24px; height: 2px; background: var(--dark); border-radius: 2px; transition: all 0.3s; }
+
+        /* Page header */
+        .page-hero { padding: 160px 0 80px; text-align: center; position: relative; }
+        .page-hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(21,97,109,0.12) 0%, transparent 60%); pointer-events: none; }
+        .section-label { display: inline-flex; align-items: center; gap: 8px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: var(--orange); margin-bottom: 16px; }
+        .section-label .line { width: 24px; height: 1px; background: var(--orange); }
+        .section-title { font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 700; color: var(--white); line-height: 1.2; margin-bottom: 20px; letter-spacing: -0.02em; }
+        .section-subtitle { font-size: 1.1rem; color: var(--gray-400); max-width: 600px; line-height: 1.7; margin: 0 auto; }
+
+        /* Pricing grid */
+        .pricing-content { padding: 0 0 80px; }
+        .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; align-items: stretch; }
+        .pricing-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 20px; padding: 40px 32px; display: flex; flex-direction: column; transition: all 0.3s ease; }
+        .pricing-card:hover { transform: translateY(-4px); }
+        .pricing-card.featured { background: linear-gradient(135deg, rgba(21,97,109,0.1), rgba(255,125,0,0.05)); border-color: rgba(21,97,109,0.3); position: relative; }
+        .pricing-card.featured::before { content: 'Most Popular'; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, var(--orange), var(--burnt)); color: var(--cream); font-size: 0.75rem; font-weight: 700; padding: 5px 16px; border-radius: 50px; letter-spacing: 0.05em; }
+        .pricing-tier { font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal-light); margin-bottom: 8px; }
+        .pricing-name { font-size: 1.4rem; font-weight: 700; color: var(--white); margin-bottom: 8px; }
+        .pricing-desc { font-size: 0.9rem; color: var(--gray-400); margin-bottom: 24px; line-height: 1.5; }
+        .pricing-amount { display: flex; align-items: baseline; gap: 4px; margin-bottom: 8px; }
+        .pricing-dollar { font-size: 1.2rem; font-weight: 600; color: var(--gray-400); }
+        .pricing-value { font-size: 3rem; font-weight: 800; color: var(--white); line-height: 1; }
+        .pricing-period { font-size: 0.9rem; color: var(--gray-400); }
+        .pricing-note { font-size: 0.8rem; color: var(--gray-600); margin-bottom: 32px; }
+        .pricing-divider { height: 1px; background: rgba(255,255,255,0.06); margin-bottom: 28px; }
+        .pricing-features { list-style: none; display: flex; flex-direction: column; gap: 14px; margin-bottom: 36px; flex: 1; }
+        .pricing-features li { display: flex; align-items: flex-start; gap: 10px; font-size: 0.9rem; color: var(--gray-300); }
+        .pricing-features .check-icon { flex-shrink: 0; color: var(--teal-light); font-size: 1rem; margin-top: 1px; }
+        .pricing-btn { display: block; text-align: center; padding: 14px; border-radius: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.25s; cursor: pointer; border: none; width: 100%; }
+        .pricing-btn-primary { background: var(--orange); color: var(--dark); }
+        .pricing-btn-primary:hover { background: var(--orange-light); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,125,0,0.3); }
+        .pricing-btn-secondary { background: rgba(255,255,255,0.05); color: var(--white); border: 1px solid rgba(255,255,255,0.1); }
+        .pricing-btn-secondary:hover { background: rgba(255,255,255,0.1); }
+
+        /* Add-on */
+        .pricing-addon { margin-top: 32px; background: rgba(255,125,0,0.04); border: 1px solid rgba(255,125,0,0.2); border-radius: 16px; padding: 36px 40px; display: flex; align-items: center; gap: 40px; }
+        .pricing-addon-badge { display: inline-block; font-size: 0.7rem; font-weight: 700; color: var(--orange); background: rgba(255,125,0,0.15); padding: 3px 12px; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .pricing-addon-info { flex: 1; }
+        .pricing-addon-info h3 { font-size: 1.3rem; font-weight: 700; color: var(--cream); margin-bottom: 6px; }
+        .pricing-addon-info > p { font-size: 0.9rem; color: var(--gray-400); margin-bottom: 16px; }
+        .addon-features { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; list-style: none; }
+        .addon-features li { font-size: 0.85rem; color: var(--gray-300); display: flex; align-items: center; gap: 8px; }
+        .addon-features .check-icon { color: var(--orange); flex-shrink: 0; }
+        .pricing-addon-price { text-align: center; min-width: 180px; }
+        .pricing-addon-price .pa-amount { font-size: 1.6rem; font-weight: 800; color: var(--cream); }
+        .pricing-addon-price .pa-period { font-size: 0.85rem; color: var(--gray-400); margin-top: 2px; }
+        .pricing-addon-price .pa-note { font-size: 0.75rem; color: var(--gray-600); margin-top: 4px; }
+        .pricing-addon-price .pricing-btn { margin-top: 14px; display: inline-block; padding: 12px 28px; width: auto; }
+
+        /* FAQ compact */
+        .pricing-faq { padding: 80px 0 120px; }
+        .pricing-faq h2 { text-align: center; font-size: 1.6rem; font-weight: 700; color: var(--white); margin-bottom: 40px; }
+        .faq-grid { max-width: 780px; margin: 0 auto; }
+        .faq-item { border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .faq-question { width: 100%; background: none; border: none; padding: 24px 0; display: flex; align-items: center; justify-content: space-between; gap: 16px; cursor: pointer; text-align: left; font-family: var(--font); font-size: 1.05rem; font-weight: 600; color: var(--cream); transition: color 0.2s; }
+        .faq-question:hover { color: var(--orange); }
+        .faq-chevron { flex-shrink: 0; width: 24px; height: 24px; transition: transform 0.3s; }
+        .faq-item.open .faq-chevron { transform: rotate(180deg); }
+        .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+        .faq-item.open .faq-answer { max-height: 300px; }
+        .faq-answer p { padding: 0 0 24px; font-size: 0.95rem; color: var(--gray-400); line-height: 1.7; }
+
+        /* Footer */
+        footer { border-top: 1px solid rgba(255,255,255,0.05); padding: 60px 0 40px; }
+        .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px; margin-bottom: 48px; }
+        .footer-brand p { font-size: 0.9rem; color: var(--gray-400); line-height: 1.6; margin-top: 16px; max-width: 300px; }
+        .footer-col h4 { font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--white); margin-bottom: 20px; }
+        .footer-col a { display: block; font-size: 0.9rem; color: var(--gray-400); padding: 6px 0; transition: color 0.2s; }
+        .footer-col a:hover { color: var(--white); }
+        .footer-bottom { border-top: 1px solid rgba(255,255,255,0.05); padding-top: 24px; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--gray-600); }
+
+        /* Animations */
+        .fade-in { opacity: 0; transform: translateY(30px); transition: opacity 0.6s ease, transform 0.6s ease; }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .pricing-grid { grid-template-columns: 1fr; max-width: 440px; margin: 0 auto; }
+            .footer-grid { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .mobile-toggle { display: flex; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 72px; left: 0; right: 0; background: rgba(255,236,209,0.98); padding: 24px; gap: 20px; border-bottom: 1px solid rgba(0,21,36,0.08); }
+            .pricing-addon { flex-direction: column; text-align: center; gap: 24px; padding: 28px 24px; }
+            .addon-features { grid-template-columns: 1fr; }
+            .footer-grid { grid-template-columns: 1fr; gap: 32px; }
+            .footer-bottom { flex-direction: column; gap: 12px; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAV -->
+    <nav id="navbar">
+        <div class="nav-inner">
+            <a href="/" class="nav-logo">
+                <img src="logo.svg" alt="EventFlow Logo">
+                EventFlow
+            </a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="/">Home</a></li>
+                <li><a href="/#features">Features</a></li>
+                <li><a href="/pricing">Pricing</a></li>
+                <li><a href="/#contact">Contact</a></li>
+                <li><a href="https://tally.so/r/BzBPgR" target="_blank" class="nav-cta">Book a Demo</a></li>
+            </ul>
+            <div class="mobile-toggle" id="mobileToggle" onclick="document.getElementById('navLinks').classList.toggle('open')">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- PAGE HEADER -->
+    <section class="page-hero">
+        <div class="container">
+            <div class="section-label"><span class="line"></span> Pricing</div>
+            <h1 class="section-title">Simple pricing that scales<br>with your venue</h1>
+            <p class="section-subtitle">No hidden fees. No per-email charges. Just straightforward monthly pricing for hospitality businesses.</p>
+        </div>
+    </section>
+
+    <!-- PRICING CARDS -->
+    <section class="pricing-content">
+        <div class="container">
+            <div class="pricing-grid">
+                <!-- Starter -->
+                <div class="pricing-card fade-in">
+                    <div class="pricing-tier">Starter</div>
+                    <div class="pricing-name">Autopilot</div>
+                    <div class="pricing-desc">AI-powered inbound email response with venue knowledge built in.</div>
+                    <div class="pricing-amount">
+                        <span class="pricing-dollar">$</span>
+                        <span class="pricing-value">149</span>
+                        <span class="pricing-period">/mo</span>
+                    </div>
+                    <div class="pricing-note">Per venue, billed monthly</div>
+                    <div class="pricing-divider"></div>
+                    <ul class="pricing-features">
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> AI replies to inbound emails</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Knowledge base ingestion (PDFs + website)</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Tally onboarding form</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Error handling + Google Sheets logging</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> TripleSeat / CRM read integration</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Live availability answers</li>
+                    </ul>
+                    <a href="https://tally.so/r/BzBPgR" target="_blank" class="pricing-btn pricing-btn-secondary">Book a Demo</a>
+                </div>
+
+                <!-- Growth -->
+                <div class="pricing-card featured fade-in">
+                    <div class="pricing-tier">Growth</div>
+                    <div class="pricing-name">Autopilot Pro</div>
+                    <div class="pricing-desc">Automated follow-ups, smart detection, and proactive venue management.</div>
+                    <div class="pricing-amount">
+                        <span class="pricing-dollar">$</span>
+                        <span class="pricing-value">299</span>
+                        <span class="pricing-period">/mo</span>
+                    </div>
+                    <div class="pricing-note">Per venue, billed monthly</div>
+                    <div class="pricing-divider"></div>
+                    <ul class="pricing-features">
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Everything in Starter</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Automated follow-up sequences</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Smart reply detection (no double follow-ups)</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> KB freshness alerts (stale menu / pricing)</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Inquiry source tracking &amp; attribution</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Tentative hold management &amp; auto expiry</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> SMS escalation alerts (Twilio)</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> BEO draft generation (PDF output)</li>
+                    </ul>
+                    <a href="https://tally.so/r/BzBPgR" target="_blank" class="pricing-btn pricing-btn-primary">Book a Demo</a>
+                </div>
+
+                <!-- Custom -->
+                <div class="pricing-card fade-in">
+                    <div class="pricing-tier">Custom</div>
+                    <div class="pricing-name">Autopilot Premium</div>
+                    <div class="pricing-desc">Full AI sales automation with multi-location management and revenue tools.</div>
+                    <div class="pricing-amount">
+                        <span class="pricing-dollar">$</span>
+                        <span class="pricing-value">499</span>
+                        <span class="pricing-period">+/mo</span>
+                    </div>
+                    <div class="pricing-note">Per venue, custom pricing available</div>
+                    <div class="pricing-divider"></div>
+                    <ul class="pricing-features">
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Everything in Growth</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Confidence-based review queue (web UI)</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Multi-location management</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> TripleSeat auto-booking from qualified leads</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Deposit &amp; contract collection (DocuSign)</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Menu &amp; package upselling (AI-suggested)</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Post-event follow-up &amp; review requests</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Ownership inquiry digest (weekly report)</li>
+                        <li><span class="check-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg></span> Priority support &amp; custom escalation rules</li>
+                    </ul>
+                    <a href="https://tally.so/r/BzBPgR" target="_blank" class="pricing-btn pricing-btn-secondary">Contact Sales</a>
+                </div>
+            </div>
+
+            <!-- Add-on -->
+            <div class="pricing-addon fade-in">
+                <div class="pricing-addon-info">
+                    <span class="pricing-addon-badge">Add-On</span>
+                    <h3>Outbound Email Campaigns</h3>
+                    <p>Re-engage past guests and fill your event calendar with AI-powered outbound campaigns.</p>
+                    <ul class="addon-features">
+                        <li><span class="check-icon"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> AI-generated personalized emails</li>
+                        <li><span class="check-icon"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> A/B subject line testing</li>
+                        <li><span class="check-icon"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> Guest segmentation (loyalty, winback, upsell)</li>
+                        <li><span class="check-icon"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> Open rate tracking &amp; analytics</li>
+                        <li><span class="check-icon"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> Campaign scheduling &amp; queuing</li>
+                        <li><span class="check-icon"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 7 5.5 10.5 12 4"/></svg></span> Performance dashboard with A/B winner</li>
+                    </ul>
+                </div>
+                <div class="pricing-addon-price">
+                    <div class="pa-amount">$99–$199</div>
+                    <div class="pa-period">per month</div>
+                    <div class="pa-note">Based on send volume. Available with any plan.</div>
+                    <a href="https://tally.so/r/BzBPgR" target="_blank" class="pricing-btn pricing-btn-primary">Add to Any Plan</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRICING FAQ -->
+    <section class="pricing-faq">
+        <div class="container">
+            <h2>Common pricing questions</h2>
+            <div class="faq-grid">
+                <div class="faq-item">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open')" aria-expanded="false">
+                        What does pricing look like?
+                        <svg class="faq-chevron" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="faq-answer"><p>Plans start at $149/month per venue with no per-email fees. You pay a flat monthly rate based on the features you need. No long-term contracts required — upgrade, downgrade, or cancel anytime.</p></div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open')" aria-expanded="false">
+                        Can I cancel at any time?
+                        <svg class="faq-chevron" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="faq-answer"><p>Yes. All plans are month-to-month with no cancellation fees. You can pause, downgrade, or cancel from your dashboard at any time. We'll export your data on request.</p></div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open')" aria-expanded="false">
+                        Do I need to pay extra for multiple email addresses?
+                        <svg class="faq-chevron" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="faq-answer"><p>No. Each venue plan includes monitoring for one inbox. If you need multiple inboxes per venue (e.g., events@ and catering@), contact us for a custom setup at no extra charge.</p></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="/" class="nav-logo">
+                        <img src="logo.svg" alt="EventFlow" style="height:36px;width:36px;border-radius:10px;">
+                        EventFlow
+                    </a>
+                    <p>AI-powered sales automation for restaurants and hospitality venues. Smarter bookings. Fuller rooms.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Product</h4>
+                    <a href="/#features">Features</a>
+                    <a href="/pricing">Pricing</a>
+                    <a href="integrations.html">Integrations</a>
+                    <a href="changelog.html">Changelog</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Company</h4>
+                    <a href="about.html">About</a>
+                    <a href="blog.html">Blog</a>
+                    <a href="careers.html">Careers</a>
+                    <a href="/#contact">Contact</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Resources</h4>
+                    <a href="documentation.html">Documentation</a>
+                    <a href="help.html">Help Center</a>
+                    <a href="privacy.html">Privacy Policy</a>
+                    <a href="terms.html">Terms of Service</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>&copy; 2026 EventFlow. All rights reserved.</span>
+                <span>Smarter bookings. Fuller rooms.</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Navbar scroll
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => { navbar.classList.toggle('scrolled', window.scrollY > 20); });
+
+        // Fade-in
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+        // Mobile nav close
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', () => { document.getElementById('navLinks').classList.remove('open'); });
+        });
+    </script>
+</body>
+</html>
