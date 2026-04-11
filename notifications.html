@@ -3,21 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EventFlow — Settings</title>
+  <title>EventFlow — Notifications</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/eventflow-shared.css" />
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <style>
-    /* Settings-specific: add menu button styling */
-    .add-menu-btn {
-      margin-top: 8px; background: none; border: 1px solid var(--border);
-      color: var(--text-secondary); padding: 6px 14px; border-radius: 6px;
-      font-size: 12px; cursor: pointer; font-family: var(--font);
-    }
-    .add-menu-btn:hover { border-color: var(--teal); color: var(--teal); }
-  </style>
 </head>
 <body>
 
@@ -25,7 +16,7 @@
 <div id="login-screen">
   <div class="login-box">
     <div class="logo">EventFlow</div>
-    <div class="subtitle">Settings</div>
+    <div class="subtitle">Notifications</div>
     <label for="username">Username</label>
     <input type="text" id="username" placeholder="Enter username" autocomplete="username" />
     <label for="password">Password</label>
@@ -33,12 +24,12 @@
     <button id="login-btn" onclick="doLogin()">Sign In</button>
     <div class="login-divider">or sign in with Google</div>
     <div id="google-signin-btn"></div>
-    <div class="login-error" id="login-error">Access denied.</div>
+    <div class="login-error" id="login-error">Access denied. Your Google account is not authorized for any venue.</div>
     <div class="login-session-msg" id="session-msg">Signing you in...</div>
   </div>
 </div>
 
-<!-- SETTINGS PAGE -->
+<!-- NOTIFICATIONS PAGE -->
 <div id="dashboard">
   <div class="app-layout">
     <!-- Sidebar -->
@@ -56,11 +47,11 @@
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
           <span>Campaigns</span>
         </a>
-        <a href="/settings" class="nav-item active">
+        <a href="/settings" class="nav-item">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           <span>Settings</span>
         </a>
-        <a href="/notifications" class="nav-item">
+        <a href="/notifications" class="nav-item active">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
           <span>Notifications</span>
         </a>
@@ -76,53 +67,31 @@
     <div class="main-content">
       <div class="top-bar">
         <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()">&#9776;</button>
-        <span class="page-title">Venue Settings</span>
+        <span class="page-title">Notifications</span>
         <div></div>
       </div>
       <div class="dash-body">
 
+        <!-- SMS Enrollment -->
         <div class="panel">
-          <div class="settings-grid">
-            <div class="settings-field">
-              <label>Venue Name</label>
-              <input type="text" id="set-venue-name" placeholder="Your Restaurant Name" />
-            </div>
-            <div class="settings-field">
-              <label>Website URL</label>
-              <input type="url" id="set-website" placeholder="https://yourrestaurant.com" />
-            </div>
-            <div class="settings-field full">
-              <label>AI Tone (how the AI sounds in emails)</label>
-              <textarea id="set-ai-tone" placeholder="e.g., warm, polished, friendly, conversational"></textarea>
-            </div>
-            <div class="settings-field full">
-              <label>Brand Voice (specific personality instructions)</label>
-              <textarea id="set-brand-voice" placeholder="e.g., You sound like a real person who genuinely wants to help guests plan a great event."></textarea>
-            </div>
-            <div class="settings-field">
-              <label>Escalation Guest Count (triggers manager handoff)</label>
-              <input type="number" id="set-escalation-threshold" min="1" max="500" />
-            </div>
-            <div class="settings-field">
-              <label>Escalation Contact Name</label>
-              <input type="text" id="set-escalation-name" placeholder="Manager name" />
-            </div>
-            <div class="settings-field">
-              <label>Escalation Contact Email</label>
-              <input type="email" id="set-escalation-email" placeholder="manager@restaurant.com" />
-            </div>
-            <div class="settings-field">
-              <label>&nbsp;</label>
-            </div>
-            <div class="settings-field full">
-              <label>Menu Links</label>
-              <div id="menu-rows"></div>
-              <button class="add-menu-btn" onclick="addMenuRow()">+ Add Menu</button>
-            </div>
-          </div>
-          <div class="settings-actions">
-            <button class="settings-save" id="save-settings-btn" onclick="saveSettings()">Save Settings</button>
-            <span class="settings-status" id="settings-status"></span>
+          <h3>SMS Enrollment</h3>
+          <div class="table-wrap">
+            <div class="table-loading" id="sms-loading">Loading enrollment data...</div>
+            <table id="sms-table" style="display:none;">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Role</th>
+                  <th>Venue</th>
+                  <th>Phone</th>
+                  <th>Consent</th>
+                  <th>Enrolled</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="sms-tbody"></tbody>
+            </table>
+            <div class="table-empty" id="sms-empty" style="display:none;">No enrollment records found.</div>
           </div>
         </div>
 
@@ -138,6 +107,7 @@ var CLIENTS = {
   demo: { username: 'demo', password: 'demo2026', venue: 'Demo Restaurant', data: {} }
 };
 
+var SMS_URL = 'https://script.google.com/macros/s/AKfycbwKAV1Yb8Ye32G2rJpZC4QndqU3LinVj4Efa2COsnvyuRqxFlbJOwWobAfhV9lS5Y9Z/exec';
 var DATA_URL = 'https://script.google.com/macros/s/AKfycbxEpfGswzFnPTFLaKWlt332kv6Jy7vdagPcDEDMXbEDwrrFzpoPLc8wrmTW5UEB2xVj8w/exec';
 var GOOGLE_CLIENT_ID = '551797277858-ne7qntlo2jgmdp36o2lpcnv8qr6u7ofv.apps.googleusercontent.com';
 var currentClient = null;
@@ -227,96 +197,43 @@ function renderPage(client) {
   if (client.gmail_address) {
     document.getElementById('user-email-sidebar').textContent = client.gmail_address;
   }
-  loadSettings();
+  loadSMSData();
 }
 
-/* ═══ SETTINGS ═══ */
-function loadSettings() {
-  if (!currentClient) return;
-  fetch(DATA_URL + '?type=client_list')
+/* ═══ SMS ENROLLMENT TABLE ═══ */
+function loadSMSData() {
+  var loading = document.getElementById('sms-loading');
+  var table = document.getElementById('sms-table');
+  var tbody = document.getElementById('sms-tbody');
+  var empty = document.getElementById('sms-empty');
+  loading.style.display = 'block';
+  table.style.display = 'none';
+  empty.style.display = 'none';
+
+  fetch(SMS_URL)
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      var c = (data.clients || []).find(function(cl) { return cl.venue === currentClient.venue || cl.gmail === currentClient.gmail_address; });
-      if (!c) return;
-      document.getElementById('set-venue-name').value = c.venue || '';
-      document.getElementById('set-website').value = c.website_url || '';
-      document.getElementById('set-ai-tone').value = c.ai_tone || '';
-      document.getElementById('set-brand-voice').value = c.brand_voice || '';
-      document.getElementById('set-escalation-threshold').value = c.escalation_threshold || 29;
-      document.getElementById('set-escalation-name').value = c.escalation_contact_name || '';
-      document.getElementById('set-escalation-email').value = c.escalation_contact_email || '';
-      var menuContainer = document.getElementById('menu-rows');
-      menuContainer.innerHTML = '';
-      try {
-        var menus = JSON.parse(c.menus_json || '[]');
-        menus.forEach(function(m) { addMenuRow(m.name, m.url); });
-      } catch(e) { addMenuRow('', ''); }
-      if (menuContainer.children.length === 0) addMenuRow('', '');
-      currentClient._slug = c.slug;
-    })
-    .catch(function(err) { console.warn('Settings load failed:', err); });
-}
-
-function addMenuRow(name, url) {
-  var container = document.getElementById('menu-rows');
-  var row = document.createElement('div');
-  row.className = 'menu-row';
-  row.innerHTML = '<input type="text" placeholder="Menu name" value="' + esc(name || '') + '" /><input type="url" placeholder="https://menu-link.com" value="' + esc(url || '') + '" />';
-  container.appendChild(row);
-}
-
-function saveSettings() {
-  if (!currentClient || !currentClient._slug) {
-    document.getElementById('settings-status').textContent = 'Error: no client selected';
-    return;
-  }
-  var btn = document.getElementById('save-settings-btn');
-  var status = document.getElementById('settings-status');
-  btn.disabled = true;
-  status.textContent = 'Saving...';
-  status.style.color = 'var(--text-muted)';
-
-  var menuRows = document.getElementById('menu-rows').querySelectorAll('.menu-row');
-  var menus = [];
-  menuRows.forEach(function(row) {
-    var inputs = row.querySelectorAll('input');
-    var name = inputs[0].value.trim();
-    var url = inputs[1].value.trim();
-    if (name || url) menus.push({ name: name, url: url, description: '' });
-  });
-
-  var payload = {
-    client_slug: currentClient._slug,
-    venue_name: document.getElementById('set-venue-name').value.trim(),
-    website_url: document.getElementById('set-website').value.trim(),
-    ai_tone: document.getElementById('set-ai-tone').value.trim(),
-    brand_voice: document.getElementById('set-brand-voice').value.trim(),
-    escalation_threshold: parseInt(document.getElementById('set-escalation-threshold').value) || 29,
-    escalation_contact_name: document.getElementById('set-escalation-name').value.trim(),
-    escalation_contact_email: document.getElementById('set-escalation-email').value.trim(),
-    menus_json: JSON.stringify(menus)
-  };
-
-  fetch(DATA_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      btn.disabled = false;
-      if (data.success) {
-        status.textContent = 'Settings saved! Changes take effect on the next email.';
-        status.style.color = 'var(--green)';
-      } else {
-        status.textContent = 'Error: ' + (data.error || 'unknown');
-        status.style.color = 'var(--red)';
-      }
+      loading.style.display = 'none';
+      var rows = data.rows || [];
+      if (rows.length === 0) { empty.style.display = 'block'; return; }
+      tbody.innerHTML = rows.map(function(r) {
+        var statusClass = r.status === 'active' ? 'badge-green' : r.status === 'pending' ? 'badge-yellow' : 'badge-gray';
+        var ts = r.timestamp ? new Date(r.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '--';
+        return '<tr>' +
+          '<td>' + esc(r.first || '') + ' ' + esc(r.last || '') + '</td>' +
+          '<td>' + esc(r.role || '--') + '</td>' +
+          '<td>' + esc(r.venue || '--') + '</td>' +
+          '<td>' + esc(r.phone || '--') + '</td>' +
+          '<td>' + (r.consent === 'yes' || r.consent === true ? '<span class="badge badge-green">Yes</span>' : '<span class="badge badge-gray">No</span>') + '</td>' +
+          '<td>' + ts + '</td>' +
+          '<td><span class="badge ' + statusClass + '">' + esc(r.status || 'unknown') + '</span></td>' +
+          '</tr>';
+      }).join('');
+      table.style.display = 'table';
     })
     .catch(function(err) {
-      btn.disabled = false;
-      status.textContent = 'Save failed: ' + err.message;
-      status.style.color = 'var(--red)';
+      loading.textContent = 'Unable to load enrollment data.';
+      console.error('SMS fetch error:', err);
     });
 }
 

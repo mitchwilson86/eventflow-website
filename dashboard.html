@@ -51,6 +51,10 @@
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           <span>Settings</span>
         </a>
+        <a href="/notifications" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span>Notifications</span>
+        </a>
       </nav>
       <div class="sidebar-footer">
         <span class="user-email" id="user-email-sidebar"></span>
@@ -92,11 +96,14 @@
           </div>
         </div>
 
-        <!-- Confidence + Chart -->
+        <!-- Inquiry Types + Email Volume -->
         <div class="two-col">
           <div class="panel">
-            <h3>Confidence by Category</h3>
-            <div id="confidence-bars"></div>
+            <h3>Event Inquiry Types</h3>
+            <div class="donut-wrap" id="inquiry-donut">
+              <div class="donut-chart" id="donut-chart"></div>
+              <div class="donut-legend" id="donut-legend"></div>
+            </div>
           </div>
           <div class="panel">
             <h3>Email Volume (7 Weeks)</h3>
@@ -120,29 +127,6 @@
               <div class="stat-val" id="stat-response">--</div>
               <div class="stat-label">Avg Response Time</div>
             </div>
-          </div>
-        </div>
-
-        <!-- SMS Enrollment Table -->
-        <div class="panel">
-          <h3>SMS Enrollment</h3>
-          <div class="table-wrap">
-            <div class="table-loading" id="sms-loading">Loading enrollment data...</div>
-            <table id="sms-table" style="display:none;">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Role</th>
-                  <th>Venue</th>
-                  <th>Phone</th>
-                  <th>Consent</th>
-                  <th>Enrolled</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody id="sms-tbody"></tbody>
-            </table>
-            <div class="table-empty" id="sms-empty" style="display:none;">No enrollment records found.</div>
           </div>
         </div>
 
@@ -179,7 +163,6 @@ let CLIENTS = {
   }
 };
 
-const SMS_URL = 'https://script.google.com/macros/s/AKfycbwKAV1Yb8Ye32G2rJpZC4QndqU3LinVj4Efa2COsnvyuRqxFlbJOwWobAfhV9lS5Y9Z/exec';
 const DATA_URL = 'https://script.google.com/macros/s/AKfycbxEpfGswzFnPTFLaKWlt332kv6Jy7vdagPcDEDMXbEDwrrFzpoPLc8wrmTW5UEB2xVj8w/exec';
 const GOOGLE_CLIENT_ID = '551797277858-ne7qntlo2jgmdp36o2lpcnv8qr6u7ofv.apps.googleusercontent.com';
 let currentClient = null;
@@ -303,7 +286,6 @@ function renderDashboard(client) {
   if (client.gmail_address) {
     document.getElementById('user-email-sidebar').textContent = client.gmail_address;
   }
-  loadSMSData();
   loadLiveKpis();
   loadLivePipeline();
   loadLiveActivity();
@@ -321,14 +303,7 @@ function loadLiveKpis() {
       if (data.escalationRate) document.getElementById('kpi-escalation').textContent = data.escalationRate;
 
       if (data.confidence && data.confidence.length) {
-        const barsEl = document.getElementById('confidence-bars');
-        barsEl.innerHTML = data.confidence.map(c => `
-          <div class="conf-row">
-            <span class="cat-label">${esc(c.category)}</span>
-            <div class="bar-bg"><div class="bar-fill" style="width:${c.score}%;background:${c.color}"></div></div>
-            <span class="conf-val">${c.score}%</span>
-          </div>
-        `).join('');
+        renderDonut(data.confidence);
       }
 
       if (data.weeklyEmails && data.weeklyEmails.length) {
@@ -383,41 +358,30 @@ function loadLiveActivity() {
     .catch(err => console.warn('Live activity fetch failed:', err));
 }
 
-/* ═══ SMS ENROLLMENT TABLE ════════════════════════════════════ */
-function loadSMSData() {
-  const loading = document.getElementById('sms-loading');
-  const table = document.getElementById('sms-table');
-  const tbody = document.getElementById('sms-tbody');
-  const empty = document.getElementById('sms-empty');
-  loading.style.display = 'block';
-  table.style.display = 'none';
-  empty.style.display = 'none';
+/* ═══ DONUT CHART ════════════════════════════════════════════ */
+function renderDonut(categories) {
+  const total = categories.reduce((s, c) => s + c.score, 0);
+  let cumulative = 0;
+  const segments = categories.map(c => {
+    const start = cumulative;
+    const pct = (c.score / total) * 100;
+    cumulative += pct;
+    return { ...c, pct, start };
+  });
 
-  fetch(SMS_URL)
-    .then(r => r.json())
-    .then(data => {
-      loading.style.display = 'none';
-      const rows = data.rows || [];
-      if (rows.length === 0) { empty.style.display = 'block'; return; }
-      tbody.innerHTML = rows.map(r => {
-        const statusClass = r.status === 'active' ? 'badge-green' : r.status === 'pending' ? 'badge-yellow' : 'badge-gray';
-        const ts = r.timestamp ? new Date(r.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '--';
-        return `<tr>
-          <td>${esc(r.first || '')} ${esc(r.last || '')}</td>
-          <td>${esc(r.role || '--')}</td>
-          <td>${esc(r.venue || '--')}</td>
-          <td>${esc(r.phone || '--')}</td>
-          <td>${r.consent === 'yes' || r.consent === true ? '<span class="badge badge-green">Yes</span>' : '<span class="badge badge-gray">No</span>'}</td>
-          <td>${ts}</td>
-          <td><span class="badge ${statusClass}">${esc(r.status || 'unknown')}</span></td>
-        </tr>`;
-      }).join('');
-      table.style.display = 'table';
-    })
-    .catch(err => {
-      loading.textContent = 'Unable to load enrollment data.';
-      console.error('SMS fetch error:', err);
-    });
+  const gradientStops = segments.map(s =>
+    `${s.color} ${s.start.toFixed(1)}% ${(s.start + s.pct).toFixed(1)}%`
+  ).join(', ');
+  document.getElementById('donut-chart').style.background =
+    `conic-gradient(${gradientStops})`;
+
+  document.getElementById('donut-legend').innerHTML = segments.map(s => `
+    <div class="donut-legend-item">
+      <div class="donut-legend-dot" style="background:${s.color}"></div>
+      <span class="donut-legend-label">${esc(s.category)}</span>
+      <span class="donut-legend-val">${s.pct.toFixed(0)}%</span>
+    </div>
+  `).join('');
 }
 
 function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }

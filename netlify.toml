@@ -19,6 +19,11 @@
   status = 200
 
 [[redirects]]
+  from = "/notifications"
+  to = "/notifications.html"
+  status = 200
+
+[[redirects]]
   from = "/onboarding"
   to = "/dashboard.html"
   status = 301
