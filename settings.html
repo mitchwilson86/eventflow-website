@@ -298,9 +298,15 @@ function saveSettings() {
     menus_json: JSON.stringify(menus)
   };
 
+  // Use text/plain Content-Type to avoid CORS preflight. Apps Script Web Apps
+  // don't respond to OPTIONS preflight with the headers browsers require, so
+  // POSTs with Content-Type: application/json get blocked at the preflight
+  // stage before reaching doPost. text/plain is a "simple" request that skips
+  // preflight entirely. doPost still reads e.postData.contents and parses it
+  // as JSON — the Content-Type header is just metadata.
   fetch(DATA_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify(payload)
   })
     .then(function(r) { return r.json(); })
