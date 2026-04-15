@@ -29,12 +29,7 @@
   <div class="login-box">
     <div class="logo">EventFlow</div>
     <div class="subtitle">Settings</div>
-    <label for="username">Username</label>
-    <input type="text" id="username" placeholder="Enter username" autocomplete="username" />
-    <label for="password">Password</label>
-    <input type="password" id="password" placeholder="Enter password" autocomplete="current-password" />
-    <button id="login-btn" onclick="doLogin()">Sign In</button>
-    <div class="login-divider">or sign in with Google</div>
+    <div class="login-divider">Sign in with Google</div>
     <div id="google-signin-btn"></div>
     <div class="login-error" id="login-error">Access denied.</div>
     <div class="login-session-msg" id="session-msg">Signing you in...</div>
@@ -136,9 +131,9 @@
 
 <script>
 /* ═══ CLIENT DATA ═══ */
+// Authorization is by Google account email only.
 var CLIENTS = {
-  sunda: { username: 'sunda', password: 'eventflow2026', gmail_address: 'sales@eventflowsales.com', venue: 'Sunda Nashville', data: {} },
-  demo: { username: 'demo', password: 'demo2026', venue: 'Demo Restaurant', data: {} }
+  sunda: { gmail_address: 'sales@eventflowsales.com', venue: 'Sunda Nashville', data: {} }
 };
 
 var DATA_URL = 'https://script.google.com/macros/s/AKfycbxEpfGswzFnPTFLaKWlt332kv6Jy7vdagPcDEDMXbEDwrrFzpoPLc8wrmTW5UEB2xVj8w/exec';
@@ -170,13 +165,16 @@ function initGoogleSignIn() {
 }
 
 function handleGoogleSignIn(response) {
-  var payload = JSON.parse(atob(response.credential.split('.')[1]));
+  var idToken = response.credential;
+  var payload = JSON.parse(atob(idToken.split('.')[1]));
   var email = payload.email;
   var errEl = document.getElementById('login-error');
   var client = Object.values(CLIENTS).find(function(c) { return c.gmail_address === email; });
   if (!client) { errEl.textContent = 'Access denied. ' + email + ' is not authorized.'; errEl.style.display = 'block'; return; }
   errEl.style.display = 'none';
   sessionStorage.setItem('ef_user_email', email);
+  sessionStorage.setItem('ef_id_token', idToken);
+  sessionStorage.setItem('ef_id_token_exp', String(payload.exp * 1000));
   currentClient = client;
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
@@ -194,35 +192,20 @@ function loadDynamicClients() {
       if (existing) continue;
       if (c.status !== 'active') continue;
       var slug = c.slug.replace(/[^a-z0-9]/g, '');
-      CLIENTS[slug] = { username: slug, password: '', gmail_address: c.gmail || '', venue: c.venue || c.slug, data: {} };
+      if (!c.gmail) continue;
+      CLIENTS[slug] = { gmail_address: c.gmail, venue: c.venue || c.slug, data: {} };
     }
   }).catch(function() {});
-}
-
-function doLogin() {
-  var u = document.getElementById('username').value.trim().toLowerCase();
-  var p = document.getElementById('password').value;
-  var errEl = document.getElementById('login-error');
-  var client = Object.values(CLIENTS).find(function(c) { return c.username === u && c.password === p; });
-  if (!client) { errEl.style.display = 'block'; return; }
-  errEl.style.display = 'none';
-  if (client.gmail_address) sessionStorage.setItem('ef_user_email', client.gmail_address);
-  currentClient = client;
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('dashboard').style.display = 'block';
-  renderPage(client);
 }
 
 function doLogout() {
   currentClient = null;
   sessionStorage.removeItem('ef_user_email');
+  sessionStorage.removeItem('ef_id_token');
+  sessionStorage.removeItem('ef_id_token_exp');
   if (typeof google !== 'undefined' && google.accounts) google.accounts.id.disableAutoSelect();
   window.location.href = '/dashboard';
 }
-
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') doLogin();
-});
 
 /* ═══ RENDER ═══ */
 function renderPage(client) {
@@ -288,7 +271,22 @@ function saveSettings() {
     if (name || url) menus.push({ name: name, url: url, description: '' });
   });
 
+  // Require a fresh Google ID token (Apps Script verifies it server-side).
+  // Tokens expire after 1 hour, so prompt re-sign-in if stale.
+  var idToken = sessionStorage.getItem('ef_id_token');
+  var exp = parseInt(sessionStorage.getItem('ef_id_token_exp') || '0', 10);
+  if (!idToken || !exp || Date.now() > exp) {
+    btn.disabled = false;
+    status.textContent = 'Session expired. Please sign in again to save changes.';
+    status.style.color = 'var(--red)';
+    sessionStorage.removeItem('ef_id_token');
+    sessionStorage.removeItem('ef_id_token_exp');
+    setTimeout(function() { window.location.reload(); }, 1500);
+    return;
+  }
+
   var payload = {
+    id_token: idToken,
     client_slug: currentClient._slug,
     venue_name: document.getElementById('set-venue-name').value.trim(),
     website_url: document.getElementById('set-website').value.trim(),

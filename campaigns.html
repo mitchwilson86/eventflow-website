@@ -20,12 +20,7 @@
   <div class="login-box">
     <div class="logo">EventFlow</div>
     <div class="subtitle">Campaigns</div>
-    <label for="username">Username</label>
-    <input type="text" id="username" placeholder="Enter username" autocomplete="username" />
-    <label for="password">Password</label>
-    <input type="password" id="password" placeholder="Enter password" autocomplete="current-password" />
-    <button id="login-btn" onclick="doLogin()">Sign In</button>
-    <div class="login-divider">or sign in with Google</div>
+    <div class="login-divider">Sign in with Google</div>
     <div id="google-signin-btn"></div>
     <div class="login-error" id="login-error">Access denied. Your Google account is not authorized for any venue.</div>
     <div class="login-session-msg" id="session-msg">Signing you in...</div>
@@ -143,19 +138,14 @@
 
 <script>
 /* ═══ CLIENT DATA ═══ */
+// Authorization is by Google account email only.
 let CLIENTS = {
   sunda: {
-    username: 'sunda', password: 'eventflow2026', gmail_address: 'sales@eventflowsales.com', venue: 'Sunda Nashville',
+    gmail_address: 'sales@eventflowsales.com', venue: 'Sunda Nashville',
     data: { campaigns: [
       { id: 'camp-001', date: 'Mar 26', goal: 'event_promo', sent: 6, skipped: 1, segments: { loyalty: 3, winback: 2, general: 1 }, ab: null },
       { id: 'camp-002', date: 'Mar 29', goal: 'winback', sent: 12, skipped: 0, segments: { winback: 8, general: 4 }, ab: { subject_a: 'We saved you a spot, {{first_name}}', subject_b: 'Your next Sunda experience awaits', a_sent: 6, b_sent: 6, winner: 'A' } },
       { id: 'camp-003', date: 'Apr 1', goal: 'event_promo', sent: 9, skipped: 2, segments: { loyalty: 4, event_upsell: 3, general: 2 }, ab: { subject_a: 'Private dining season is here', subject_b: 'Book your spring celebration at Sunda', a_sent: 5, b_sent: 4, winner: 'B' } }
-    ]}
-  },
-  demo: {
-    username: 'demo', password: 'demo2026', venue: 'Demo Restaurant',
-    data: { campaigns: [
-      { id: 'demo-camp-001', date: 'Mar 28', goal: 'general', sent: 4, skipped: 0, segments: { loyalty: 2, general: 2 }, ab: null }
     ]}
   }
 };
@@ -189,13 +179,16 @@ function initGoogleSignIn() {
 }
 
 function handleGoogleSignIn(response) {
-  var payload = JSON.parse(atob(response.credential.split('.')[1]));
+  var idToken = response.credential;
+  var payload = JSON.parse(atob(idToken.split('.')[1]));
   var email = payload.email;
   var errEl = document.getElementById('login-error');
   var client = Object.values(CLIENTS).find(function(c) { return c.gmail_address === email; });
   if (!client) { errEl.textContent = 'Access denied. ' + email + ' is not authorized.'; errEl.style.display = 'block'; return; }
   errEl.style.display = 'none';
   sessionStorage.setItem('ef_user_email', email);
+  sessionStorage.setItem('ef_id_token', idToken);
+  sessionStorage.setItem('ef_id_token_exp', String(payload.exp * 1000));
   currentClient = client;
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
@@ -213,34 +206,20 @@ function loadDynamicClients() {
       if (existing) continue;
       if (c.status !== 'active') continue;
       var slug = c.slug.replace(/[^a-z0-9]/g, '');
-      CLIENTS[slug] = { username: slug, password: '', gmail_address: c.gmail || '', venue: c.venue || c.slug, data: { campaigns: [] } };
+      if (!c.gmail) continue;
+      CLIENTS[slug] = { gmail_address: c.gmail, venue: c.venue || c.slug, data: { campaigns: [] } };
     }
   }).catch(function() {});
-}
-
-function doLogin() {
-  var u = document.getElementById('username').value.trim().toLowerCase();
-  var p = document.getElementById('password').value;
-  var errEl = document.getElementById('login-error');
-  var client = Object.values(CLIENTS).find(function(c) { return c.username === u && c.password === p; });
-  if (!client) { errEl.style.display = 'block'; return; }
-  errEl.style.display = 'none';
-  currentClient = client;
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('dashboard').style.display = 'block';
-  renderPage(client);
 }
 
 function doLogout() {
   currentClient = null;
   sessionStorage.removeItem('ef_user_email');
+  sessionStorage.removeItem('ef_id_token');
+  sessionStorage.removeItem('ef_id_token_exp');
   if (typeof google !== 'undefined' && google.accounts) google.accounts.id.disableAutoSelect();
   window.location.href = '/dashboard';
 }
-
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') doLogin();
-});
 
 /* ═══ RENDER ═══ */
 function renderPage(client) {

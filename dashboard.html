@@ -20,12 +20,7 @@
   <div class="login-box">
     <div class="logo">EventFlow</div>
     <div class="subtitle">Client Dashboard</div>
-    <label for="username">Username</label>
-    <input type="text" id="username" placeholder="Enter username" autocomplete="username" />
-    <label for="password">Password</label>
-    <input type="password" id="password" placeholder="Enter password" autocomplete="current-password" />
-    <button id="login-btn" onclick="doLogin()">Sign In</button>
-    <div class="login-divider">or sign in with Google</div>
+    <div class="login-divider">Sign in with Google</div>
     <div id="google-signin-btn"></div>
     <div class="login-error" id="login-error">Access denied. Your Google account is not authorized for any venue.</div>
     <div class="login-session-msg" id="session-msg">Signing you in...</div>
@@ -152,17 +147,12 @@
 
 <script>
 /* ═══ CLIENT DATA ═════════════════════════════════════════════ */
+// Authorization is by Google account email only. To grant access,
+// add a row to the client_registry sheet with a matching gmail address.
 let CLIENTS = {
   sunda: {
-    username: 'sunda',
-    password: 'eventflow2026',
     gmail_address: 'sales@eventflowsales.com',
     venue: 'Sunda Nashville'
-  },
-  demo: {
-    username: 'demo',
-    password: 'demo2026',
-    venue: 'Demo Restaurant'
   }
 };
 
@@ -205,7 +195,8 @@ function initGoogleSignIn() {
 }
 
 function handleGoogleSignIn(response) {
-  const payload = JSON.parse(atob(response.credential.split('.')[1]));
+  const idToken = response.credential;
+  const payload = JSON.parse(atob(idToken.split('.')[1]));
   const email = payload.email;
   const errEl = document.getElementById('login-error');
   const client = Object.values(CLIENTS).find(c => c.gmail_address === email);
@@ -216,6 +207,8 @@ function handleGoogleSignIn(response) {
   }
   errEl.style.display = 'none';
   sessionStorage.setItem('ef_user_email', email);
+  sessionStorage.setItem('ef_id_token', idToken);
+  sessionStorage.setItem('ef_id_token_exp', String(payload.exp * 1000));
   currentClient = client;
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
@@ -238,11 +231,10 @@ function loadDynamicClients() {
         const existing = Object.values(CLIENTS).find(cl => cl.gmail_address === c.gmail || cl.venue === c.venue);
         if (existing) continue;
         if (c.status !== 'active') continue;
+        if (!c.gmail) continue;  // no gmail = cannot sign in, skip
         const slug = c.slug.replace(/[^a-z0-9]/g, '');
         CLIENTS[slug] = {
-          username: slug,
-          password: '',
-          gmail_address: c.gmail || '',
+          gmail_address: c.gmail,
           venue: c.venue || c.slug
         };
         added++;
@@ -252,36 +244,18 @@ function loadDynamicClients() {
     .catch(err => console.warn('Dynamic client load failed:', err));
 }
 
-/* ═══ AUTH (MANUAL FALLBACK) ═════════════════════════════════ */
-function doLogin() {
-  const u = document.getElementById('username').value.trim().toLowerCase();
-  const p = document.getElementById('password').value;
-  const errEl = document.getElementById('login-error');
-  const client = Object.values(CLIENTS).find(c => c.username === u && c.password === p);
-  if (!client) { errEl.style.display = 'block'; return; }
-  errEl.style.display = 'none';
-  if (client.gmail_address) sessionStorage.setItem('ef_user_email', client.gmail_address);
-  currentClient = client;
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('dashboard').style.display = 'block';
-  renderDashboard(client);
-}
-
+/* ═══ LOGOUT ═════════════════════════════════════════════════ */
 function doLogout() {
   currentClient = null;
   sessionStorage.removeItem('ef_user_email');
+  sessionStorage.removeItem('ef_id_token');
+  sessionStorage.removeItem('ef_id_token_exp');
   if (typeof google !== 'undefined' && google.accounts) {
     google.accounts.id.disableAutoSelect();
   }
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('username').value = '';
-  document.getElementById('password').value = '';
 }
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') doLogin();
-});
 
 /* ═══ RENDER ══════════════════════════════════════════════════ */
 function renderDashboard(client) {
