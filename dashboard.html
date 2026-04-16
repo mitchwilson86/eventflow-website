@@ -337,26 +337,28 @@ function loadLiveActivity() {
 
 /* ═══ DONUT CHART ════════════════════════════════════════════ */
 function renderDonut(categories) {
-  const total = categories.reduce((s, c) => s + c.score, 0);
+  // Donut shows equal-sized slices per category; legend shows actual confidence score
+  const count = categories.length || 1;
   let cumulative = 0;
+  const slicePct = 100 / count;
   const segments = categories.map(c => {
     const start = cumulative;
-    const pct = (c.score / total) * 100;
-    cumulative += pct;
-    return { ...c, pct, start };
+    cumulative += slicePct;
+    return { ...c, slicePct, start };
   });
 
   const gradientStops = segments.map(s =>
-    `${s.color} ${s.start.toFixed(1)}% ${(s.start + s.pct).toFixed(1)}%`
+    `${s.color} ${s.start.toFixed(1)}% ${(s.start + s.slicePct).toFixed(1)}%`
   ).join(', ');
   document.getElementById('donut-chart').style.background =
     `conic-gradient(${gradientStops})`;
 
+  // Legend shows the actual AI confidence score per category (e.g. 85%)
   document.getElementById('donut-legend').innerHTML = segments.map(s => `
     <div class="donut-legend-item">
       <div class="donut-legend-dot" style="background:${s.color}"></div>
       <span class="donut-legend-label">${esc(s.category)}</span>
-      <span class="donut-legend-val">${s.pct.toFixed(0)}%</span>
+      <span class="donut-legend-val">${s.score}%</span>
     </div>
   `).join('');
 }
