@@ -151,6 +151,7 @@
 // add a row to the client_registry sheet with a matching gmail address.
 let CLIENTS = {
   sunda: {
+    slug: 'sunda-nashville',
     gmail_address: 'sales@eventflowsales.com',
     venue: 'Sunda Nashville'
   }
@@ -263,15 +264,20 @@ function renderDashboard(client) {
   if (client.gmail_address) {
     document.getElementById('user-email-sidebar').textContent = client.gmail_address;
   }
-  loadLiveKpis();
-  loadLivePipeline();
-  loadLiveActivity();
-  loadLiveSnapshot();
+  const slug = client.slug || '';
+  loadLiveKpis(slug);
+  loadLivePipeline(slug);
+  loadLiveActivity(slug);
+  loadLiveSnapshot(slug);
+}
+
+function clientParam(slug) {
+  return slug ? '&client=' + encodeURIComponent(slug) : '';
 }
 
 /* ═══ LIVE DATA LOADERS ══════════════════════════════════════ */
-function loadLiveKpis() {
-  fetch(DATA_URL + '?type=email_kpis')
+function loadLiveKpis(slug) {
+  fetch(DATA_URL + '?type=email_kpis' + clientParam(slug))
     .then(r => r.json())
     .then(data => {
       if (data.error) { console.warn('KPI error:', data.error); return; }
@@ -310,8 +316,8 @@ function loadLiveKpis() {
     .catch(err => console.warn('Live KPI fetch failed:', err));
 }
 
-function loadLivePipeline() {
-  fetch(DATA_URL + '?type=pipeline')
+function loadLivePipeline(slug) {
+  fetch(DATA_URL + '?type=pipeline' + clientParam(slug))
     .then(r => r.json())
     .then(data => {
       if (data.error) { console.warn('Pipeline error:', data.error); return; }
@@ -322,8 +328,8 @@ function loadLivePipeline() {
     .catch(err => console.warn('Live pipeline fetch failed:', err));
 }
 
-function loadLiveActivity() {
-  fetch(DATA_URL + '?type=activity')
+function loadLiveActivity(slug) {
+  fetch(DATA_URL + '?type=activity' + clientParam(slug))
     .then(r => r.json())
     .then(data => {
       if (data.error || !data.activity || !data.activity.length) return;
@@ -343,8 +349,8 @@ function loadLiveActivity() {
     .catch(err => console.warn('Live activity fetch failed:', err));
 }
 
-function loadLiveSnapshot() {
-  fetch(DATA_URL + '?type=business_snapshot')
+function loadLiveSnapshot(slug) {
+  fetch(DATA_URL + '?type=business_snapshot' + clientParam(slug))
     .then(r => r.json())
     .then(data => {
       if (data.error) { console.warn('Snapshot error:', data.error); return; }
