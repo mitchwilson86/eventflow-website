@@ -334,11 +334,20 @@ thead th.sorted .sort-arrow { opacity: 1; color: var(--orange); }
 /* ── Business Snapshot ──────────────────────────────────────── */
 .snap-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
 .snap-item {
-  display: flex; justify-content: space-between; padding: 12px 16px;
+  display: flex; flex-direction: column; gap: 4px; padding: 14px 16px;
   background: var(--bg-inset); border-radius: 8px; border: 1px solid var(--border);
 }
-.snap-item .snap-label { font-size: 13px; color: var(--text-secondary); }
-.snap-item .snap-val { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.snap-item .snap-label { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+.snap-item .snap-val { font-size: 22px; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+.snap-item .snap-val .snap-sub { font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-left: 6px; }
+.snap-item .snap-sub { font-size: 12px; color: var(--text-muted); }
+
+/* ── Activity Feed preview line ────────────────────────────── */
+.feed-preview { font-size: 12px; color: var(--text-muted); margin-top: 2px; font-style: italic; }
+
+/* ── Donut legend extras ───────────────────────────────────── */
+.donut-legend-count { color: var(--text-muted); font-weight: 400; font-size: 12px; margin-left: 4px; }
+.donut-empty { padding: 20px; text-align: center; color: var(--text-muted); font-size: 14px; }
 
 /* ── Alerts ─────────────────────────────────────────────────── */
 .alerts { margin-bottom: 24px; }

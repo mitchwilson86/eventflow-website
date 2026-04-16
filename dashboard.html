@@ -266,6 +266,7 @@ function renderDashboard(client) {
   loadLiveKpis();
   loadLivePipeline();
   loadLiveActivity();
+  loadLiveSnapshot();
 }
 
 /* ═══ LIVE DATA LOADERS ══════════════════════════════════════ */
@@ -279,8 +280,14 @@ function loadLiveKpis() {
       document.getElementById('kpi-confidence').textContent = data.avgConfidence;
       if (data.escalationRate) document.getElementById('kpi-escalation').textContent = data.escalationRate;
 
-      if (data.confidence && data.confidence.length) {
-        renderDonut(data.confidence);
+      // Prefer inquiryTypes (distribution) over confidence (avg score per type)
+      if (data.inquiryTypes && data.inquiryTypes.length) {
+        renderDonut(data.inquiryTypes);
+      } else if (data.confidence && data.confidence.length) {
+        renderDonut(data.confidence);  // fallback
+      } else {
+        document.getElementById('donut-legend').innerHTML =
+          '<div class="donut-empty">No inquiries yet</div>';
       }
 
       if (data.weeklyEmails && data.weeklyEmails.length) {
@@ -326,6 +333,7 @@ function loadLiveActivity() {
           <div class="feed-dot" style="background:${a.color}"></div>
           <div>
             <div class="feed-text">${esc(a.text)}</div>
+            ${a.preview ? `<div class="feed-preview">${esc(a.preview)}</div>` : ''}
             <div class="feed-time">${esc(a.time)}</div>
           </div>
         </div>
@@ -335,32 +343,108 @@ function loadLiveActivity() {
     .catch(err => console.warn('Live activity fetch failed:', err));
 }
 
+function loadLiveSnapshot() {
+  fetch(DATA_URL + '?type=business_snapshot')
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) { console.warn('Snapshot error:', data.error); return; }
+      const gridEl = document.getElementById('snapshot-grid');
+
+      // 1. This week vs last week
+      const weekChange = data.week_change_pct;
+      let weekSubtext;
+      if (weekChange === null || weekChange === undefined) {
+        weekSubtext = `${data.last_week || 0} last week`;
+      } else {
+        const arrow = weekChange > 0 ? '▲' : weekChange < 0 ? '▼' : '';
+        const color = weekChange > 0 ? 'var(--green)' : weekChange < 0 ? '#ef4444' : 'var(--muted)';
+        weekSubtext = `<span style="color:${color}">${arrow} ${Math.abs(weekChange)}%</span> vs ${data.last_week} last week`;
+      }
+
+      // 2. Top event type
+      const topLabel = data.top_event_type
+        ? `${data.top_event_type} <span class="snap-sub">(${data.top_event_type_count})</span>`
+        : '—';
+
+      // 3. Avg guest count & escalations
+      const guestsLabel = data.avg_guest_count !== null && data.avg_guest_count !== undefined
+        ? data.avg_guest_count
+        : '—';
+      const escLabel = `${data.escalations_this_month || 0} escalation${data.escalations_this_month === 1 ? '' : 's'}`;
+
+      // 4. Avg response time
+      const respLabel = data.avg_response_minutes !== null && data.avg_response_minutes !== undefined
+        ? formatMinutes(data.avg_response_minutes)
+        : '—';
+
+      gridEl.innerHTML = `
+        <div class="snap-item">
+          <div class="snap-label">This Week</div>
+          <div class="snap-val">${data.this_week}</div>
+          <div class="snap-sub">${weekSubtext}</div>
+        </div>
+        <div class="snap-item">
+          <div class="snap-label">Top Event Type</div>
+          <div class="snap-val">${topLabel}</div>
+          <div class="snap-sub">Last 30 days</div>
+        </div>
+        <div class="snap-item">
+          <div class="snap-label">Avg Guest Count</div>
+          <div class="snap-val">${guestsLabel}</div>
+          <div class="snap-sub">${escLabel} this month</div>
+        </div>
+        <div class="snap-item">
+          <div class="snap-label">Avg Response Time</div>
+          <div class="snap-val">${respLabel}</div>
+          <div class="snap-sub">AI auto-reply</div>
+        </div>
+      `;
+      console.log('Live snapshot loaded');
+    })
+    .catch(err => console.warn('Live snapshot fetch failed:', err));
+}
+
+function formatMinutes(min) {
+  if (min < 1) return '<1 min';
+  if (min < 60) return min + ' min';
+  const hr = Math.floor(min / 60);
+  const rem = min % 60;
+  return rem === 0 ? `${hr}h` : `${hr}h ${rem}m`;
+}
+
 /* ═══ DONUT CHART ════════════════════════════════════════════ */
 function renderDonut(categories) {
-  // Donut shows equal-sized slices per category; legend shows actual confidence score
-  const count = categories.length || 1;
+  // Supports two shapes:
+  //   - Distribution: [{category, count, pct, color}] — pct is share of inquiries (preferred)
+  //   - Confidence:   [{category, score, color}] — legacy, equal slices, score in legend
+  const isDistribution = categories.length > 0 && categories[0].pct !== undefined;
+
   let cumulative = 0;
-  const slicePct = 100 / count;
   const segments = categories.map(c => {
+    const slice = isDistribution ? c.pct : (100 / categories.length);
     const start = cumulative;
-    cumulative += slicePct;
-    return { ...c, slicePct, start };
+    cumulative += slice;
+    return { ...c, slice, start };
   });
 
   const gradientStops = segments.map(s =>
-    `${s.color} ${s.start.toFixed(1)}% ${(s.start + s.slicePct).toFixed(1)}%`
+    `${s.color} ${s.start.toFixed(1)}% ${(s.start + s.slice).toFixed(1)}%`
   ).join(', ');
   document.getElementById('donut-chart').style.background =
     `conic-gradient(${gradientStops})`;
 
-  // Legend shows the actual AI confidence score per category (e.g. 85%)
-  document.getElementById('donut-legend').innerHTML = segments.map(s => `
-    <div class="donut-legend-item">
-      <div class="donut-legend-dot" style="background:${s.color}"></div>
-      <span class="donut-legend-label">${esc(s.category)}</span>
-      <span class="donut-legend-val">${s.score}%</span>
-    </div>
-  `).join('');
+  document.getElementById('donut-legend').innerHTML = segments.map(s => {
+    const val = isDistribution
+      ? `${s.pct}% <span class="donut-legend-count">(${s.count})</span>`
+      : `${s.score}%`;
+    return `
+      <div class="donut-legend-item">
+        <div class="donut-legend-dot" style="background:${s.color}"></div>
+        <span class="donut-legend-label">${esc(s.category)}</span>
+        <span class="donut-legend-val">${val}</span>
+      </div>
+    `;
+  }).join('');
 }
 
 function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
