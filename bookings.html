@@ -15,6 +15,19 @@
   <script src="/bookings-shared.js"></script>
 </head>
 <body>
+<script>
+  // Preflight: if we already have a Supabase session, hide login before
+  // first paint so there's no flash between HTML parse and async auth check.
+  (function(){
+    try {
+      if (localStorage.getItem('sb-uzojlcwsrbsqckycjlgm-auth-token')) {
+        var s = document.createElement('style');
+        s.textContent = '#login-screen{display:none !important}';
+        document.head.appendChild(s);
+      }
+    } catch(e) {}
+  })();
+</script>
 
 <!-- LOGIN -->
 <div id="login-screen">
