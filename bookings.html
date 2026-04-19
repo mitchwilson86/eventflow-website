@@ -85,6 +85,17 @@
           <div class="cal-grid" id="cal-grid"></div>
         </div>
 
+        <!-- Status color key (shown under month view) -->
+        <div class="cal-legend" id="cal-legend">
+          <span class="cal-legend-title">Key:</span>
+          <span class="cal-legend-item"><span class="cal-legend-swatch" style="background:#94A3B8"></span>Lead</span>
+          <span class="cal-legend-item"><span class="cal-legend-swatch" style="background:#EAB308"></span>Tentative</span>
+          <span class="cal-legend-item"><span class="cal-legend-swatch" style="background:#22C55E"></span>Definite</span>
+          <span class="cal-legend-item"><span class="cal-legend-swatch" style="background:#15616D"></span>Completed</span>
+          <span class="cal-legend-item"><span class="cal-legend-swatch" style="background:#EF4444"></span>Cancelled</span>
+          <span class="cal-legend-item"><span class="cal-legend-swatch cal-legend-ext"></span>External (Tripleseat / Toast)</span>
+        </div>
+
         <!-- List view -->
         <div id="list-view" class="bookings-list" style="display:none">
           <table>
@@ -271,6 +282,7 @@ function setView(v) {
   document.getElementById('view-list').classList.toggle('active', v === 'list');
   document.getElementById('month-view').style.display = v === 'month' ? 'block' : 'none';
   document.getElementById('list-view').style.display = v === 'list' ? 'block' : 'none';
+  document.getElementById('cal-legend').style.display = v === 'month' ? 'flex' : 'none';
   render();
 }
 async function calPrev() {
