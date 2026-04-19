@@ -23,6 +23,17 @@
   </style>
 </head>
 <body>
+<script>
+  (function(){
+    try {
+      if (sessionStorage.getItem('ef_user_email')) {
+        var s = document.createElement('style');
+        s.textContent = '#login-screen{display:none !important}';
+        document.head.appendChild(s);
+      }
+    } catch(e) {}
+  })();
+</script>
 
 <!-- LOGIN -->
 <div id="login-screen">
