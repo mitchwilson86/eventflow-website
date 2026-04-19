@@ -1,0 +1,288 @@
+/* ═══════════════════════════════════════════════════════════════
+   EventFlow Bookings — styles specific to calendar & booking pages
+   Layered on top of eventflow-shared.css (imported first)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Page layout tweaks ─────────────────────────────────────── */
+.page-actions {
+  display: flex; gap: 8px; align-items: center;
+}
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px; border-radius: var(--radius);
+  font-family: var(--font); font-size: 14px; font-weight: 600;
+  border: 1px solid var(--border); background: var(--bg-card);
+  color: var(--text-primary); cursor: pointer; transition: all .15s;
+}
+.btn:hover { border-color: var(--border-hover); background: var(--bg-inset); }
+.btn.primary { background: var(--teal); color: #fff; border-color: var(--teal); }
+.btn.primary:hover { background: var(--teal-light); border-color: var(--teal-light); }
+.btn.danger { background: var(--red); color: #fff; border-color: var(--red); }
+.btn.danger:hover { background: #dc2626; border-color: #dc2626; }
+.btn.ghost { background: transparent; }
+.btn.sm { padding: 4px 10px; font-size: 13px; }
+.btn[disabled] { opacity: .5; cursor: not-allowed; }
+
+/* ── Venue switcher in top bar ─────────────────────────────── */
+.venue-switcher {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: var(--radius);
+  background: var(--bg-inset); border: 1px solid var(--border);
+  font-size: 13px; color: var(--text-secondary);
+}
+.venue-switcher select {
+  border: none; background: transparent; font: inherit; color: var(--text-primary);
+  font-weight: 600; cursor: pointer; outline: none;
+}
+
+/* ── Status badges ─────────────────────────────────────────── */
+.status-badge {
+  display: inline-block; padding: 3px 10px; border-radius: 999px;
+  font-size: 12px; font-weight: 600; letter-spacing: .02em;
+  text-transform: uppercase;
+}
+
+/* ── Calendar toolbar ──────────────────────────────────────── */
+.cal-toolbar {
+  display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+  padding: 12px 16px; background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); margin-bottom: 16px;
+}
+.cal-toolbar-group { display: inline-flex; gap: 6px; align-items: center; }
+.cal-title { font-family: var(--serif); font-size: 22px; color: var(--text-primary); margin: 0 8px; }
+.cal-filter-label { font-size: 13px; color: var(--text-secondary); }
+.cal-filter-select {
+  padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--bg-card); font: inherit; font-size: 13px; color: var(--text-primary);
+}
+.cal-view-toggle {
+  display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+}
+.cal-view-toggle button {
+  padding: 6px 12px; font-size: 13px; font-weight: 600;
+  background: var(--bg-card); color: var(--text-secondary);
+  border: none; cursor: pointer; border-right: 1px solid var(--border);
+}
+.cal-view-toggle button:last-child { border-right: none; }
+.cal-view-toggle button.active { background: var(--teal); color: #fff; }
+
+/* ── Month grid ────────────────────────────────────────────── */
+.cal-wrap {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.cal-weekhead {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  background: var(--bg-inset); border-bottom: 1px solid var(--border);
+}
+.cal-weekhead div {
+  padding: 10px 12px; font-size: 12px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .05em;
+  color: var(--text-secondary);
+}
+.cal-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+}
+.cal-cell {
+  min-height: 120px; padding: 6px 8px;
+  border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  background: var(--bg-card); cursor: pointer; position: relative;
+}
+.cal-cell:nth-child(7n) { border-right: none; }
+.cal-cell:hover { background: var(--bg-inset); }
+.cal-cell.other-month { background: #FAFBFC; color: var(--text-muted); }
+.cal-cell.today .cal-daynum {
+  background: var(--teal); color: #fff; border-radius: 999px;
+  width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;
+}
+.cal-daynum { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+.cal-event {
+  display: block; margin-top: 4px; padding: 3px 6px; border-radius: 4px;
+  font-size: 12px; font-weight: 500; color: #fff;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  text-decoration: none; cursor: pointer;
+}
+.cal-event.external { opacity: .75; border: 1px dashed rgba(0,0,0,.25); }
+.cal-event-more {
+  display: block; margin-top: 4px; padding: 2px 6px; font-size: 11px;
+  color: var(--text-secondary); font-weight: 600;
+}
+
+/* ── Bookings list ─────────────────────────────────────────── */
+.bookings-list {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.bookings-list table { width: 100%; border-collapse: collapse; }
+.bookings-list th, .bookings-list td {
+  padding: 12px 16px; text-align: left; font-size: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.bookings-list th {
+  background: var(--bg-inset); font-size: 12px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .05em;
+  color: var(--text-secondary);
+}
+.bookings-list tr:hover td { background: var(--bg-inset); cursor: pointer; }
+.bookings-list tr:last-child td { border-bottom: none; }
+.bookings-list .empty {
+  padding: 40px; text-align: center; color: var(--text-secondary);
+}
+
+/* ── Booking detail form ───────────────────────────────────── */
+.booking-layout {
+  display: grid; grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 16px; align-items: start;
+}
+@media (max-width: 900px) {
+  .booking-layout { grid-template-columns: 1fr; }
+}
+.form-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 16px;
+}
+.form-grid .full { grid-column: 1 / -1; }
+.form-field { display: flex; flex-direction: column; gap: 4px; }
+.form-field label {
+  font-size: 12px; font-weight: 600; color: var(--text-secondary);
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.form-field input, .form-field select, .form-field textarea {
+  padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--bg-card); font: inherit; font-size: 14px;
+  color: var(--text-primary);
+}
+.form-field input:focus, .form-field select:focus, .form-field textarea:focus {
+  outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px var(--teal-bg);
+}
+.form-field textarea { min-height: 80px; resize: vertical; }
+
+/* Status pipeline stepper */
+.status-pipeline {
+  display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.status-step {
+  flex: 1; min-width: 90px; padding: 8px 12px; border-radius: 6px;
+  background: var(--bg-inset); font-size: 12px; font-weight: 600;
+  text-align: center; cursor: pointer; border: 1px solid transparent;
+  color: var(--text-secondary); text-transform: uppercase; letter-spacing: .04em;
+  transition: all .15s;
+}
+.status-step:hover { border-color: var(--border-hover); }
+.status-step.active { background: var(--teal); color: #fff; border-color: var(--teal); }
+
+/* BEO items table */
+.beo-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+.beo-table th, .beo-table td {
+  padding: 8px 10px; font-size: 13px; text-align: left;
+  border-bottom: 1px solid var(--border); vertical-align: middle;
+}
+.beo-table th {
+  background: var(--bg-inset); font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .04em; color: var(--text-secondary);
+}
+.beo-table input, .beo-table select {
+  width: 100%; padding: 4px 6px; border: 1px solid transparent;
+  background: transparent; border-radius: 4px; font: inherit; font-size: 13px;
+}
+.beo-table input:focus, .beo-table select:focus {
+  outline: none; border-color: var(--teal); background: var(--bg-card);
+}
+.beo-table .num { text-align: right; }
+.beo-table .num input { text-align: right; }
+.beo-table .row-remove {
+  background: none; border: none; color: var(--red); cursor: pointer;
+  font-size: 16px; padding: 2px 6px;
+}
+.beo-add {
+  display: inline-flex; gap: 6px; align-items: center;
+  margin-top: 8px; padding: 6px 10px; font-size: 13px;
+  color: var(--teal); background: var(--teal-bg); border: 1px dashed var(--teal);
+  border-radius: 6px; cursor: pointer;
+}
+.beo-add:hover { background: var(--teal); color: #fff; }
+
+/* Totals sidebar */
+.totals-panel { position: sticky; top: 16px; }
+.totals-row {
+  display: flex; justify-content: space-between; padding: 8px 0;
+  border-bottom: 1px solid var(--border); font-size: 14px;
+}
+.totals-row:last-child { border-bottom: none; }
+.totals-row.big {
+  font-size: 16px; font-weight: 700; padding-top: 12px; margin-top: 4px;
+  border-top: 2px solid var(--text-primary); border-bottom: none;
+}
+.totals-row .label { color: var(--text-secondary); }
+.totals-row .val { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+/* Conflict warning */
+.conflict-warn {
+  padding: 10px 14px; background: #fef3c7; border: 1px solid #fbbf24;
+  border-radius: 8px; color: #92400e; font-size: 13px; margin-bottom: 12px;
+}
+.conflict-warn.blocking {
+  background: #fee2e2; border-color: #f87171; color: #991b1b;
+}
+
+/* Toast messages */
+.toast-wrap {
+  position: fixed; bottom: 24px; right: 24px; z-index: 1000;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.toast {
+  padding: 12px 18px; border-radius: 8px; font-size: 14px;
+  box-shadow: var(--shadow-md); min-width: 200px; animation: toast-in .2s ease;
+}
+.toast.success { background: var(--green); color: #fff; }
+.toast.error { background: var(--red); color: #fff; }
+.toast.info { background: var(--teal); color: #fff; }
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Skeleton loader */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-inset) 0%, #E2E8F0 50%, var(--bg-inset) 100%);
+  background-size: 200% 100%; animation: skeleton 1.4s infinite; border-radius: 4px;
+}
+@keyframes skeleton {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Contract / BEO / Sign pages — print-friendly */
+.doc-page {
+  max-width: 800px; margin: 24px auto; padding: 48px 56px;
+  background: #fff; box-shadow: var(--shadow-md); border-radius: 4px;
+  font-size: 14px; line-height: 1.6;
+}
+.doc-page h1 { font-family: var(--serif); font-size: 32px; margin-bottom: 4px; }
+.doc-page h2 { font-size: 18px; margin: 24px 0 8px; color: var(--teal); }
+.doc-page h3 { font-size: 15px; margin: 16px 0 6px; color: var(--text-primary); text-transform: uppercase; letter-spacing: .05em; }
+.doc-page table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+.doc-page th, .doc-page td { padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 13px; text-align: left; }
+.doc-page th { background: var(--bg-inset); text-transform: uppercase; font-size: 11px; color: var(--text-secondary); }
+.doc-page .doc-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--text-primary); padding-bottom: 16px; margin-bottom: 24px; }
+.doc-page .venue-info { text-align: right; font-size: 13px; color: var(--text-secondary); }
+.doc-page .signature-box { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--border); }
+.doc-page .signed-stamp { color: var(--green); font-weight: 600; font-size: 13px; }
+@media print {
+  body { background: #fff; }
+  .doc-page { box-shadow: none; margin: 0; padding: 24px; max-width: none; }
+  .no-print { display: none !important; }
+}
+
+/* Sign page */
+.sign-wrap {
+  max-width: 640px; margin: 40px auto; padding: 24px;
+}
+.sign-box {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 24px; margin-top: 16px;
+}
+.sign-accept {
+  display: flex; gap: 10px; align-items: flex-start; margin: 12px 0;
+  font-size: 13px; line-height: 1.5;
+}
+.sign-accept input[type=checkbox] { margin-top: 4px; width: 18px; height: 18px; }

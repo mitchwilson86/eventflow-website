@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EventFlow — Booking</title>
+  <link rel="canonical" href="https://eventflowsales.com/booking">
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/eventflow-shared.css" />
+  <link rel="stylesheet" href="/bookings.css" />
+  <script src="/bookings-shared.js"></script>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-box">
+    <div class="logo">EventFlow</div>
+    <div class="subtitle">Bookings</div>
+    <div class="login-divider">Sign in with your Google account</div>
+    <button class="btn primary" style="width:100%;justify-content:center" onclick="signInWithGoogle()">Continue with Google</button>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-session-msg" id="session-msg">Signing you in...</div>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+  <div class="app-layout">
+    <div id="sidebar-host"></div>
+    <div class="main-content">
+      <div class="top-bar">
+        <button class="sidebar-toggle" onclick="toggleSidebar()">&#9776;</button>
+        <span class="page-title" id="page-title">Booking</span>
+        <div class="page-actions" id="page-actions">
+          <a class="btn ghost" href="/bookings">&larr; All bookings</a>
+        </div>
+      </div>
+
+      <div class="dash-body">
+        <div id="conflict-host"></div>
+
+        <!-- Status pipeline -->
+        <div class="panel" style="padding:12px 16px">
+          <div class="status-pipeline" id="status-pipeline"></div>
+        </div>
+
+        <div class="booking-layout">
+          <!-- MAIN COLUMN -->
+          <div>
+            <!-- Event details -->
+            <div class="panel">
+              <h3>Event Details</h3>
+              <div class="form-grid">
+                <div class="form-field full">
+                  <label>Event Name *</label>
+                  <input type="text" id="f-event_name" placeholder="e.g., Smith Rehearsal Dinner" />
+                </div>
+                <div class="form-field">
+                  <label>Event Type</label>
+                  <select id="f-event_type">
+                    <option value="">—</option>
+                    <option>Rehearsal Dinner</option>
+                    <option>Birthday</option>
+                    <option>Corporate Dinner</option>
+                    <option>Holiday Party</option>
+                    <option>Wedding Reception</option>
+                    <option>Bridal Shower</option>
+                    <option>Baby Shower</option>
+                    <option>Anniversary</option>
+                    <option>Memorial</option>
+                    <option>Fundraiser</option>
+                    <option>Other</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label>Space *</label>
+                  <select id="f-space_id"></select>
+                </div>
+                <div class="form-field">
+                  <label>Date *</label>
+                  <input type="date" id="f-event_date" />
+                </div>
+                <div class="form-field">
+                  <label>Start Time *</label>
+                  <input type="time" id="f-start_time" />
+                </div>
+                <div class="form-field">
+                  <label>End Time *</label>
+                  <input type="time" id="f-end_time" />
+                </div>
+                <div class="form-field">
+                  <label>Guest Count</label>
+                  <input type="number" id="f-guest_count" min="1" />
+                </div>
+                <div class="form-field">
+                  <label>Guaranteed Count</label>
+                  <input type="number" id="f-guaranteed_count" min="1" />
+                </div>
+                <div class="form-field">
+                  <label>Setup Minutes</label>
+                  <input type="number" id="f-setup_minutes" min="0" step="15" value="60" />
+                </div>
+                <div class="form-field">
+                  <label>Teardown Minutes</label>
+                  <input type="number" id="f-teardown_minutes" min="0" step="15" value="60" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Contact -->
+            <div class="panel">
+              <h3>Contact</h3>
+              <div class="form-grid">
+                <div class="form-field"><label>First Name</label><input type="text" id="f-contact_first" /></div>
+                <div class="form-field"><label>Last Name</label><input type="text" id="f-contact_last" /></div>
+                <div class="form-field"><label>Email</label><input type="email" id="f-contact_email" /></div>
+                <div class="form-field"><label>Phone</label><input type="tel" id="f-contact_phone" /></div>
+                <div class="form-field full"><label>Company</label><input type="text" id="f-contact_company" /></div>
+              </div>
+            </div>
+
+            <!-- BEO items -->
+            <div class="panel">
+              <h3 style="display:flex;justify-content:space-between;align-items:center">
+                BEO Line Items
+                <span style="font-size:12px;font-weight:400;color:var(--text-secondary)">
+                  Food & beverage, A/V, staffing, rentals, fees
+                </span>
+              </h3>
+              <table class="beo-table">
+                <thead>
+                  <tr>
+                    <th style="width:110px">Category</th>
+                    <th>Item</th>
+                    <th class="num" style="width:70px">Qty</th>
+                    <th style="width:80px">Unit</th>
+                    <th class="num" style="width:100px">Unit Price</th>
+                    <th class="num" style="width:100px">Line</th>
+                    <th style="width:70px;text-align:center">Tax</th>
+                    <th style="width:70px;text-align:center">Srv</th>
+                    <th style="width:32px"></th>
+                  </tr>
+                </thead>
+                <tbody id="beo-tbody"></tbody>
+              </table>
+              <button class="beo-add" onclick="addBeoItem()">+ Add line item</button>
+            </div>
+
+            <!-- Notes -->
+            <div class="panel">
+              <h3>Notes</h3>
+              <div class="form-grid">
+                <div class="form-field full">
+                  <label>Internal Notes <span style="font-weight:400;color:var(--text-muted)">(not on contract)</span></label>
+                  <textarea id="f-internal_notes"></textarea>
+                </div>
+                <div class="form-field full">
+                  <label>Client-facing Notes <span style="font-weight:400;color:var(--text-muted)">(appears on BEO/contract)</span></label>
+                  <textarea id="f-client_notes"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SIDEBAR -->
+          <div>
+            <div class="panel totals-panel">
+              <h3>Totals</h3>
+              <div id="totals-body"></div>
+
+              <div style="margin-top:16px;display:flex;flex-direction:column;gap:8px">
+                <button class="btn primary" onclick="saveBooking()">Save</button>
+                <a class="btn ghost" id="beo-link" href="#" style="display:none" target="_blank">View BEO (PDF)</a>
+                <a class="btn ghost" id="contract-link" href="#" style="display:none" target="_blank">View Contract</a>
+                <button class="btn ghost" id="send-contract-btn" style="display:none" onclick="sendContract()">Send for Signature</button>
+                <button class="btn ghost" id="invoice-btn" style="display:none" onclick="createInvoice()">Create Deposit Invoice</button>
+                <button class="btn danger ghost" id="delete-btn" style="display:none" onclick="deleteBooking()">Delete</button>
+              </div>
+            </div>
+
+            <!-- Invoices / payments panel (shown once booking exists) -->
+            <div class="panel" id="invoice-panel" style="display:none">
+              <h3>Invoices & Payments</h3>
+              <div id="invoice-list"></div>
+              <button class="btn sm" style="margin-top:8px" onclick="addPayment()">+ Record Payment</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script>
+/* ═══ State ════════════════════════════════════════════════════ */
+let state = {
+  user: null,
+  venues: [],
+  activeVenue: null,
+  spaces: [],
+  booking: null,              // null = new
+  contact: null,
+  items: [],                  // BEO line items
+  contracts: [],
+  invoices: [],
+  payments: [],
+  isNew: false,
+  conflicts: []
+};
+
+function toast(msg, kind = 'info') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + kind;
+  el.textContent = msg;
+  document.getElementById('toast-wrap').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+/* ═══ Boot ═════════════════════════════════════════════════════ */
+window.addEventListener('load', boot);
+
+async function boot() {
+  const sb = await getSupabase();
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { document.getElementById('login-screen').style.display = 'flex'; return; }
+  state.user = session.user;
+  try {
+    const { venues, activeVenue } = await loadUserVenues();
+    if (!venues.length) {
+      document.getElementById('login-error').textContent = 'Access denied for ' + session.user.email;
+      document.getElementById('login-error').style.display = 'block';
+      document.getElementById('login-screen').style.display = 'flex';
+      return;
+    }
+    state.venues = venues;
+    state.activeVenue = activeVenue;
+    await loadSpaces();
+
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    state.isNew = !id || params.get('new') === '1';
+    if (state.isNew) {
+      initNewBooking(params);
+    } else {
+      await loadBooking(id);
+    }
+
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('sidebar-host').innerHTML = renderSidebar('bookings', state.activeVenue.name, session.user.email);
+    renderAll();
+    wireFormListeners();
+  } catch (err) {
+    console.error(err);
+    toast('Load failed: ' + err.message, 'error');
+  }
+}
+
+async function loadSpaces() {
+  const sb = await getSupabase();
+  const { data, error } = await sb
+    .from('spaces')
+    .select('*')
+    .eq('venue_id', state.activeVenue.id)
+    .eq('active', true)
+    .order('sort_order');
+  if (error) throw error;
+  state.spaces = data || [];
+}
+
+function initNewBooking(params) {
+  const date = params.get('date') || new Date().toISOString().slice(0,10);
+  state.booking = {
+    venue_id: state.activeVenue.id,
+    space_id: state.spaces[0] ? state.spaces[0].id : '',
+    status: 'lead',
+    event_name: '',
+    event_type: '',
+    event_date: date,
+    start_time: '18:00',
+    end_time: '22:00',
+    setup_minutes: 60,
+    teardown_minutes: 60,
+    guest_count: null,
+    guaranteed_count: null,
+    tax_rate: state.activeVenue.default_tax_rate,
+    service_charge_rate: state.activeVenue.default_service_charge,
+    internal_notes: '',
+    client_notes: '',
+    source: 'manual',
+    created_by: state.user.email
+  };
+  state.contact = { first_name: '', last_name: '', email: '', phone: '', company: '' };
+  state.items = [];
+  document.getElementById('page-title').textContent = 'New Booking';
+}
+
+async function loadBooking(id) {
+  const sb = await getSupabase();
+  const [{ data: booking, error: be }, { data: items, error: ie }, { data: contracts }, { data: invoices }, { data: payments }] = await Promise.all([
+    sb.from('bookings').select('*, contact:contact_id(*)').eq('id', id).maybeSingle(),
+    sb.from('beo_items').select('*').eq('booking_id', id).order('sort_order'),
+    sb.from('contracts').select('*').eq('booking_id', id).order('created_at', { ascending: false }),
+    sb.from('invoices').select('*').eq('booking_id', id).order('issue_date'),
+    sb.from('payments').select('*').eq('booking_id', id).order('received_at')
+  ]);
+  if (be) throw be;
+  if (ie) throw ie;
+  if (!booking) throw new Error('Booking not found');
+  state.booking = booking;
+  state.contact = booking.contact || { first_name: '', last_name: '', email: '', phone: '', company: '' };
+  state.items = items || [];
+  state.contracts = contracts || [];
+  state.invoices = invoices || [];
+  state.payments = payments || [];
+  document.getElementById('page-title').textContent = booking.event_name || 'Booking';
+}
+
+/* ═══ Render ═══════════════════════════════════════════════════ */
+function renderAll() {
+  renderStatusPipeline();
+  renderForm();
+  renderBeoItems();
+  renderTotals();
+  renderActions();
+  renderInvoices();
+  checkConflicts();
+}
+
+function renderStatusPipeline() {
+  const steps = ['lead', 'tentative', 'definite', 'completed', 'cancelled'];
+  const host = document.getElementById('status-pipeline');
+  host.innerHTML = steps.map(s => `
+    <div class="status-step ${state.booking.status === s ? 'active' : ''}"
+         onclick="changeStatus('${s}')">
+      ${STATUS_COLORS[s].label}
+    </div>
+  `).join('');
+}
+
+function renderForm() {
+  const b = state.booking, c = state.contact;
+  const sel = document.getElementById('f-space_id');
+  sel.innerHTML = state.spaces.map(s =>
+    `<option value="${s.id}">${esc(s.name)}${s.capacity_seated ? ` · seats ${s.capacity_seated}` : ''}</option>`
+  ).join('');
+  sel.value = b.space_id || '';
+  document.getElementById('f-event_name').value = b.event_name || '';
+  document.getElementById('f-event_type').value = b.event_type || '';
+  document.getElementById('f-event_date').value = b.event_date || '';
+  document.getElementById('f-start_time').value = (b.start_time || '').slice(0,5);
+  document.getElementById('f-end_time').value = (b.end_time || '').slice(0,5);
+  document.getElementById('f-guest_count').value = b.guest_count ?? '';
+  document.getElementById('f-guaranteed_count').value = b.guaranteed_count ?? '';
+  document.getElementById('f-setup_minutes').value = b.setup_minutes ?? 60;
+  document.getElementById('f-teardown_minutes').value = b.teardown_minutes ?? 60;
+  document.getElementById('f-internal_notes').value = b.internal_notes || '';
+  document.getElementById('f-client_notes').value = b.client_notes || '';
+  document.getElementById('f-contact_first').value = c.first_name || '';
+  document.getElementById('f-contact_last').value = c.last_name || '';
+  document.getElementById('f-contact_email').value = c.email || '';
+  document.getElementById('f-contact_phone').value = c.phone || '';
+  document.getElementById('f-contact_company').value = c.company || '';
+}
+
+function wireFormListeners() {
+  const ids = ['f-event_name','f-event_type','f-event_date','f-start_time','f-end_time',
+    'f-guest_count','f-guaranteed_count','f-setup_minutes','f-teardown_minutes',
+    'f-internal_notes','f-client_notes','f-space_id',
+    'f-contact_first','f-contact_last','f-contact_email','f-contact_phone','f-contact_company'];
+  for (const id of ids) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    el.addEventListener('change', syncFormToState);
+    el.addEventListener('input', syncFormToState);
+  }
+}
+
+function syncFormToState() {
+  const b = state.booking, c = state.contact;
+  b.event_name = document.getElementById('f-event_name').value.trim();
+  b.event_type = document.getElementById('f-event_type').value;
+  b.space_id = document.getElementById('f-space_id').value;
+  b.event_date = document.getElementById('f-event_date').value;
+  b.start_time = document.getElementById('f-start_time').value;
+  b.end_time = document.getElementById('f-end_time').value;
+  b.guest_count = numOrNull(document.getElementById('f-guest_count').value);
+  b.guaranteed_count = numOrNull(document.getElementById('f-guaranteed_count').value);
+  b.setup_minutes = numOrNull(document.getElementById('f-setup_minutes').value) ?? 60;
+  b.teardown_minutes = numOrNull(document.getElementById('f-teardown_minutes').value) ?? 60;
+  b.internal_notes = document.getElementById('f-internal_notes').value;
+  b.client_notes = document.getElementById('f-client_notes').value;
+  c.first_name = document.getElementById('f-contact_first').value.trim();
+  c.last_name = document.getElementById('f-contact_last').value.trim();
+  c.email = document.getElementById('f-contact_email').value.trim();
+  c.phone = document.getElementById('f-contact_phone').value.trim();
+  c.company = document.getElementById('f-contact_company').value.trim();
+  renderTotals();
+  checkConflicts();
+}
+function numOrNull(v) { if (v === '' || v == null) return null; const n = Number(v); return isNaN(n) ? null : n; }
+
+/* ═══ BEO items ════════════════════════════════════════════════ */
+function renderBeoItems() {
+  const body = document.getElementById('beo-tbody');
+  if (!state.items.length) {
+    body.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text-secondary);padding:20px">No line items yet. Add one below.</td></tr>`;
+    return;
+  }
+  body.innerHTML = state.items.map((it, idx) => {
+    const line = (Number(it.quantity || 0) * Number(it.unit_price || 0)).toFixed(2);
+    return `
+      <tr>
+        <td>
+          <select onchange="updateItem(${idx}, 'category', this.value)">
+            ${BEO_CATEGORIES.map(c => `<option value="${c.value}" ${it.category === c.value ? 'selected' : ''}>${c.label}</option>`).join('')}
+          </select>
+        </td>
+        <td>
+          <input type="text" value="${esc(it.name || '')}" placeholder="Item name"
+                 oninput="updateItem(${idx}, 'name', this.value)" />
+          <div style="margin-top:2px">
+            <input type="text" value="${esc(it.description || '')}" placeholder="Description (optional)"
+                   oninput="updateItem(${idx}, 'description', this.value)"
+                   style="font-size:12px;color:var(--text-secondary)" />
+          </div>
+        </td>
+        <td class="num"><input type="number" step="1" min="0" value="${it.quantity ?? 1}"
+             oninput="updateItem(${idx}, 'quantity', this.value)" /></td>
+        <td><input type="text" value="${esc(it.unit || 'each')}"
+             oninput="updateItem(${idx}, 'unit', this.value)" /></td>
+        <td class="num"><input type="number" step="0.01" min="0" value="${it.unit_price ?? 0}"
+             oninput="updateItem(${idx}, 'unit_price', this.value)" /></td>
+        <td class="num">${fmtMoney(line)}</td>
+        <td style="text-align:center"><input type="checkbox" ${it.taxable !== false ? 'checked' : ''}
+             onchange="updateItem(${idx}, 'taxable', this.checked)" /></td>
+        <td style="text-align:center"><input type="checkbox" ${it.service_chargeable !== false ? 'checked' : ''}
+             onchange="updateItem(${idx}, 'service_chargeable', this.checked)" /></td>
+        <td><button class="row-remove" onclick="removeItem(${idx})" title="Remove">×</button></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function addBeoItem() {
+  state.items.push({
+    category: 'food', name: '', description: '', quantity: 1, unit: 'each',
+    unit_price: 0, taxable: true, service_chargeable: true,
+    sort_order: state.items.length
+  });
+  renderBeoItems(); renderTotals();
+}
+function updateItem(idx, key, value) {
+  if (key === 'quantity' || key === 'unit_price') value = value === '' ? 0 : Number(value);
+  state.items[idx][key] = value;
+  // Only re-render totals; re-rendering the whole table blows away focus
+  const line = (Number(state.items[idx].quantity || 0) * Number(state.items[idx].unit_price || 0));
+  const tr = document.querySelectorAll('#beo-tbody tr')[idx];
+  if (tr) tr.querySelector('td:nth-child(6)').textContent = fmtMoney(line);
+  renderTotals();
+}
+function removeItem(idx) {
+  state.items.splice(idx, 1);
+  renderBeoItems(); renderTotals();
+}
+
+/* ═══ Totals ═══════════════════════════════════════════════════ */
+function renderTotals() {
+  const t = computeTotals({
+    items: state.items,
+    taxRate: state.booking.tax_rate ?? state.activeVenue.default_tax_rate,
+    serviceChargeRate: state.booking.service_charge_rate ?? state.activeVenue.default_service_charge,
+    depositPct: state.activeVenue.default_deposit_pct
+  });
+  state.booking.subtotal = t.subtotal;
+  state.booking.tax_amount = t.tax;
+  state.booking.service_charge_amount = t.service;
+  state.booking.total = t.total;
+  state.booking.deposit_amount = t.deposit;
+
+  const taxPct = ((state.booking.tax_rate ?? state.activeVenue.default_tax_rate) * 100).toFixed(3).replace(/\.?0+$/, '');
+  const svcPct = ((state.booking.service_charge_rate ?? state.activeVenue.default_service_charge) * 100).toFixed(2).replace(/\.?0+$/, '');
+  const depPct = (state.activeVenue.default_deposit_pct * 100).toFixed(0);
+
+  document.getElementById('totals-body').innerHTML = `
+    <div class="totals-row"><span class="label">Subtotal</span><span class="val">${fmtMoney(t.subtotal)}</span></div>
+    <div class="totals-row"><span class="label">Service (${svcPct}%)</span><span class="val">${fmtMoney(t.service)}</span></div>
+    <div class="totals-row"><span class="label">Tax (${taxPct}%)</span><span class="val">${fmtMoney(t.tax)}</span></div>
+    <div class="totals-row big"><span class="label">Total</span><span class="val">${fmtMoney(t.total)}</span></div>
+    <div class="totals-row"><span class="label">Deposit (${depPct}%)</span><span class="val">${fmtMoney(t.deposit)}</span></div>
+  `;
+}
+
+/* ═══ Actions / visibility ═════════════════════════════════════ */
+function renderActions() {
+  const hasId = !!state.booking.id;
+  document.getElementById('delete-btn').style.display = hasId ? '' : 'none';
+  document.getElementById('invoice-btn').style.display = hasId ? '' : 'none';
+  document.getElementById('send-contract-btn').style.display = hasId ? '' : 'none';
+
+  const beo = document.getElementById('beo-link');
+  const contract = document.getElementById('contract-link');
+  if (hasId) {
+    beo.href = `/beo?id=${state.booking.id}`;
+    contract.href = `/contract?id=${state.booking.id}`;
+    beo.style.display = ''; contract.style.display = '';
+  } else {
+    beo.style.display = 'none'; contract.style.display = 'none';
+  }
+}
+
+function renderInvoices() {
+  const panel = document.getElementById('invoice-panel');
+  if (!state.booking.id) { panel.style.display = 'none'; return; }
+  panel.style.display = '';
+  const list = document.getElementById('invoice-list');
+  if (!state.invoices.length) {
+    list.innerHTML = `<div style="color:var(--text-secondary);font-size:13px">No invoices yet.</div>`;
+    return;
+  }
+  list.innerHTML = state.invoices.map(inv => {
+    const paid = state.payments.filter(p => p.invoice_id === inv.id)
+      .reduce((s, p) => s + Number(p.amount), 0);
+    const balance = Number(inv.amount) - paid;
+    return `
+      <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;font-weight:600">
+          <span>${esc(inv.invoice_number)}</span>
+          <span>${fmtMoney(inv.amount)}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">
+          ${esc(inv.description || '')} · Paid: ${fmtMoney(paid)} · Balance: ${fmtMoney(balance)}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ═══ Status change ════════════════════════════════════════════ */
+async function changeStatus(status) {
+  state.booking.status = status;
+  renderStatusPipeline();
+  if (state.booking.id) {
+    const sb = await getSupabase();
+    const { error } = await sb.from('bookings').update({ status }).eq('id', state.booking.id);
+    if (error) { toast('Status update failed: ' + error.message, 'error'); return; }
+    toast('Status updated to ' + STATUS_COLORS[status].label, 'success');
+  }
+  checkConflicts();
+}
+
+/* ═══ Conflict detection ═══════════════════════════════════════ */
+async function checkConflicts() {
+  const host = document.getElementById('conflict-host');
+  host.innerHTML = '';
+  const b = state.booking;
+  if (!b.space_id || !b.event_date || !b.start_time || !b.end_time) return;
+  if (b.end_time <= b.start_time) return;
+  const sb = await getSupabase();
+  const { data, error } = await sb.rpc('check_booking_conflicts', {
+    p_space_id: b.space_id,
+    p_event_date: b.event_date,
+    p_start_time: b.start_time,
+    p_end_time: b.end_time,
+    p_exclude_booking_id: b.id || null
+  });
+  if (error) { console.warn(error); return; }
+  state.conflicts = data || [];
+  if (state.conflicts.length) {
+    const blocking = ['tentative','definite','completed'].includes(b.status);
+    host.innerHTML = `
+      <div class="conflict-warn ${blocking ? 'blocking' : ''}">
+        <strong>⚠ Schedule conflict:</strong>
+        This space is already booked for ${state.conflicts.map(c =>
+          `${esc(c.event_name)} (${STATUS_COLORS[c.status].label}, ${fmtTime(c.start_time)}–${fmtTime(c.end_time)})`
+        ).join(', ')}.
+        ${blocking ? 'Save is blocked while status is tentative/definite/completed.' : 'You can save as a lead — this will become a conflict if you advance the status.'}
+      </div>
+    `;
+  }
+}
+
+/* ═══ Save ═════════════════════════════════════════════════════ */
+async function saveBooking() {
+  syncFormToState();
+  const b = state.booking;
+  if (!b.event_name) return toast('Event name is required', 'error');
+  if (!b.space_id) return toast('Space is required', 'error');
+  if (!b.event_date || !b.start_time || !b.end_time) return toast('Date and times are required', 'error');
+  if (b.end_time <= b.start_time) return toast('End time must be after start time', 'error');
+
+  await checkConflicts();
+  if (state.conflicts.length && ['tentative','definite','completed'].includes(b.status)) {
+    return toast('Cannot save with schedule conflict — change status to Lead or adjust the time/space.', 'error');
+  }
+
+  const sb = await getSupabase();
+  try {
+    // 1. Upsert contact (if any detail filled)
+    let contact_id = state.booking.contact_id || null;
+    const c = state.contact;
+    const hasContact = c.first_name || c.last_name || c.email || c.phone || c.company;
+    if (hasContact) {
+      if (contact_id) {
+        const { error } = await sb.from('contacts').update({
+          first_name: c.first_name || null, last_name: c.last_name || null,
+          email: c.email || null, phone: c.phone || null, company: c.company || null
+        }).eq('id', contact_id);
+        if (error) throw error;
+      } else {
+        const { data, error } = await sb.from('contacts').insert({
+          venue_id: state.activeVenue.id,
+          first_name: c.first_name || null, last_name: c.last_name || null,
+          email: c.email || null, phone: c.phone || null, company: c.company || null
+        }).select('id').single();
+        if (error) throw error;
+        contact_id = data.id;
+      }
+    }
+
+    // 2. Build booking row
+    const row = {
+      venue_id: state.activeVenue.id,
+      space_id: b.space_id,
+      contact_id,
+      status: b.status,
+      event_name: b.event_name,
+      event_type: b.event_type || null,
+      event_date: b.event_date,
+      start_time: b.start_time,
+      end_time: b.end_time,
+      setup_minutes: b.setup_minutes ?? 60,
+      teardown_minutes: b.teardown_minutes ?? 60,
+      guest_count: b.guest_count,
+      guaranteed_count: b.guaranteed_count,
+      tax_rate: b.tax_rate,
+      service_charge_rate: b.service_charge_rate,
+      internal_notes: b.internal_notes || null,
+      client_notes: b.client_notes || null,
+      source: b.source || 'manual',
+      subtotal: b.subtotal,
+      tax_amount: b.tax_amount,
+      service_charge_amount: b.service_charge_amount,
+      total: b.total,
+      deposit_amount: b.deposit_amount,
+      created_by: b.created_by || state.user.email
+    };
+
+    let bookingId;
+    if (b.id) {
+      const { error } = await sb.from('bookings').update(row).eq('id', b.id);
+      if (error) throw error;
+      bookingId = b.id;
+    } else {
+      const { data, error } = await sb.from('bookings').insert(row).select('id').single();
+      if (error) throw error;
+      bookingId = data.id;
+      state.booking.id = bookingId;
+      state.isNew = false;
+      // Update URL so reload stays on this booking
+      const url = new URL(window.location);
+      url.searchParams.delete('new'); url.searchParams.delete('date');
+      url.searchParams.set('id', bookingId);
+      window.history.replaceState({}, '', url);
+    }
+
+    // 3. BEO items — delete existing + reinsert (simpler than diff for v1)
+    const { error: delErr } = await sb.from('beo_items').delete().eq('booking_id', bookingId);
+    if (delErr) throw delErr;
+    if (state.items.length) {
+      const rows = state.items.map((it, i) => ({
+        booking_id: bookingId,
+        category: it.category,
+        name: it.name || 'Untitled',
+        description: it.description || null,
+        quantity: Number(it.quantity || 0),
+        unit: it.unit || 'each',
+        unit_price: Number(it.unit_price || 0),
+        taxable: it.taxable !== false,
+        service_chargeable: it.service_chargeable !== false,
+        sort_order: i
+      }));
+      const { error: insErr } = await sb.from('beo_items').insert(rows);
+      if (insErr) throw insErr;
+    }
+
+    toast('Saved', 'success');
+    document.getElementById('page-title').textContent = b.event_name;
+    renderActions();
+  } catch (err) {
+    console.error(err);
+    toast('Save failed: ' + err.message, 'error');
+  }
+}
+
+/* ═══ Delete ═══════════════════════════════════════════════════ */
+async function deleteBooking() {
+  if (!state.booking.id) return;
+  if (!confirm('Delete this booking? This removes BEO items, contracts, invoices, and payments too. Cannot be undone.')) return;
+  const sb = await getSupabase();
+  const { error } = await sb.from('bookings').delete().eq('id', state.booking.id);
+  if (error) return toast('Delete failed: ' + error.message, 'error');
+  toast('Deleted', 'success');
+  setTimeout(() => location.href = '/bookings', 600);
+}
+
+/* ═══ Invoice + payment ════════════════════════════════════════ */
+async function createInvoice() {
+  if (!state.booking.id) return;
+  const depositExists = state.invoices.some(i => i.description && i.description.toLowerCase().includes('deposit'));
+  const description = depositExists ? 'Balance' : 'Deposit';
+  const amount = depositExists
+    ? (Number(state.booking.total) - state.invoices.reduce((s,i) => s + Number(i.amount), 0))
+    : Number(state.booking.deposit_amount);
+  if (amount <= 0) return toast('Nothing to invoice', 'info');
+  const invNum = description.toUpperCase() + '-' + Date.now().toString().slice(-6);
+  const sb = await getSupabase();
+  const { data, error } = await sb.from('invoices').insert({
+    booking_id: state.booking.id,
+    invoice_number: invNum,
+    status: 'sent',
+    amount,
+    description,
+    sent_at: new Date().toISOString(),
+    due_date: description === 'Deposit'
+      ? new Date(Date.now() + 7*86400000).toISOString().slice(0,10)
+      : state.booking.event_date
+  }).select('*').single();
+  if (error) return toast('Invoice create failed: ' + error.message, 'error');
+  state.invoices.push(data);
+  renderInvoices();
+  toast(`${description} invoice created: ${fmtMoney(amount)}`, 'success');
+}
+
+async function addPayment() {
+  if (!state.invoices.length) return toast('Create an invoice first', 'info');
+  const invChoice = state.invoices.length === 1
+    ? state.invoices[0]
+    : state.invoices.find(i => (i.amount - state.payments.filter(p => p.invoice_id === i.id).reduce((s,p) => s + Number(p.amount), 0)) > 0) || state.invoices[0];
+  const alreadyPaid = state.payments.filter(p => p.invoice_id === invChoice.id).reduce((s,p) => s + Number(p.amount), 0);
+  const remaining = Number(invChoice.amount) - alreadyPaid;
+  const amtStr = prompt(`Payment amount for invoice ${invChoice.invoice_number} (remaining ${fmtMoney(remaining)}):`, remaining.toFixed(2));
+  if (!amtStr) return;
+  const amt = Number(amtStr);
+  if (isNaN(amt) || amt <= 0) return toast('Invalid amount', 'error');
+  const method = prompt('Method (card / ach / check / cash / wire / other):', 'card');
+  if (!method) return;
+  const reference = prompt('Reference (last 4, check #, txn id) — optional:', '');
+  const sb = await getSupabase();
+  const { data, error } = await sb.from('payments').insert({
+    invoice_id: invChoice.id,
+    booking_id: state.booking.id,
+    amount: amt,
+    method: method.toLowerCase(),
+    reference: reference || null
+  }).select('*').single();
+  if (error) return toast('Payment failed: ' + error.message, 'error');
+  state.payments.push(data);
+  // Update invoice status
+  const totalPaid = alreadyPaid + amt;
+  const newStatus = totalPaid >= Number(invChoice.amount) ? 'paid' : 'partial';
+  const paid_at = newStatus === 'paid' ? new Date().toISOString() : null;
+  await sb.from('invoices').update({ status: newStatus, amount_paid: totalPaid, paid_at }).eq('id', invChoice.id);
+  invChoice.status = newStatus;
+  invChoice.amount_paid = totalPaid;
+  renderInvoices();
+  toast('Payment recorded', 'success');
+}
+
+/* ═══ Send contract ════════════════════════════════════════════ */
+async function sendContract() {
+  if (!state.booking.id) return;
+  const sb = await getSupabase();
+  const token = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+  const { data, error } = await sb.from('contracts').insert({
+    booking_id: state.booking.id,
+    status: 'sent',
+    access_token: token,
+    sent_at: new Date().toISOString(),
+    version: (state.contracts[0]?.version || 0) + 1
+  }).select('*').single();
+  if (error) return toast('Contract create failed: ' + error.message, 'error');
+  state.contracts.unshift(data);
+  const url = `${window.location.origin}/sign?token=${token}`;
+  await navigator.clipboard.writeText(url).catch(() => {});
+  toast('Signing link copied to clipboard', 'success');
+  // Open preview for review
+  window.open(`/contract?id=${state.booking.id}`, '_blank');
+}
+</script>
+</body>
+</html>

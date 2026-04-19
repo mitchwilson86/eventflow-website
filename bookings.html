@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EventFlow — Bookings</title>
+  <meta name="description" content="EventFlow bookings calendar — manage events, BEOs, contracts, and invoices across your venue spaces.">
+  <link rel="canonical" href="https://eventflowsales.com/bookings">
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/eventflow-shared.css" />
+  <link rel="stylesheet" href="/bookings.css" />
+  <script src="/bookings-shared.js"></script>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="logo">EventFlow</div>
+    <div class="subtitle">Bookings</div>
+    <div class="login-divider">Sign in with your Google account</div>
+    <button class="btn primary" style="width:100%;justify-content:center" onclick="signInWithGoogle()">
+      Continue with Google
+    </button>
+    <div class="login-error" id="login-error">Access denied. Your Google account is not authorized for any venue.</div>
+    <div class="login-session-msg" id="session-msg">Signing you in...</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+  <div class="app-layout">
+    <div id="sidebar-host"></div>
+
+    <div class="main-content">
+      <div class="top-bar">
+        <button class="sidebar-toggle" onclick="toggleSidebar()">&#9776;</button>
+        <span class="page-title">Bookings</span>
+        <div class="page-actions">
+          <div class="venue-switcher" id="venue-switcher-host"></div>
+          <a class="btn primary" href="/booking?new=1">+ New Booking</a>
+        </div>
+      </div>
+
+      <div class="dash-body">
+        <!-- Calendar toolbar -->
+        <div class="cal-toolbar">
+          <div class="cal-toolbar-group">
+            <button class="btn sm ghost" onclick="calPrev()">&larr;</button>
+            <button class="btn sm ghost" onclick="calToday()">Today</button>
+            <button class="btn sm ghost" onclick="calNext()">&rarr;</button>
+            <h2 class="cal-title" id="cal-title">—</h2>
+          </div>
+          <div class="cal-toolbar-group">
+            <span class="cal-filter-label">Space:</span>
+            <select class="cal-filter-select" id="cal-space-filter" onchange="applyFilters()">
+              <option value="">All spaces</option>
+            </select>
+            <span class="cal-filter-label">Status:</span>
+            <select class="cal-filter-select" id="cal-status-filter" onchange="applyFilters()">
+              <option value="">All statuses</option>
+              <option value="lead">Lead</option>
+              <option value="tentative">Tentative</option>
+              <option value="definite">Definite</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div class="cal-toolbar-group" style="margin-left:auto">
+            <div class="cal-view-toggle">
+              <button id="view-month" class="active" onclick="setView('month')">Month</button>
+              <button id="view-list" onclick="setView('list')">List</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Month view -->
+        <div id="month-view" class="cal-wrap">
+          <div class="cal-weekhead">
+            <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+          </div>
+          <div class="cal-grid" id="cal-grid"></div>
+        </div>
+
+        <!-- List view -->
+        <div id="list-view" class="bookings-list" style="display:none">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Event</th>
+                <th>Space</th>
+                <th>Time</th>
+                <th>Guests</th>
+                <th>Status</th>
+                <th style="text-align:right">Total</th>
+              </tr>
+            </thead>
+            <tbody id="list-body"></tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script>
+/* ═══ State ════════════════════════════════════════════════════ */
+let state = {
+  venues: [],
+  activeVenue: null,
+  spaces: [],
+  bookings: [],
+  externalEvents: [],
+  viewDate: new Date(),     // anchor date for month view
+  view: 'month',
+  filters: { space_id: '', status: '' }
+};
+
+/* ═══ Toasts ═══════════════════════════════════════════════════ */
+function toast(msg, kind = 'info') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + kind;
+  el.textContent = msg;
+  document.getElementById('toast-wrap').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+/* ═══ Boot ═════════════════════════════════════════════════════ */
+window.addEventListener('load', boot);
+
+async function boot() {
+  const sb = await getSupabase();
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    // Might be returning from OAuth redirect — detectSessionInUrl handles it
+    document.getElementById('login-screen').style.display = 'flex';
+    return;
+  }
+  document.getElementById('session-msg').style.display = 'block';
+  try {
+    const { venues, activeVenue } = await loadUserVenues();
+    if (!venues.length) {
+      document.getElementById('login-error').textContent =
+        'Access denied. ' + session.user.email + ' is not assigned to any venue.';
+      document.getElementById('login-error').style.display = 'block';
+      document.getElementById('session-msg').style.display = 'none';
+      document.getElementById('login-screen').style.display = 'flex';
+      return;
+    }
+    state.venues = venues;
+    state.activeVenue = activeVenue;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('sidebar-host').innerHTML = renderSidebar('bookings', activeVenue.name, session.user.email);
+    renderVenueSwitcher();
+    await loadSpaces();
+    renderSpaceFilter();
+    await loadBookings();
+    render();
+  } catch (err) {
+    console.error(err);
+    toast('Failed to load: ' + err.message, 'error');
+  }
+}
+
+/* ═══ Venue switcher ═══════════════════════════════════════════ */
+function renderVenueSwitcher() {
+  const host = document.getElementById('venue-switcher-host');
+  if (state.venues.length <= 1) {
+    host.innerHTML = `<span>${esc(state.activeVenue.name)}</span>`;
+    return;
+  }
+  host.innerHTML = `
+    <span>Venue:</span>
+    <select onchange="switchVenue(this.value)">
+      ${state.venues.map(v => `<option value="${esc(v.slug)}" ${v.slug === state.activeVenue.slug ? 'selected' : ''}>${esc(v.name)}</option>`).join('')}
+    </select>
+  `;
+}
+async function switchVenue(slug) {
+  localStorage.setItem('ef_active_venue', slug);
+  window.location.search = '?venue=' + encodeURIComponent(slug);
+}
+
+/* ═══ Data loaders ═════════════════════════════════════════════ */
+async function loadSpaces() {
+  const sb = await getSupabase();
+  const { data, error } = await sb
+    .from('spaces')
+    .select('id, name, capacity_seated, capacity_standing, is_buyout, active, sort_order')
+    .eq('venue_id', state.activeVenue.id)
+    .eq('active', true)
+    .order('sort_order');
+  if (error) throw error;
+  state.spaces = data || [];
+}
+
+async function loadBookings() {
+  const sb = await getSupabase();
+  const start = monthStart(state.viewDate);
+  const end = monthEnd(state.viewDate);
+  // Pull bookings that overlap the visible month (pad for month-view out-of-month days)
+  const startStr = isoDate(addDays(start, -7));
+  const endStr = isoDate(addDays(end, 14));
+  const { data, error } = await sb
+    .from('bookings')
+    .select(`
+      id, event_name, event_type, event_date, start_time, end_time,
+      status, guest_count, total, space_id,
+      contact:contact_id ( id, first_name, last_name, email, company ),
+      space:space_id ( id, name )
+    `)
+    .eq('venue_id', state.activeVenue.id)
+    .gte('event_date', startStr)
+    .lte('event_date', endStr)
+    .order('event_date');
+  if (error) throw error;
+  state.bookings = data || [];
+
+  // External events (iCal-synced, read-only) for the same window
+  const { data: ext, error: extErr } = await sb
+    .from('external_events')
+    .select('id, summary, starts_at, ends_at, space_id')
+    .eq('venue_id', state.activeVenue.id)
+    .gte('starts_at', startStr)
+    .lte('starts_at', endStr);
+  if (!extErr) state.externalEvents = ext || [];
+}
+
+function renderSpaceFilter() {
+  const sel = document.getElementById('cal-space-filter');
+  const current = sel.value;
+  sel.innerHTML = `<option value="">All spaces</option>` +
+    state.spaces.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
+  sel.value = current;
+}
+
+/* ═══ Filters ══════════════════════════════════════════════════ */
+function applyFilters() {
+  state.filters.space_id = document.getElementById('cal-space-filter').value;
+  state.filters.status = document.getElementById('cal-status-filter').value;
+  render();
+}
+
+function filteredBookings() {
+  return state.bookings.filter(b => {
+    if (state.filters.space_id && b.space_id !== state.filters.space_id) return false;
+    if (state.filters.status && b.status !== state.filters.status) return false;
+    return true;
+  });
+}
+function filteredExternal() {
+  return state.externalEvents.filter(e => {
+    if (state.filters.space_id && e.space_id !== state.filters.space_id) return false;
+    if (state.filters.status) return false;  // external events have no status
+    return true;
+  });
+}
+
+/* ═══ View control ═════════════════════════════════════════════ */
+function setView(v) {
+  state.view = v;
+  document.getElementById('view-month').classList.toggle('active', v === 'month');
+  document.getElementById('view-list').classList.toggle('active', v === 'list');
+  document.getElementById('month-view').style.display = v === 'month' ? 'block' : 'none';
+  document.getElementById('list-view').style.display = v === 'list' ? 'block' : 'none';
+  render();
+}
+async function calPrev() {
+  state.viewDate = addMonths(state.viewDate, -1);
+  await loadBookings(); render();
+}
+async function calNext() {
+  state.viewDate = addMonths(state.viewDate, 1);
+  await loadBookings(); render();
+}
+async function calToday() {
+  state.viewDate = new Date();
+  await loadBookings(); render();
+}
+
+/* ═══ Render ═══════════════════════════════════════════════════ */
+function render() {
+  document.getElementById('cal-title').textContent =
+    state.viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  if (state.view === 'month') renderMonth();
+  else renderList();
+}
+
+function renderMonth() {
+  const grid = document.getElementById('cal-grid');
+  const start = monthStart(state.viewDate);
+  const firstCell = addDays(start, -start.getDay());  // Sunday of the first week
+  const today = new Date(); today.setHours(0,0,0,0);
+  const bookings = filteredBookings();
+  const external = filteredExternal();
+
+  // Group by date string
+  const byDate = {};
+  for (const b of bookings) {
+    (byDate[b.event_date] ||= []).push({ kind: 'booking', ref: b });
+  }
+  for (const e of external) {
+    const d = isoDate(new Date(e.starts_at));
+    (byDate[d] ||= []).push({ kind: 'external', ref: e });
+  }
+
+  const cells = [];
+  for (let i = 0; i < 42; i++) {
+    const day = addDays(firstCell, i);
+    const iso = isoDate(day);
+    const events = byDate[iso] || [];
+    const isOther = day.getMonth() !== state.viewDate.getMonth();
+    const isToday = day.getTime() === today.getTime();
+
+    const eventsHtml = events.slice(0, 3).map(ev => {
+      if (ev.kind === 'booking') {
+        const b = ev.ref;
+        const c = STATUS_COLORS[b.status] || STATUS_COLORS.lead;
+        return `<a class="cal-event" style="background:${c.bg};color:${c.fg}"
+                   href="/booking?id=${b.id}" onclick="event.stopPropagation()">
+                  ${esc(fmtTime(b.start_time))} · ${esc(b.event_name)}
+                </a>`;
+      } else {
+        const e = ev.ref;
+        const t = new Date(e.starts_at);
+        const hhmm = t.toTimeString().slice(0,5);
+        return `<div class="cal-event external" style="background:#CBD5E1;color:#334155"
+                     title="External (read-only)">
+                  ${esc(fmtTime(hhmm))} · ${esc(e.summary || 'External')}
+                </div>`;
+      }
+    }).join('');
+    const moreHtml = events.length > 3
+      ? `<div class="cal-event-more">+ ${events.length - 3} more</div>` : '';
+
+    cells.push(`
+      <div class="cal-cell${isOther ? ' other-month' : ''}${isToday ? ' today' : ''}"
+           onclick="newBookingOnDate('${iso}')">
+        <span class="cal-daynum">${day.getDate()}</span>
+        ${eventsHtml}${moreHtml}
+      </div>
+    `);
+  }
+  grid.innerHTML = cells.join('');
+}
+
+function renderList() {
+  const body = document.getElementById('list-body');
+  const rows = filteredBookings()
+    .filter(b => {
+      // Only bookings within the current month for the list view
+      const d = new Date(b.event_date + 'T00:00:00');
+      return d >= monthStart(state.viewDate) && d <= monthEnd(state.viewDate);
+    })
+    .sort((a, b) => (a.event_date + a.start_time).localeCompare(b.event_date + b.start_time));
+  if (!rows.length) {
+    body.innerHTML = `<tr><td colspan="7" class="empty">No bookings this month. <a href="/booking?new=1">Create the first one →</a></td></tr>`;
+    return;
+  }
+  body.innerHTML = rows.map(b => `
+    <tr onclick="location.href='/booking?id=${b.id}'">
+      <td>${esc(fmtDateShort(b.event_date))}</td>
+      <td>
+        <strong>${esc(b.event_name)}</strong>
+        ${b.contact ? `<br><span style="color:var(--text-secondary);font-size:12px">${esc([b.contact.first_name, b.contact.last_name].filter(Boolean).join(' '))}${b.contact.company ? ' · ' + esc(b.contact.company) : ''}</span>` : ''}
+      </td>
+      <td>${esc(b.space ? b.space.name : '')}</td>
+      <td>${esc(fmtTime(b.start_time))}–${esc(fmtTime(b.end_time))}</td>
+      <td>${b.guest_count || '—'}</td>
+      <td>${statusBadge(b.status)}</td>
+      <td style="text-align:right">${fmtMoney(b.total)}</td>
+    </tr>
+  `).join('');
+}
+
+function newBookingOnDate(iso) {
+  location.href = '/booking?new=1&date=' + encodeURIComponent(iso);
+}
+
+/* ═══ Date utils ═══════════════════════════════════════════════ */
+function monthStart(d) { const x = new Date(d); x.setDate(1); x.setHours(0,0,0,0); return x; }
+function monthEnd(d)   { const x = new Date(d); x.setMonth(x.getMonth()+1, 0); x.setHours(23,59,59,999); return x; }
+function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate()+n); return x; }
+function addMonths(d, n) { const x = new Date(d); x.setMonth(x.getMonth()+n); return x; }
+function isoDate(d)    { return d.toISOString().slice(0,10); }
+</script>
+</body>
+</html>

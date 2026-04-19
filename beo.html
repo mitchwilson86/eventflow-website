@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EventFlow — Banquet Event Order</title>
+  <link rel="canonical" href="https://eventflowsales.com/beo">
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/eventflow-shared.css" />
+  <link rel="stylesheet" href="/bookings.css" />
+  <script src="/bookings-shared.js"></script>
+</head>
+<body style="background:#E2E8F0">
+
+<div id="login-screen">
+  <div class="login-box">
+    <div class="logo">EventFlow</div>
+    <div class="subtitle">BEO</div>
+    <button class="btn primary" style="width:100%;justify-content:center" onclick="signInWithGoogle()">Continue with Google</button>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+  <div class="no-print" style="max-width:800px;margin:16px auto 0;padding:0 16px;display:flex;gap:8px;justify-content:space-between;align-items:center">
+    <a class="btn ghost" id="back-link" href="/bookings">&larr; Back</a>
+    <div>
+      <button class="btn" onclick="window.print()">Print / Save as PDF</button>
+    </div>
+  </div>
+  <div class="doc-page" id="doc"></div>
+</div>
+
+<script>
+window.addEventListener('load', boot);
+
+async function boot() {
+  const sb = await getSupabase();
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { document.getElementById('login-screen').style.display = 'flex'; return; }
+  const id = new URLSearchParams(window.location.search).get('id');
+  if (!id) { document.getElementById('doc').innerHTML = '<p>No booking id.</p>'; document.getElementById('app').style.display = 'block'; return; }
+
+  const { data: b, error: be } = await sb.from('bookings')
+    .select(`*, contact:contact_id(*), space:space_id(*), venue:venue_id(*)`)
+    .eq('id', id).maybeSingle();
+  if (be || !b) {
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('doc').innerHTML = '<p>Booking not found.</p>';
+    return;
+  }
+  const { data: items } = await sb.from('beo_items').select('*').eq('booking_id', id).order('sort_order');
+  document.getElementById('back-link').href = `/booking?id=${id}`;
+  document.getElementById('app').style.display = 'block';
+  document.title = 'BEO — ' + b.event_name;
+  renderDoc(b, items || []);
+}
+
+function renderDoc(b, items) {
+  const v = b.venue, s = b.space, c = b.contact;
+  const totals = computeTotals({
+    items,
+    taxRate: b.tax_rate ?? v.default_tax_rate,
+    serviceChargeRate: b.service_charge_rate ?? v.default_service_charge,
+    depositPct: v.default_deposit_pct
+  });
+  const byCategory = {};
+  for (const it of items) { (byCategory[it.category] ||= []).push(it); }
+  const catOrder = ['food','beverage','av','staffing','rental','fee','other'];
+
+  const sections = catOrder.filter(c => byCategory[c]).map(cat => {
+    const lbl = (BEO_CATEGORIES.find(x => x.value === cat) || { label: cat }).label;
+    const rows = byCategory[cat].map(it => {
+      const line = Number(it.quantity || 0) * Number(it.unit_price || 0);
+      return `
+        <tr>
+          <td>
+            <strong>${esc(it.name)}</strong>
+            ${it.description ? `<br><span style="color:var(--text-secondary);font-size:12px">${esc(it.description)}</span>` : ''}
+          </td>
+          <td style="text-align:right">${Number(it.quantity).toLocaleString()}</td>
+          <td>${esc(it.unit || '')}</td>
+          <td style="text-align:right">${fmtMoney(it.unit_price)}</td>
+          <td style="text-align:right">${fmtMoney(line)}</td>
+        </tr>
+      `;
+    }).join('');
+    return `
+      <h3>${esc(lbl)}</h3>
+      <table>
+        <thead><tr><th>Item</th><th style="text-align:right">Qty</th><th>Unit</th><th style="text-align:right">Unit Price</th><th style="text-align:right">Line</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+  }).join('');
+
+  const taxPct = ((b.tax_rate ?? v.default_tax_rate) * 100).toFixed(3).replace(/\.?0+$/, '');
+  const svcPct = ((b.service_charge_rate ?? v.default_service_charge) * 100).toFixed(2).replace(/\.?0+$/, '');
+
+  document.getElementById('doc').innerHTML = `
+    <div class="doc-header">
+      <div>
+        <h1>Banquet Event Order</h1>
+        <div style="color:var(--text-secondary);font-size:13px;margin-top:4px">
+          BEO ID: ${esc(b.id.slice(0,8))} · Status: ${statusBadge(b.status)}
+        </div>
+      </div>
+      <div class="venue-info">
+        <strong style="font-size:16px;color:var(--text-primary)">${esc(v.name)}</strong><br>
+        ${v.address ? esc(v.address) + '<br>' : ''}
+        ${v.contact_email ? esc(v.contact_email) + '<br>' : ''}
+        ${v.contact_phone ? esc(v.contact_phone) : ''}
+      </div>
+    </div>
+
+    <h2>Event</h2>
+    <table>
+      <tr><td style="width:35%"><strong>Event</strong></td><td>${esc(b.event_name)}${b.event_type ? ' · ' + esc(b.event_type) : ''}</td></tr>
+      <tr><td><strong>Date</strong></td><td>${esc(fmtDate(b.event_date))}</td></tr>
+      <tr><td><strong>Time</strong></td><td>${esc(fmtTime(b.start_time))} – ${esc(fmtTime(b.end_time))} <span style="color:var(--text-secondary)">(setup ${b.setup_minutes || 0}m / teardown ${b.teardown_minutes || 0}m)</span></td></tr>
+      <tr><td><strong>Space</strong></td><td>${esc(s.name)}${s.capacity_seated ? ' · seats ' + s.capacity_seated : ''}${s.capacity_standing ? ' · stand ' + s.capacity_standing : ''}</td></tr>
+      <tr><td><strong>Guest Count</strong></td><td>${b.guest_count || '—'}${b.guaranteed_count ? ` <span style="color:var(--text-secondary)">(guaranteed ${b.guaranteed_count})</span>` : ''}</td></tr>
+    </table>
+
+    <h2>Client</h2>
+    <table>
+      <tr><td style="width:35%"><strong>Name</strong></td><td>${esc([c?.first_name, c?.last_name].filter(Boolean).join(' ') || '—')}</td></tr>
+      ${c?.company ? `<tr><td><strong>Company</strong></td><td>${esc(c.company)}</td></tr>` : ''}
+      ${c?.email ? `<tr><td><strong>Email</strong></td><td>${esc(c.email)}</td></tr>` : ''}
+      ${c?.phone ? `<tr><td><strong>Phone</strong></td><td>${esc(c.phone)}</td></tr>` : ''}
+    </table>
+
+    <h2>Line Items</h2>
+    ${sections || '<p style="color:var(--text-secondary)">No line items yet.</p>'}
+
+    <h2>Totals</h2>
+    <table style="max-width:360px;margin-left:auto">
+      <tr><td>Subtotal</td><td style="text-align:right">${fmtMoney(totals.subtotal)}</td></tr>
+      <tr><td>Service (${svcPct}%)</td><td style="text-align:right">${fmtMoney(totals.service)}</td></tr>
+      <tr><td>Tax (${taxPct}%)</td><td style="text-align:right">${fmtMoney(totals.tax)}</td></tr>
+      <tr style="font-weight:700"><td>Total</td><td style="text-align:right">${fmtMoney(totals.total)}</td></tr>
+      <tr><td>Deposit Due</td><td style="text-align:right">${fmtMoney(totals.deposit)}</td></tr>
+    </table>
+
+    ${b.client_notes ? `<h2>Notes</h2><p>${esc(b.client_notes).replace(/\n/g,'<br>')}</p>` : ''}
+
+    <div style="margin-top:48px;padding-top:12px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted);text-align:center">
+      Generated ${new Date().toLocaleString('en-US')} · ${esc(v.name)}
+    </div>
+  `;
+}
+</script>
+</body>
+</html>

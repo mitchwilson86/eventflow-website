@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign Event Contract</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/eventflow-shared.css" />
+  <link rel="stylesheet" href="/bookings.css" />
+  <script src="/bookings-shared.js"></script>
+</head>
+<body style="background:#E2E8F0">
+
+<div class="sign-wrap">
+  <div id="loader" style="text-align:center;padding:40px">Loading contract…</div>
+
+  <div id="error" style="display:none" class="sign-box">
+    <h2 style="font-family:var(--serif);margin-bottom:8px">Can't load this contract</h2>
+    <p id="error-msg" style="color:var(--text-secondary)"></p>
+  </div>
+
+  <div id="already-signed" style="display:none" class="sign-box" style="text-align:center">
+    <div style="font-size:48px;color:var(--green)">✓</div>
+    <h2 style="font-family:var(--serif);margin:8px 0 4px">Thank you — this contract has been signed.</h2>
+    <p style="color:var(--text-secondary)" id="already-detail"></p>
+    <button class="btn" onclick="window.print()" style="margin-top:16px">Print / Save a copy</button>
+  </div>
+
+  <div id="content" style="display:none">
+    <div class="doc-page" id="doc"></div>
+
+    <div class="sign-box no-print" id="sign-form-host">
+      <h3 style="font-family:var(--serif);font-size:22px;margin-bottom:8px">Sign this contract</h3>
+      <p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px">
+        By signing below you agree to the terms set forth above. A copy will be emailed to you and the venue.
+      </p>
+      <div class="form-grid">
+        <div class="form-field full">
+          <label>Full Legal Name *</label>
+          <input type="text" id="sig-name" autocomplete="name" />
+        </div>
+        <div class="form-field full">
+          <label>Email *</label>
+          <input type="email" id="sig-email" autocomplete="email" />
+        </div>
+      </div>
+      <label class="sign-accept">
+        <input type="checkbox" id="sig-accept" />
+        <span>I have read and agree to the terms of this Event Contract. I understand that typing my name
+        and clicking "Sign Contract" below is the legal equivalent of a handwritten signature.</span>
+      </label>
+      <button class="btn primary" style="width:100%;justify-content:center;margin-top:12px" onclick="submitSignature()">
+        Sign Contract
+      </button>
+      <div id="sign-error" style="display:none;color:var(--red);font-size:13px;margin-top:8px"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let bundle = null;
+const token = new URLSearchParams(window.location.search).get('token') || '';
+
+window.addEventListener('load', boot);
+
+async function boot() {
+  if (!token) { showError('No signing token provided.'); return; }
+  try {
+    const sb = await getSupabase();
+    const { data, error } = await sb.rpc('get_contract_for_signing', { p_token: token });
+    if (error) { showError(error.message); return; }
+    if (!data || data.error) { showError(humanizeError(data && data.error)); return; }
+    bundle = data;
+    renderDoc(bundle);
+    document.getElementById('loader').style.display = 'none';
+    if (bundle.contract.status === 'signed') {
+      document.getElementById('already-signed').style.display = 'block';
+      document.getElementById('already-detail').textContent =
+        'Signed ' + new Date(bundle.contract.signed_at).toLocaleString('en-US');
+      document.getElementById('sign-form-host').style.display = 'none';
+    }
+    document.getElementById('content').style.display = 'block';
+    if (bundle.contact) {
+      document.getElementById('sig-name').value = [bundle.contact.first_name, bundle.contact.last_name].filter(Boolean).join(' ');
+      document.getElementById('sig-email').value = bundle.contact.email || '';
+    }
+  } catch (err) {
+    showError(err.message);
+  }
+}
+
+function showError(msg) {
+  document.getElementById('loader').style.display = 'none';
+  document.getElementById('error').style.display = 'block';
+  document.getElementById('error-msg').textContent = msg || 'Unknown error.';
+}
+function humanizeError(code) {
+  return ({
+    invalid_token: 'That signing link is not valid.',
+    not_found: 'We could not find a contract for that link.',
+    voided: 'This contract has been voided by the venue. Please contact them for a new one.'
+  })[code] || ('Error: ' + code);
+}
+
+function renderDoc(d) {
+  const b = d.booking, v = d.venue, s = d.space, c = d.contact;
+  const items = d.items || [];
+  const totals = computeTotals({
+    items,
+    taxRate: b.tax_rate ?? v.default_tax_rate,
+    serviceChargeRate: b.service_charge_rate ?? v.default_service_charge,
+    depositPct: v.default_deposit_pct
+  });
+  const taxPct = ((b.tax_rate ?? v.default_tax_rate) * 100).toFixed(3).replace(/\.?0+$/, '');
+  const svcPct = ((b.service_charge_rate ?? v.default_service_charge) * 100).toFixed(2).replace(/\.?0+$/, '');
+  const depPct = (v.default_deposit_pct * 100).toFixed(0);
+
+  const itemsHtml = items.length ? `
+    <table>
+      <thead><tr><th>Item</th><th style="text-align:right">Qty</th><th style="text-align:right">Unit</th><th style="text-align:right">Line</th></tr></thead>
+      <tbody>
+        ${items.map(it => {
+          const line = Number(it.quantity || 0) * Number(it.unit_price || 0);
+          return `<tr>
+            <td>${esc(it.name)}${it.description ? `<br><span style="color:var(--text-secondary);font-size:12px">${esc(it.description)}</span>` : ''}</td>
+            <td style="text-align:right">${Number(it.quantity).toLocaleString()} ${esc(it.unit || '')}</td>
+            <td style="text-align:right">${fmtMoney(it.unit_price)}</td>
+            <td style="text-align:right">${fmtMoney(line)}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>` : '<p style="color:var(--text-secondary)">No line items yet.</p>';
+
+  document.getElementById('doc').innerHTML = `
+    <div class="doc-header">
+      <div>
+        <h1>Event Contract</h1>
+        <div style="color:var(--text-secondary);font-size:13px;margin-top:4px">Contract v${d.contract.version}</div>
+      </div>
+      <div class="venue-info">
+        <strong style="font-size:16px;color:var(--text-primary)">${esc(v.name)}</strong><br>
+        ${v.address ? esc(v.address) + '<br>' : ''}
+        ${v.contact_email ? esc(v.contact_email) + '<br>' : ''}
+        ${v.contact_phone ? esc(v.contact_phone) : ''}
+      </div>
+    </div>
+
+    <p>This Event Contract (the "Agreement") is entered into between <strong>${esc(v.name)}</strong> (the "Venue")
+    and <strong>${esc([c?.first_name, c?.last_name].filter(Boolean).join(' ') || '[Client Name]')}</strong>${c?.company ? ' of ' + esc(c.company) : ''} (the "Client")
+    for the event described below.</p>
+
+    <h2>1. Event Details</h2>
+    <table>
+      <tr><td style="width:35%"><strong>Event</strong></td><td>${esc(b.event_name)}${b.event_type ? ' · ' + esc(b.event_type) : ''}</td></tr>
+      <tr><td><strong>Date</strong></td><td>${esc(fmtDate(b.event_date))}</td></tr>
+      <tr><td><strong>Time</strong></td><td>${esc(fmtTime(b.start_time))} – ${esc(fmtTime(b.end_time))}</td></tr>
+      <tr><td><strong>Space</strong></td><td>${esc(s.name)}</td></tr>
+      <tr><td><strong>Expected Guests</strong></td><td>${b.guest_count || '—'}${b.guaranteed_count ? ` (guaranteed ${b.guaranteed_count})` : ''}</td></tr>
+    </table>
+
+    <h2>2. Services & Charges</h2>
+    ${itemsHtml}
+    <table style="max-width:360px;margin-left:auto;margin-top:12px">
+      <tr><td>Subtotal</td><td style="text-align:right">${fmtMoney(totals.subtotal)}</td></tr>
+      <tr><td>Service Charge (${svcPct}%)</td><td style="text-align:right">${fmtMoney(totals.service)}</td></tr>
+      <tr><td>Sales Tax (${taxPct}%)</td><td style="text-align:right">${fmtMoney(totals.tax)}</td></tr>
+      <tr style="font-weight:700"><td>Total</td><td style="text-align:right">${fmtMoney(totals.total)}</td></tr>
+    </table>
+
+    <h2>3. Payment Terms</h2>
+    <p>A non-refundable deposit of <strong>${fmtMoney(totals.deposit)}</strong> (${depPct}% of total) is due
+    upon execution of this Agreement to confirm the booking. The remaining balance of
+    <strong>${fmtMoney(totals.total - totals.deposit)}</strong> is due on or before the event date.</p>
+
+    <h2>4. Guest Count Guarantee</h2>
+    <p>The Client must confirm a final guaranteed guest count no later than seventy-two (72) hours prior to
+    the event. This guaranteed count is the minimum number of guests the Client will be billed for.</p>
+
+    <h2>5. Cancellation Policy</h2>
+    <p>${esc(v.cancellation_policy || '')}</p>
+
+    <h2>6. Space & Conduct</h2>
+    <p>The Client agrees to treat the Venue's property with care and is responsible for any damages caused
+    by the Client or their guests. The Venue reserves the right to terminate the event without refund for
+    disruptive, unsafe, or unlawful conduct.</p>
+
+    <h2>7. Force Majeure</h2>
+    <p>Neither party shall be liable for failure to perform due to events beyond reasonable control. In such
+    cases the parties will work in good faith to reschedule the event.</p>
+
+    ${b.client_notes ? `<h2>8. Additional Terms</h2><p>${esc(b.client_notes).replace(/\n/g,'<br>')}</p>` : ''}
+  `;
+}
+
+async function submitSignature() {
+  const name = document.getElementById('sig-name').value.trim();
+  const email = document.getElementById('sig-email').value.trim();
+  const accepted = document.getElementById('sig-accept').checked;
+  const errEl = document.getElementById('sign-error');
+  errEl.style.display = 'none';
+  if (!name) return showSignError('Enter your full legal name.');
+  if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) return showSignError('Enter a valid email address.');
+  if (!accepted) return showSignError('You must acknowledge the terms before signing.');
+
+  const btn = document.querySelector('#sign-form-host button.primary');
+  btn.disabled = true; btn.textContent = 'Signing…';
+  try {
+    const sb = await getSupabase();
+    const { data, error } = await sb.rpc('sign_contract', {
+      p_token: token,
+      p_signer_name: name,
+      p_signer_email: email,
+      p_user_agent: navigator.userAgent
+    });
+    if (error) throw error;
+    if (data && data.error) throw new Error(humanizeError(data.error));
+    document.getElementById('sign-form-host').style.display = 'none';
+    document.getElementById('already-signed').style.display = 'block';
+    document.getElementById('already-detail').textContent = 'Signed just now by ' + name;
+    window.scrollTo({ top: document.getElementById('already-signed').offsetTop - 20, behavior: 'smooth' });
+  } catch (err) {
+    showSignError(err.message || String(err));
+    btn.disabled = false; btn.textContent = 'Sign Contract';
+  }
+}
+function showSignError(msg) {
+  const errEl = document.getElementById('sign-error');
+  errEl.textContent = msg; errEl.style.display = 'block';
+}
+</script>
+</body>
+</html>

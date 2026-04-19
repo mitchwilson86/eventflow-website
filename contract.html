@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EventFlow — Contract</title>
+  <link rel="canonical" href="https://eventflowsales.com/contract">
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/eventflow-shared.css" />
+  <link rel="stylesheet" href="/bookings.css" />
+  <script src="/bookings-shared.js"></script>
+</head>
+<body style="background:#E2E8F0">
+
+<div id="login-screen">
+  <div class="login-box">
+    <div class="logo">EventFlow</div>
+    <div class="subtitle">Contract</div>
+    <button class="btn primary" style="width:100%;justify-content:center" onclick="signInWithGoogle()">Continue with Google</button>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+  <div class="no-print" style="max-width:800px;margin:16px auto 0;padding:0 16px;display:flex;gap:8px;justify-content:space-between;align-items:center">
+    <a class="btn ghost" id="back-link" href="/bookings">&larr; Back</a>
+    <div style="display:flex;gap:8px">
+      <button class="btn" onclick="copySignLink()" id="copy-link-btn" style="display:none">Copy Signing Link</button>
+      <button class="btn" onclick="window.print()">Print / Save as PDF</button>
+    </div>
+  </div>
+  <div class="doc-page" id="doc"></div>
+</div>
+
+<script>
+let signUrl = null;
+
+window.addEventListener('load', boot);
+
+async function boot() {
+  const sb = await getSupabase();
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { document.getElementById('login-screen').style.display = 'flex'; return; }
+  const id = new URLSearchParams(window.location.search).get('id');
+  if (!id) { document.getElementById('doc').innerHTML = '<p>No booking id.</p>'; document.getElementById('app').style.display = 'block'; return; }
+
+  const { data: b, error: be } = await sb.from('bookings')
+    .select(`*, contact:contact_id(*), space:space_id(*), venue:venue_id(*)`)
+    .eq('id', id).maybeSingle();
+  if (be || !b) {
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('doc').innerHTML = '<p>Booking not found.</p>';
+    return;
+  }
+  const { data: items } = await sb.from('beo_items').select('*').eq('booking_id', id).order('sort_order');
+  const { data: contracts } = await sb.from('contracts').select('*').eq('booking_id', id).order('created_at', { ascending: false });
+  const active = (contracts || []).find(c => c.status !== 'voided') || null;
+  let signature = null;
+  if (active) {
+    const { data: sigs } = await sb.from('signatures').select('*').eq('contract_id', active.id).order('signed_at', { ascending: false }).limit(1);
+    signature = sigs && sigs[0];
+  }
+  if (active && active.access_token && active.status !== 'signed') {
+    signUrl = `${window.location.origin}/sign?token=${active.access_token}`;
+    document.getElementById('copy-link-btn').style.display = '';
+  }
+
+  document.getElementById('back-link').href = `/booking?id=${id}`;
+  document.getElementById('app').style.display = 'block';
+  document.title = 'Contract — ' + b.event_name;
+  renderDoc(b, items || [], active, signature);
+}
+
+async function copySignLink() {
+  if (!signUrl) return;
+  try { await navigator.clipboard.writeText(signUrl); alert('Signing link copied:\n' + signUrl); }
+  catch { prompt('Copy signing link:', signUrl); }
+}
+
+function renderDoc(b, items, contract, signature) {
+  const v = b.venue, s = b.space, c = b.contact;
+  const totals = computeTotals({
+    items,
+    taxRate: b.tax_rate ?? v.default_tax_rate,
+    serviceChargeRate: b.service_charge_rate ?? v.default_service_charge,
+    depositPct: v.default_deposit_pct
+  });
+
+  const taxPct = ((b.tax_rate ?? v.default_tax_rate) * 100).toFixed(3).replace(/\.?0+$/, '');
+  const svcPct = ((b.service_charge_rate ?? v.default_service_charge) * 100).toFixed(2).replace(/\.?0+$/, '');
+  const depPct = (v.default_deposit_pct * 100).toFixed(0);
+
+  const itemsHtml = items.length ? `
+    <table>
+      <thead><tr><th>Item</th><th style="text-align:right">Qty</th><th style="text-align:right">Unit</th><th style="text-align:right">Line</th></tr></thead>
+      <tbody>
+        ${items.map(it => {
+          const line = Number(it.quantity || 0) * Number(it.unit_price || 0);
+          return `<tr>
+            <td>${esc(it.name)}${it.description ? `<br><span style="color:var(--text-secondary);font-size:12px">${esc(it.description)}</span>` : ''}</td>
+            <td style="text-align:right">${Number(it.quantity).toLocaleString()} ${esc(it.unit || '')}</td>
+            <td style="text-align:right">${fmtMoney(it.unit_price)}</td>
+            <td style="text-align:right">${fmtMoney(line)}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  ` : '<p style="color:var(--text-secondary)">No line items yet.</p>';
+
+  const signedHtml = signature ? `
+    <div class="signature-box">
+      <h3>Signed</h3>
+      <p>
+        <strong>${esc(signature.signer_name)}</strong> &lt;${esc(signature.signer_email)}&gt;<br>
+        <span class="signed-stamp">✓ Signed ${esc(new Date(signature.signed_at).toLocaleString('en-US'))}</span><br>
+        <span style="color:var(--text-muted);font-size:12px">
+          IP ${esc(signature.signer_ip || '—')} ·
+          ${esc((signature.signer_user_agent || '').slice(0, 80))}
+        </span>
+      </p>
+    </div>
+  ` : `
+    <div class="signature-box">
+      <h3>Signatures</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:16px">
+        <div>
+          <div style="border-bottom:1px solid var(--text-primary);height:40px"></div>
+          <div style="font-size:12px;margin-top:4px">Client signature — ${esc([c?.first_name, c?.last_name].filter(Boolean).join(' ') || '____________________')}</div>
+          <div style="font-size:12px;margin-top:2px">Date: _____________</div>
+        </div>
+        <div>
+          <div style="border-bottom:1px solid var(--text-primary);height:40px"></div>
+          <div style="font-size:12px;margin-top:4px">${esc(v.name)}</div>
+          <div style="font-size:12px;margin-top:2px">Date: _____________</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('doc').innerHTML = `
+    <div class="doc-header">
+      <div>
+        <h1>Event Contract</h1>
+        <div style="color:var(--text-secondary);font-size:13px;margin-top:4px">
+          Contract v${contract ? contract.version : 1} · Status: ${statusBadge(b.status)}
+        </div>
+      </div>
+      <div class="venue-info">
+        <strong style="font-size:16px;color:var(--text-primary)">${esc(v.name)}</strong><br>
+        ${v.address ? esc(v.address) + '<br>' : ''}
+        ${v.contact_email ? esc(v.contact_email) + '<br>' : ''}
+        ${v.contact_phone ? esc(v.contact_phone) : ''}
+      </div>
+    </div>
+
+    <p>This Event Contract (the "Agreement") is entered into between <strong>${esc(v.name)}</strong> (the "Venue")
+    and <strong>${esc([c?.first_name, c?.last_name].filter(Boolean).join(' ') || '[Client Name]')}</strong>${c?.company ? ' of ' + esc(c.company) : ''} (the "Client")
+    for the event described below.</p>
+
+    <h2>1. Event Details</h2>
+    <table>
+      <tr><td style="width:35%"><strong>Event</strong></td><td>${esc(b.event_name)}${b.event_type ? ' · ' + esc(b.event_type) : ''}</td></tr>
+      <tr><td><strong>Date</strong></td><td>${esc(fmtDate(b.event_date))}</td></tr>
+      <tr><td><strong>Time</strong></td><td>${esc(fmtTime(b.start_time))} – ${esc(fmtTime(b.end_time))}</td></tr>
+      <tr><td><strong>Space</strong></td><td>${esc(s.name)}</td></tr>
+      <tr><td><strong>Expected Guests</strong></td><td>${b.guest_count || '—'}${b.guaranteed_count ? ` (guaranteed ${b.guaranteed_count})` : ''}</td></tr>
+    </table>
+
+    <h2>2. Services & Charges</h2>
+    ${itemsHtml}
+
+    <table style="max-width:360px;margin-left:auto;margin-top:12px">
+      <tr><td>Subtotal</td><td style="text-align:right">${fmtMoney(totals.subtotal)}</td></tr>
+      <tr><td>Service Charge (${svcPct}%)</td><td style="text-align:right">${fmtMoney(totals.service)}</td></tr>
+      <tr><td>Sales Tax (${taxPct}%)</td><td style="text-align:right">${fmtMoney(totals.tax)}</td></tr>
+      <tr style="font-weight:700"><td>Total</td><td style="text-align:right">${fmtMoney(totals.total)}</td></tr>
+    </table>
+
+    <h2>3. Payment Terms</h2>
+    <p>A non-refundable deposit of <strong>${fmtMoney(totals.deposit)}</strong> (${depPct}% of total) is due upon
+    execution of this Agreement to confirm the booking. The remaining balance of
+    <strong>${fmtMoney(totals.total - totals.deposit)}</strong> is due on or before the event date.
+    Payment may be made by credit card, ACH, check, or wire transfer.</p>
+
+    <h2>4. Guest Count Guarantee</h2>
+    <p>The Client must confirm a final guaranteed guest count no later than seventy-two (72) hours prior to
+    the event. This guaranteed count is the minimum number of guests the Client will be billed for. Should
+    the actual attendance exceed the guaranteed count, the Client will be billed for the actual count.</p>
+
+    <h2>5. Cancellation Policy</h2>
+    <p>${esc(v.cancellation_policy || 'Cancellations more than sixty (60) days prior to the event will receive a full deposit refund. Cancellations twenty-one to sixty (21–60) days prior will forfeit fifty percent (50%) of the deposit. Cancellations within twenty (20) days of the event will forfeit the entire deposit. Cancellations within seven (7) days will be responsible for 100% of the contracted food & beverage minimum.')}</p>
+
+    <h2>6. Space & Conduct</h2>
+    <p>The Client agrees to treat the Venue's property with care and is responsible for any damages caused by
+    the Client or their guests. The Venue reserves the right to terminate the event without refund if guests
+    engage in conduct that is disruptive, unsafe, or violates applicable law.</p>
+
+    <h2>7. Force Majeure</h2>
+    <p>Neither party shall be liable for failure to perform due to events beyond reasonable control, including
+    acts of God, government action, natural disaster, or public health emergency. In such cases the parties
+    will work in good faith to reschedule the event.</p>
+
+    ${b.client_notes ? `<h2>8. Additional Terms</h2><p>${esc(b.client_notes).replace(/\n/g,'<br>')}</p>` : ''}
+
+    <p style="margin-top:16px">By signing below, both parties acknowledge they have read, understood, and agree to be bound by
+    the terms of this Agreement.</p>
+
+    ${signedHtml}
+
+    <div style="margin-top:32px;padding-top:12px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted);text-align:center">
+      Contract ID ${contract ? esc(contract.id.slice(0,8)) : '—'} · Generated ${new Date().toLocaleString('en-US')}
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
