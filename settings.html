@@ -316,8 +316,9 @@ function doLogout() {
 /* ═══ RENDER ═══ */
 function renderPage(client) {
   document.getElementById('venue-name').textContent = client.venue;
-  if (client.gmail_address) {
-    document.getElementById('user-email-sidebar').textContent = client.gmail_address;
+  var signedInEmail = sessionStorage.getItem('ef_user_email') || client.gmail_address || '';
+  if (signedInEmail) {
+    document.getElementById('user-email-sidebar').textContent = signedInEmail;
   }
   loadSettings();
 }
