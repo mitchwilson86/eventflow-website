@@ -50,6 +50,36 @@ async function signInWithGoogle() {
   });
 }
 
+// If the user signed in via Google Identity Services on another page
+// (dashboard/campaigns/admin/settings), sessionStorage will have an
+// ef_id_token. Hand that to Supabase so the user has a single sign-on
+// experience across bookings + the GSI-based pages.
+//
+// This only works if the Supabase project has Google OAuth configured
+// with the same client ID the GSI flow uses. If not, this is a no-op
+// and the existing OAuth redirect flow still works as a fallback.
+async function bootstrapSupabaseFromGSI() {
+  const s = await getSupabase();
+  const { data: { session } } = await s.auth.getSession();
+  if (session) return true;
+
+  const idToken = sessionStorage.getItem('ef_id_token');
+  const exp = parseInt(sessionStorage.getItem('ef_id_token_exp') || '0', 10);
+  if (!idToken || !exp || Date.now() > exp) return false;
+
+  try {
+    const { error } = await s.auth.signInWithIdToken({ provider: 'google', token: idToken });
+    if (error) {
+      console.warn('Supabase GSI bootstrap failed:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('Supabase GSI bootstrap error:', err && err.message);
+    return false;
+  }
+}
+
 async function signOut() {
   const s = await getSupabase();
   await s.auth.signOut();
@@ -122,6 +152,9 @@ function computeTotals({ items, taxRate, serviceChargeRate, depositPct }) {
 
 /* Sidebar nav — identical structure to dashboard for visual continuity */
 function renderSidebar(activeKey, venueName, userEmail) {
+  const ADMIN_EMAILS_LOCAL = ['mitchwilson@eventflowsales.com'];
+  const signedIn = (sessionStorage.getItem('ef_user_email') || userEmail || '').toLowerCase();
+  const isAdmin = ADMIN_EMAILS_LOCAL.indexOf(signedIn) !== -1;
   const nav = [
     { key: 'dashboard',    href: '/dashboard',    label: 'Dashboard',    icon: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>' },
     { key: 'bookings',     href: '/bookings',     label: 'Bookings',     icon: '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>' },
@@ -129,6 +162,9 @@ function renderSidebar(activeKey, venueName, userEmail) {
     { key: 'settings',     href: '/settings',     label: 'Settings',     icon: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>' },
     { key: 'notifications',href: '/notifications',label: 'Notifications',icon: '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>' }
   ];
+  if (isAdmin) {
+    nav.push({ key: 'admin', href: '/admin', label: 'Admin Dashboard', icon: '<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>' });
+  }
   return `
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-brand">
@@ -144,7 +180,7 @@ function renderSidebar(activeKey, venueName, userEmail) {
         `).join('')}
       </nav>
       <div class="sidebar-footer">
-        <span class="user-email" id="user-email-sidebar">${esc(userEmail || '')}</span>
+        <span class="user-email" id="user-email-sidebar">${esc(signedIn || userEmail || '')}</span>
         <button class="logout-btn" onclick="signOut()">Sign Out</button>
       </div>
     </aside>
@@ -162,6 +198,7 @@ window.getSupabase = getSupabase;
 window.currentUser = currentUser;
 window.signInWithGoogle = signInWithGoogle;
 window.signOut = signOut;
+window.bootstrapSupabaseFromGSI = bootstrapSupabaseFromGSI;
 window.loadUserVenues = loadUserVenues;
 window.esc = esc;
 window.fmtMoney = fmtMoney;

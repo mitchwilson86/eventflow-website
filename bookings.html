@@ -160,6 +160,9 @@ function toast(msg, kind = 'info') {
 window.addEventListener('load', boot);
 
 async function boot() {
+  // If the user signed in via GSI on another page, try to reuse that token
+  // for Supabase so they don't get re-prompted.
+  await bootstrapSupabaseFromGSI();
   const sb = await getSupabase();
   const { data: { session } } = await sb.auth.getSession();
   if (!session) {
