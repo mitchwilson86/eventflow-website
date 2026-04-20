@@ -158,6 +158,27 @@
             </div>
           </div>
 
+          <!-- Pending Signups — only rendered when there are any -->
+          <div class="panel" id="pending-panel" style="display:none;">
+            <h3>Pending Signups <span id="pending-count" style="color:var(--text-muted);font-weight:400;font-size:14px;"></span></h3>
+            <div class="table-wrap">
+              <table id="pending-table">
+                <thead>
+                  <tr>
+                    <th>Venue</th>
+                    <th>Slug</th>
+                    <th>Owner email</th>
+                    <th>Signed up</th>
+                    <th>Source</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="pending-tbody"></tbody>
+              </table>
+            </div>
+            <div id="approve-result" style="margin-top:12px;font-size:13px;"></div>
+          </div>
+
           <!-- 3. Multi-Client Overview -->
           <div class="panel">
             <h3>Client Overview</h3>
@@ -411,6 +432,92 @@ function renderAll(data) {
   renderCampaigns(data.campaigns || []);
   renderPipeline(data.pipeline || []);
   renderActivity(data.activity || []);
+  loadPendingSignups();
+}
+
+/* ═══ PENDING SIGNUPS ══════════════════════════════════════════ */
+async function loadPendingSignups() {
+  try {
+    const res = await fetch(DATA_URL + '?type=client_list');
+    const data = await res.json();
+    const pending = (data.clients || []).filter(c => (c.status || '').toString().toLowerCase() === 'pending');
+    renderPending(pending);
+  } catch (err) {
+    console.warn('Pending signups load failed:', err);
+  }
+}
+
+function renderPending(pending) {
+  const panel = document.getElementById('pending-panel');
+  const tbody = document.getElementById('pending-tbody');
+  const count = document.getElementById('pending-count');
+  if (!pending.length) {
+    panel.style.display = 'none';
+    return;
+  }
+  panel.style.display = 'block';
+  count.textContent = '(' + pending.length + ')';
+  tbody.innerHTML = pending.map(c => {
+    const onboarded = c.onboarded ? new Date(c.onboarded).toLocaleDateString() : '--';
+    const source = c.signup_source || '—';
+    return '<tr>' +
+      '<td>' + esc(c.venue || c.slug) + '</td>' +
+      '<td><code>' + esc(c.slug) + '</code></td>' +
+      '<td>' + esc(c.gmail || '—') + '</td>' +
+      '<td>' + esc(onboarded) + '</td>' +
+      '<td>' + esc(source) + '</td>' +
+      '<td><button class="btn-primary" style="padding:6px 14px;font-size:13px;" onclick="approveVenue(\'' + esc(c.slug) + '\', this)">Approve</button></td>' +
+      '</tr>';
+  }).join('');
+}
+
+async function approveVenue(slug, btn) {
+  const resultEl = document.getElementById('approve-result');
+  const idToken = sessionStorage.getItem('ef_id_token');
+  const exp = parseInt(sessionStorage.getItem('ef_id_token_exp') || '0', 10);
+  if (!idToken || !exp || Date.now() > exp) {
+    resultEl.innerHTML = '<span style="color:var(--red);">Session expired. Please sign in again to approve.</span>';
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = 'Approving...';
+  resultEl.textContent = '';
+
+  try {
+    const res = await fetch(DATA_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'approve_venue', id_token: idToken, client_slug: slug })
+    });
+    const data = await res.json();
+    if (data.success) {
+      let msg = '<span style="color:var(--green);">&#10003; ' + esc(slug) + ' approved.</span>';
+      if (data.provisioning) {
+        const p = data.provisioning;
+        msg += '<br><span style="color:var(--text-muted);font-size:12px;">';
+        if (p.supabase_venue_id) msg += 'Supabase venue: ' + esc(p.supabase_venue_id.slice(0, 8)) + '... · ';
+        if (p.workflow_b_id) msg += 'Workflow B: <code>' + esc(p.workflow_b_id) + '</code> · ';
+        msg += '</span>';
+      }
+      if (data.warnings && data.warnings.length) {
+        msg += '<br><span style="color:var(--orange);font-size:12px;">Warnings: ' + data.warnings.map(esc).join(' · ') + '</span>';
+      }
+      if (data.next_steps) {
+        msg += '<br><span style="font-size:12px;">' + esc(data.next_steps) + '</span>';
+      }
+      resultEl.innerHTML = msg;
+      // Refresh the pending list
+      setTimeout(loadPendingSignups, 800);
+    } else {
+      resultEl.innerHTML = '<span style="color:var(--red);">Error: ' + esc(data.error || 'unknown') + '</span>';
+      btn.disabled = false;
+      btn.textContent = 'Approve';
+    }
+  } catch (err) {
+    resultEl.innerHTML = '<span style="color:var(--red);">Request failed: ' + esc(err.message) + '</span>';
+    btn.disabled = false;
+    btn.textContent = 'Approve';
+  }
 }
 
 function renderAlerts(alerts) {
