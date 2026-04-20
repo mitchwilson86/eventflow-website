@@ -20,20 +20,41 @@
       font-size: 12px; cursor: pointer; font-family: var(--font);
     }
     .add-menu-btn:hover { border-color: var(--teal); color: var(--teal); }
-    .space-row { border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .space-row { border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     .space-row .full { grid-column: 1 / -1; }
-    .space-row label { font-size: 11px; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: .5px; display: block; margin-bottom: 4px; }
-    .space-row input[type=text], .space-row input[type=number], .space-row textarea {
-      width: 100%; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px;
-      font-family: var(--font); font-size: 13px; background: var(--bg); color: var(--text);
+    .space-row label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+    .space-row input[type=text], .space-row input[type=number], .space-row input[type=url], .space-row textarea {
+      width: 100%; padding: 10px 14px; background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text-primary); font-family: var(--font); font-size: 14px;
+      transition: border-color .2s;
     }
-    .space-row textarea { min-height: 50px; resize: vertical; }
-    .space-row .buyout-line { display: flex; align-items: center; gap: 8px; }
-    .space-row .buyout-line input[type=checkbox] { margin: 0; }
+    .space-row input:focus, .space-row textarea:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(21,97,109,.1); }
+    .space-row textarea { min-height: 60px; resize: vertical; }
+    .buyout-label {
+      display: inline-flex; align-items: center; gap: 10px; padding: 10px 14px;
+      background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px;
+      font-size: 14px; color: var(--text-primary); cursor: pointer; text-transform: none;
+      letter-spacing: normal; font-weight: 400; margin-bottom: 0;
+    }
+    .buyout-label input[type=checkbox] { margin: 0; width: 16px; height: 16px; accent-color: var(--teal); }
     .space-remove { background: none; border: none; color: var(--red); font-size: 12px; cursor: pointer; padding: 4px 8px; }
     .space-remove:hover { text-decoration: underline; }
-    .auth-row { display: flex; gap: 8px; margin-bottom: 6px; align-items: center; }
-    .auth-row input { flex: 1; }
+    .auth-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+    .auth-row input {
+      flex: 1; padding: 10px 14px; background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text-primary); font-family: var(--font); font-size: 14px;
+    }
+    .auth-row input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(21,97,109,.1); }
+    .venue-picker-row {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+      padding: 12px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px;
+    }
+    .venue-picker-row label { margin: 0; font-size: 12px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; }
+    .venue-picker-row select {
+      flex: 1; padding: 8px 12px; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 6px; color: var(--text-primary); font-family: var(--font); font-size: 14px;
+    }
+    .admin-badge { font-size: 11px; color: var(--teal); background: rgba(21,97,109,.1); padding: 3px 8px; border-radius: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
   </style>
 </head>
 <body>
@@ -107,6 +128,12 @@
         <div></div>
       </div>
       <div class="dash-body">
+
+        <div class="venue-picker-row" id="venue-picker-row" style="display:none;">
+          <span class="admin-badge">Admin</span>
+          <label for="venue-picker">Editing venue:</label>
+          <select id="venue-picker" onchange="onVenueChange()"></select>
+        </div>
 
         <div class="panel">
           <div class="settings-grid">
@@ -207,6 +234,37 @@ function resolveClientForEmail(email) {
   return null;
 }
 
+function isAdminCaller() {
+  var email = (sessionStorage.getItem('ef_user_email') || '').toLowerCase();
+  return ADMIN_EMAILS.indexOf(email) !== -1;
+}
+
+function refreshVenuePicker() {
+  if (!isAdminCaller()) return;
+  var row = document.getElementById('venue-picker-row');
+  var sel = document.getElementById('venue-picker');
+  var venues = Object.values(CLIENTS).filter(function(c){ return c.slug; });
+  if (!venues.length) return;
+  row.style.display = 'flex';
+  var currentSlug = currentClient && currentClient.slug;
+  sel.innerHTML = '';
+  venues.forEach(function(c){
+    var opt = document.createElement('option');
+    opt.value = c.slug;
+    opt.textContent = c.venue + ' (' + c.slug + ')';
+    if (c.slug === currentSlug) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function onVenueChange() {
+  var slug = document.getElementById('venue-picker').value;
+  var client = Object.values(CLIENTS).find(function(c){ return c.slug === slug; });
+  if (!client) return;
+  currentClient = client;
+  renderPage(client);
+}
+
 /* ═══ SIDEBAR TOGGLE ═══ */
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
@@ -272,6 +330,20 @@ function loadDynamicClients() {
         authorized_emails: authList,
         data: {}
       };
+    }
+    // Admin may have signed in before the full client list arrived — refresh
+    // the picker and re-resolve their default venue now that we have all venues.
+    if (isAdminCaller()) {
+      if (!currentClient) {
+        var defaultVenue = resolveClientForEmail(sessionStorage.getItem('ef_user_email'));
+        if (defaultVenue) {
+          currentClient = defaultVenue;
+          document.getElementById('login-screen').style.display = 'none';
+          document.getElementById('dashboard').style.display = 'block';
+          renderPage(defaultVenue);
+        }
+      }
+      refreshVenuePicker();
     }
   }).catch(function() {});
 }
@@ -397,6 +469,7 @@ function addMenuRow(name, url) {
 
 function addSpaceRow(s) {
   s = s || {};
+  var photoLines = Array.isArray(s.photos) ? s.photos.join('\n') : '';
   var container = document.getElementById('spaces-rows');
   var row = document.createElement('div');
   row.className = 'space-row';
@@ -405,9 +478,10 @@ function addSpaceRow(s) {
     '<div><label>Seated capacity</label><input type="number" class="s-seated" value="' + esc(s.capacity_seated != null ? s.capacity_seated : '') + '" min="1" /></div>' +
     '<div class="full"><label>Description</label><textarea class="s-desc" placeholder="Short description of the space">' + esc(s.description || '') + '</textarea></div>' +
     '<div><label>Standing capacity</label><input type="number" class="s-standing" value="' + esc(s.capacity_standing != null ? s.capacity_standing : '') + '" min="1" /></div>' +
-    '<div><label>&nbsp;</label><div class="buyout-line"><input type="checkbox" class="s-buyout" ' + (s.buyout ? 'checked' : '') + ' /> <span style="font-size:13px;">Full buyout of venue</span></div></div>' +
     '<div><label>F&B minimum — weekday ($)</label><input type="number" class="s-fbwk" value="' + esc(s.fb_min_weekday != null ? s.fb_min_weekday : '') + '" min="0" /></div>' +
     '<div><label>F&B minimum — weekend ($)</label><input type="number" class="s-fbwe" value="' + esc(s.fb_min_weekend != null ? s.fb_min_weekend : '') + '" min="0" /></div>' +
+    '<div class="full"><label class="buyout-label"><input type="checkbox" class="s-buyout" ' + (s.buyout ? 'checked' : '') + ' /> This space is a full buyout of the venue</label></div>' +
+    '<div class="full"><label>Photo URLs (one per line)</label><textarea class="s-photos" placeholder="https://your-photos.com/space1.jpg\nhttps://your-photos.com/space1-close.jpg">' + esc(photoLines) + '</textarea></div>' +
     '<div class="full" style="text-align:right;"><button type="button" class="space-remove" onclick="this.closest(\'.space-row\').remove()">Remove this space</button></div>';
   container.appendChild(row);
 }
@@ -428,6 +502,8 @@ function collectSpaces() {
   rows.forEach(function(row) {
     var name = row.querySelector('.s-name').value.trim();
     if (!name) return; // skip empty rows
+    var photosRaw = row.querySelector('.s-photos').value || '';
+    var photos = photosRaw.split(/\r?\n/).map(function(s){ return s.trim(); }).filter(Boolean);
     out.push({
       name: name,
       description: row.querySelector('.s-desc').value.trim(),
@@ -435,7 +511,8 @@ function collectSpaces() {
       capacity_standing: parseInt(row.querySelector('.s-standing').value, 10) || 0,
       buyout: row.querySelector('.s-buyout').checked,
       fb_min_weekday: parseInt(row.querySelector('.s-fbwk').value, 10) || 0,
-      fb_min_weekend: parseInt(row.querySelector('.s-fbwe').value, 10) || 0
+      fb_min_weekend: parseInt(row.querySelector('.s-fbwe').value, 10) || 0,
+      photos: photos
     });
   });
   return out;
