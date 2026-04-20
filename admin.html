@@ -290,7 +290,8 @@ function initGoogleSignIn() {
     document.getElementById('google-signin-btn'),
     { theme: 'outline', size: 'large', width: 340, text: 'signin_with', shape: 'rectangular' }
   );
-  const savedEmail = sessionStorage.getItem('ef_admin_email');
+  // Accept either key so an existing admin session from any page works.
+  const savedEmail = sessionStorage.getItem('ef_user_email') || sessionStorage.getItem('ef_admin_email');
   if (savedEmail && ADMIN_EMAILS.includes(savedEmail)) {
     document.getElementById('session-msg').style.display = 'block';
     document.getElementById('user-email').textContent = savedEmail;
@@ -302,7 +303,8 @@ function initGoogleSignIn() {
 }
 
 function handleGoogleSignIn(response) {
-  const payload = JSON.parse(atob(response.credential.split('.')[1]));
+  const idToken = response.credential;
+  const payload = JSON.parse(atob(idToken.split('.')[1]));
   const email = payload.email;
   const errEl = document.getElementById('login-error');
 
@@ -313,7 +315,13 @@ function handleGoogleSignIn(response) {
   }
 
   errEl.style.display = 'none';
+  // Store under BOTH keys so admin sessions are recognized by every page
+  // (dashboard/campaigns/settings all read ef_user_email). Also store the
+  // id_token so authenticated writes work without re-signing.
   sessionStorage.setItem('ef_admin_email', email);
+  sessionStorage.setItem('ef_user_email', email);
+  sessionStorage.setItem('ef_id_token', idToken);
+  sessionStorage.setItem('ef_id_token_exp', String(payload.exp * 1000));
   document.getElementById('user-email').textContent = email;
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
@@ -323,6 +331,9 @@ function handleGoogleSignIn(response) {
 
 function doLogout() {
   sessionStorage.removeItem('ef_admin_email');
+  sessionStorage.removeItem('ef_user_email');
+  sessionStorage.removeItem('ef_id_token');
+  sessionStorage.removeItem('ef_id_token_exp');
   if (typeof google !== 'undefined' && google.accounts) {
     google.accounts.id.disableAutoSelect();
   }
