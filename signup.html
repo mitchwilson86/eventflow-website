@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Get Started — EventFlow</title>
+  <meta name="description" content="Sign up your venue for EventFlow — AI-powered inquiry response for restaurants and private event spaces.">
+  <link rel="canonical" href="https://eventflowsales.com/signup">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/eventflow-shared.css" />
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    .signup-wrap {
+      max-width: 540px; margin: 60px auto; padding: 0 20px;
+      font-family: var(--font); color: var(--text-primary);
+    }
+    .signup-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 36px 32px; box-shadow: 0 2px 12px rgba(0,0,0,.04);
+    }
+    .signup-logo { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--teal); margin-bottom: 4px; }
+    .signup-title { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+    .signup-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5; }
+    .signup-step { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); font-weight: 600; margin-bottom: 10px; }
+    .signup-gsi { margin-bottom: 24px; }
+    .signup-signed {
+      padding: 10px 14px; background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 8px; font-size: 13px; color: var(--text-muted); margin-bottom: 20px;
+      display: none; gap: 8px; align-items: center;
+    }
+    .signup-signed.shown { display: flex; }
+    .signup-signed strong { color: var(--text-primary); font-weight: 500; }
+    .signup-form { display: none; }
+    .signup-form.shown { display: block; }
+    .signup-field { margin-bottom: 18px; }
+    .signup-field label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+    .signup-field input {
+      width: 100%; padding: 10px 14px; background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text-primary); font-family: var(--font); font-size: 14px;
+      transition: border-color .2s; box-sizing: border-box;
+    }
+    .signup-field input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(21,97,109,.1); }
+    .signup-field .hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+    .signup-field .error { font-size: 12px; color: var(--red); margin-top: 6px; display: none; }
+    .signup-field.invalid input { border-color: var(--red); }
+    .signup-field.invalid .error { display: block; }
+    .signup-submit {
+      width: 100%; padding: 12px 20px; background: var(--teal); color: #fff; border: none;
+      border-radius: 8px; font-family: var(--font); font-size: 15px; font-weight: 600;
+      cursor: pointer; transition: background .2s;
+    }
+    .signup-submit:hover { background: var(--teal-light); }
+    .signup-submit:disabled { opacity: .5; cursor: not-allowed; }
+    .signup-status { margin-top: 16px; font-size: 13px; color: var(--text-muted); text-align: center; }
+    .signup-status.error { color: var(--red); }
+    .signup-status.success { color: var(--green); }
+    .signup-footnote { margin-top: 20px; font-size: 12px; color: var(--text-muted); line-height: 1.5; text-align: center; }
+  </style>
+</head>
+<body>
+
+<div class="signup-wrap">
+  <div class="signup-card">
+    <div class="signup-logo">EventFlow</div>
+    <div class="signup-title">Get your venue set up</div>
+    <div class="signup-sub">
+      We'll create a home for your venue in EventFlow. Sign in with Google so you own the settings, then give us your venue name.
+    </div>
+
+    <div class="signup-step">Step 1 — Sign in</div>
+    <div class="signup-gsi" id="gsi-btn-wrap"></div>
+
+    <div class="signup-signed" id="signed-in">
+      <span>Signed in as</span>
+      <strong id="signed-email"></strong>
+    </div>
+
+    <form class="signup-form" id="signup-form" onsubmit="return submitSignup(event)">
+      <div class="signup-step">Step 2 — Tell us about your venue</div>
+
+      <div class="signup-field" id="field-name">
+        <label for="su-venue-name">Venue name</label>
+        <input type="text" id="su-venue-name" placeholder="Bistro Nashville" autocomplete="organization" required />
+        <div class="error">Venue name is required.</div>
+      </div>
+
+      <div class="signup-field" id="field-slug">
+        <label for="su-slug">URL slug</label>
+        <input type="text" id="su-slug" placeholder="bistro-nashville" pattern="[a-z0-9-]{3,50}" required />
+        <div class="hint">Lowercase letters, numbers, and hyphens only. Auto-suggested from your venue name — edit if you like.</div>
+        <div class="error">Slug must be 3–50 characters, letters/numbers/hyphens only.</div>
+      </div>
+
+      <div class="signup-field" id="field-website">
+        <label for="su-website">Website (optional)</label>
+        <input type="url" id="su-website" placeholder="https://yourrestaurant.com" autocomplete="url" />
+      </div>
+
+      <button class="signup-submit" id="submit-btn" type="submit">Create my venue</button>
+      <div class="signup-status" id="status"></div>
+    </form>
+
+    <div class="signup-footnote">
+      Your venue starts in <strong>pending</strong> status. We'll review and activate it within one business day.
+    </div>
+  </div>
+</div>
+
+<script>
+var DATA_URL = 'https://script.google.com/macros/s/AKfycbxEpfGswzFnPTFLaKWlt332kv6Jy7vdagPcDEDMXbEDwrrFzpoPLc8wrmTW5UEB2xVj8w/exec';
+var GOOGLE_CLIENT_ID = '551797277858-ne7qntlo2jgmdp36o2lpcnv8qr6u7ofv.apps.googleusercontent.com';
+var signedInEmail = null;
+var idToken = null;
+
+function initGoogleSignIn() {
+  if (typeof google === 'undefined' || !google.accounts) { setTimeout(initGoogleSignIn, 300); return; }
+  google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleSignIn });
+  google.accounts.id.renderButton(
+    document.getElementById('gsi-btn-wrap'),
+    { theme: 'outline', size: 'large', width: 340, text: 'signin_with', shape: 'rectangular' }
+  );
+  // If a previous session is still fresh, reuse it so the user doesn't re-click
+  var existingToken = sessionStorage.getItem('ef_id_token');
+  var exp = parseInt(sessionStorage.getItem('ef_id_token_exp') || '0', 10);
+  if (existingToken && exp && Date.now() < exp) {
+    var email = sessionStorage.getItem('ef_user_email');
+    if (email) {
+      markSignedIn(email, existingToken);
+    }
+  }
+}
+
+function handleSignIn(response) {
+  idToken = response.credential;
+  var payload = JSON.parse(atob(idToken.split('.')[1]));
+  var email = payload.email;
+  sessionStorage.setItem('ef_user_email', email);
+  sessionStorage.setItem('ef_id_token', idToken);
+  sessionStorage.setItem('ef_id_token_exp', String(payload.exp * 1000));
+  markSignedIn(email, idToken);
+}
+
+function markSignedIn(email, token) {
+  signedInEmail = email;
+  idToken = token;
+  document.getElementById('signed-email').textContent = email;
+  document.getElementById('signed-in').classList.add('shown');
+  document.getElementById('signup-form').classList.add('shown');
+  document.getElementById('gsi-btn-wrap').style.display = 'none';
+  document.querySelector('.signup-step').style.display = 'none';
+  // Focus the venue-name input so the user can start typing right away
+  setTimeout(function(){ document.getElementById('su-venue-name').focus(); }, 100);
+}
+
+function slugify(s) {
+  return (s || '').toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 50);
+}
+
+// Auto-suggest slug from venue name (only while user hasn't touched slug)
+var userEditedSlug = false;
+document.getElementById('su-slug').addEventListener('input', function(){ userEditedSlug = true; });
+document.getElementById('su-venue-name').addEventListener('input', function(e) {
+  if (userEditedSlug) return;
+  document.getElementById('su-slug').value = slugify(e.target.value);
+});
+
+function submitSignup(e) {
+  e.preventDefault();
+  var btn = document.getElementById('submit-btn');
+  var status = document.getElementById('status');
+  status.className = 'signup-status';
+  status.textContent = '';
+
+  // Validate
+  var venueName = document.getElementById('su-venue-name').value.trim();
+  var slug = document.getElementById('su-slug').value.trim().toLowerCase();
+  var website = document.getElementById('su-website').value.trim();
+
+  var ok = true;
+  var nameField = document.getElementById('field-name');
+  var slugField = document.getElementById('field-slug');
+  nameField.classList.toggle('invalid', !venueName);
+  var slugOk = /^[a-z0-9-]{3,50}$/.test(slug);
+  slugField.classList.toggle('invalid', !slugOk);
+  if (!venueName || !slugOk) return false;
+
+  if (!idToken) {
+    status.className = 'signup-status error';
+    status.textContent = 'Please sign in first.';
+    return false;
+  }
+
+  btn.disabled = true;
+  status.textContent = 'Creating your venue...';
+
+  fetch(DATA_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({
+      action: 'signup',
+      id_token: idToken,
+      venue_name: venueName,
+      client_slug: slug,
+      website_url: website
+    })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      btn.disabled = false;
+      if (data.success) {
+        status.className = 'signup-status success';
+        status.textContent = 'Success! Taking you to Settings to finish setup...';
+        setTimeout(function(){ window.location.href = '/settings?welcome=1'; }, 1200);
+      } else {
+        status.className = 'signup-status error';
+        status.textContent = data.error || 'Something went wrong.';
+      }
+    })
+    .catch(function(err) {
+      btn.disabled = false;
+      status.className = 'signup-status error';
+      status.textContent = 'Request failed: ' + err.message;
+    });
+  return false;
+}
+
+window.addEventListener('load', initGoogleSignIn);
+</script>
+</body>
+</html>

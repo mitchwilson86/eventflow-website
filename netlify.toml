@@ -19,6 +19,11 @@
   status = 200
 
 [[redirects]]
+  from = "/signup"
+  to = "/signup.html"
+  status = 200
+
+[[redirects]]
   from = "/pricing"
   to = "/pricing.html"
   status = 200
