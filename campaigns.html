@@ -236,21 +236,26 @@ function loadDynamicClients() {
         existing.authorized_emails = authList;
         continue;
       }
-      if (c.status !== 'active') continue;
+      // Include pending venues — backend already excludes deleted.
       var key = c.slug.replace(/[^a-z0-9]/g, '');
       CLIENTS[key] = { slug: c.slug, gmail_address: c.gmail || '', venue: c.venue || c.slug, authorized_emails: authList, data: { campaigns: [] } };
     }
-    if (window.EF_ADMIN && EF_ADMIN.isAdminCaller()) {
-      if (!currentClient) {
-        var def = EF_ADMIN.resolveClient(CLIENTS, sessionStorage.getItem('ef_user_email'));
-        if (def) {
-          currentClient = def;
+    // Re-resolve for users who signed in before their venue row arrived.
+    if (!currentClient) {
+      var savedEmail = sessionStorage.getItem('ef_user_email');
+      if (savedEmail) {
+        var c3 = (window.EF_ADMIN && EF_ADMIN.resolveClient(CLIENTS, savedEmail))
+          || Object.values(CLIENTS).find(function(cl){ return (cl.gmail_address || '').toLowerCase() === savedEmail.toLowerCase(); });
+        if (c3) {
+          currentClient = c3;
           document.getElementById('login-screen').style.display = 'none';
           document.getElementById('dashboard').style.display = 'block';
-          renderPage(def);
+          renderPage(c3);
+          if (window.EF_ADMIN) EF_ADMIN.showAdminNav();
         }
-        EF_ADMIN.showAdminNav();
       }
+    }
+    if (window.EF_ADMIN && EF_ADMIN.isAdminCaller()) {
       EF_ADMIN.setupVenuePicker(CLIENTS, function(slug) {
         var c2 = Object.values(CLIENTS).find(function(x){ return x.slug === slug; });
         if (!c2) return;

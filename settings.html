@@ -271,7 +271,8 @@ function loadDynamicClients() {
         existing.authorized_emails = authList;
         continue;
       }
-      if (c.status !== 'active') continue;
+      // Include pending venues too — fresh signups need to edit their own
+      // settings before Mitchell approves. Backend already excludes deleted.
       var key = c.slug.replace(/[^a-z0-9]/g, '');
       CLIENTS[key] = {
         slug: c.slug,
@@ -281,19 +282,23 @@ function loadDynamicClients() {
         data: {}
       };
     }
-    // Admin may have signed in before the full client list arrived — set up
-    // the picker and (if they haven't resolved yet) land them on a default.
-    if (window.EF_ADMIN && EF_ADMIN.isAdminCaller()) {
-      if (!currentClient) {
-        var defaultVenue = EF_ADMIN.resolveClient(CLIENTS, sessionStorage.getItem('ef_user_email'));
-        if (defaultVenue) {
-          currentClient = defaultVenue;
+    // If the user signed in before their own venue row arrived (fresh
+    // signup lands on /settings?welcome=1 with CLIENTS still empty), try
+    // resolving again now that client_list has loaded.
+    if (!currentClient) {
+      var savedEmail = sessionStorage.getItem('ef_user_email');
+      if (savedEmail) {
+        var c3 = resolveClientForEmail(savedEmail);
+        if (c3) {
+          currentClient = c3;
           document.getElementById('login-screen').style.display = 'none';
           document.getElementById('dashboard').style.display = 'block';
-          renderPage(defaultVenue);
+          renderPage(c3);
+          if (window.EF_ADMIN) EF_ADMIN.showAdminNav();
         }
-        EF_ADMIN.showAdminNav();
       }
+    }
+    if (window.EF_ADMIN && EF_ADMIN.isAdminCaller()) {
       EF_ADMIN.setupVenuePicker(CLIENTS, function(slug) {
         var c2 = Object.values(CLIENTS).find(function(x){ return x.slug === slug; });
         if (!c2) return;

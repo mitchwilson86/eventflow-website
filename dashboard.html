@@ -263,7 +263,8 @@ function loadDynamicClients() {
           existing.authorized_emails = authList;
           continue;
         }
-        if (c.status !== 'active') continue;
+        // Include pending venues — fresh signups need to view their own
+        // (empty) dashboard. Backend already excludes deleted.
         const key = c.slug.replace(/[^a-z0-9]/g, '');
         CLIENTS[key] = {
           slug: c.slug,
@@ -274,19 +275,23 @@ function loadDynamicClients() {
         added++;
       }
       if (added > 0) console.log('Dynamic clients loaded:', added, 'new');
-      // Admin may have signed in before the full list arrived — set up the
-      // picker and (if they haven't resolved yet) land them on a default venue.
-      if (window.EF_ADMIN && EF_ADMIN.isAdminCaller()) {
-        if (!currentClient) {
-          const def = EF_ADMIN.resolveClient(CLIENTS, sessionStorage.getItem('ef_user_email'));
-          if (def) {
-            currentClient = def;
+      // Re-resolve in case the user (signup flow) signed in before their
+      // own venue row was in CLIENTS.
+      if (!currentClient) {
+        const savedEmail = sessionStorage.getItem('ef_user_email');
+        if (savedEmail) {
+          const c3 = (window.EF_ADMIN && EF_ADMIN.resolveClient(CLIENTS, savedEmail))
+            || Object.values(CLIENTS).find(cl => (cl.gmail_address || '').toLowerCase() === savedEmail.toLowerCase());
+          if (c3) {
+            currentClient = c3;
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('dashboard').style.display = 'block';
-            renderDashboard(def);
+            renderDashboard(c3);
+            if (window.EF_ADMIN) EF_ADMIN.showAdminNav();
           }
-          EF_ADMIN.showAdminNav();
         }
+      }
+      if (window.EF_ADMIN && EF_ADMIN.isAdminCaller()) {
         EF_ADMIN.setupVenuePicker(CLIENTS, function(slug) {
           const c = Object.values(CLIENTS).find(x => x.slug === slug);
           if (!c) return;
