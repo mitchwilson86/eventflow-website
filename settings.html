@@ -20,6 +20,20 @@
       font-size: 12px; cursor: pointer; font-family: var(--font);
     }
     .add-menu-btn:hover { border-color: var(--teal); color: var(--teal); }
+    .space-row { border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .space-row .full { grid-column: 1 / -1; }
+    .space-row label { font-size: 11px; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: .5px; display: block; margin-bottom: 4px; }
+    .space-row input[type=text], .space-row input[type=number], .space-row textarea {
+      width: 100%; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px;
+      font-family: var(--font); font-size: 13px; background: var(--bg); color: var(--text);
+    }
+    .space-row textarea { min-height: 50px; resize: vertical; }
+    .space-row .buyout-line { display: flex; align-items: center; gap: 8px; }
+    .space-row .buyout-line input[type=checkbox] { margin: 0; }
+    .space-remove { background: none; border: none; color: var(--red); font-size: 12px; cursor: pointer; padding: 4px 8px; }
+    .space-remove:hover { text-decoration: underline; }
+    .auth-row { display: flex; gap: 8px; margin-bottom: 6px; align-items: center; }
+    .auth-row input { flex: 1; }
   </style>
 </head>
 <body>
@@ -128,6 +142,24 @@
               <label>&nbsp;</label>
             </div>
             <div class="settings-field full">
+              <label>Parking Info</label>
+              <textarea id="set-parking-info" placeholder="e.g., Valet parking is available across the street at the JW Marriott."></textarea>
+            </div>
+            <div class="settings-field full">
+              <label>Billing Policy (short)</label>
+              <textarea id="set-billing-policy-short" placeholder="e.g., Our invoices cover food, beverage, and service only. Outside vendors (DJs, photographers, decorators) must be billed separately."></textarea>
+            </div>
+            <div class="settings-field full">
+              <label>Event Spaces</label>
+              <div id="spaces-rows"></div>
+              <button class="add-menu-btn" onclick="addSpaceRow()">+ Add Space</button>
+            </div>
+            <div class="settings-field full">
+              <label>Team Access (emails that can sign in and edit these settings)</label>
+              <div id="auth-rows"></div>
+              <button class="add-menu-btn" onclick="addAuthRow()">+ Add Teammate</button>
+            </div>
+            <div class="settings-field full">
               <label>Menu Links</label>
               <div id="menu-rows"></div>
               <button class="add-menu-btn" onclick="addMenuRow()">+ Add Menu</button>
@@ -146,14 +178,34 @@
 
 <script>
 /* ═══ CLIENT DATA ═══ */
-// Authorization is by Google account email only.
+// Authorization: match signed-in email against a venue's gmail_address,
+// its authorized_emails list (loaded dynamically), or ADMIN_EMAILS.
 var CLIENTS = {
-  sunda: { gmail_address: 'sales@eventflowsales.com', venue: 'Sunda Nashville', data: {} }
+  sunda: { slug: 'sunda-nashville', gmail_address: 'sales@eventflowsales.com', venue: 'Sunda Nashville', authorized_emails: [], data: {} }
 };
+
+var ADMIN_EMAILS = ['mitchwilson@eventflowsales.com'];
 
 var DATA_URL = 'https://script.google.com/macros/s/AKfycbxEpfGswzFnPTFLaKWlt332kv6Jy7vdagPcDEDMXbEDwrrFzpoPLc8wrmTW5UEB2xVj8w/exec';
 var GOOGLE_CLIENT_ID = '551797277858-ne7qntlo2jgmdp36o2lpcnv8qr6u7ofv.apps.googleusercontent.com';
 var currentClient = null;
+
+function resolveClientForEmail(email) {
+  email = (email || '').toLowerCase();
+  // Priority 1: venue where gmail_address matches
+  var byGmail = Object.values(CLIENTS).find(function(c) { return (c.gmail_address || '').toLowerCase() === email; });
+  if (byGmail) return byGmail;
+  // Priority 2: venue where email is in authorized_emails
+  var byAuth = Object.values(CLIENTS).find(function(c) {
+    return (c.authorized_emails || []).some(function(e) { return (e || '').toLowerCase() === email; });
+  });
+  if (byAuth) return byAuth;
+  // Priority 3: admin — default to first venue in the list
+  if (ADMIN_EMAILS.indexOf(email) !== -1) {
+    return Object.values(CLIENTS)[0] || null;
+  }
+  return null;
+}
 
 /* ═══ SIDEBAR TOGGLE ═══ */
 function toggleSidebar() {
@@ -168,7 +220,7 @@ function initGoogleSignIn() {
   google.accounts.id.renderButton(document.getElementById('google-signin-btn'), { theme: 'outline', size: 'large', width: 340, text: 'signin_with', shape: 'rectangular' });
   var savedEmail = sessionStorage.getItem('ef_user_email');
   if (savedEmail) {
-    var client = Object.values(CLIENTS).find(function(c) { return c.gmail_address === savedEmail; });
+    var client = resolveClientForEmail(savedEmail);
     if (client) {
       document.getElementById('session-msg').style.display = 'block';
       currentClient = client;
@@ -184,7 +236,7 @@ function handleGoogleSignIn(response) {
   var payload = JSON.parse(atob(idToken.split('.')[1]));
   var email = payload.email;
   var errEl = document.getElementById('login-error');
-  var client = Object.values(CLIENTS).find(function(c) { return c.gmail_address === email; });
+  var client = resolveClientForEmail(email);
   if (!client) { errEl.textContent = 'Access denied. ' + email + ' is not authorized.'; errEl.style.display = 'block'; return; }
   errEl.style.display = 'none';
   sessionStorage.setItem('ef_user_email', email);
@@ -204,11 +256,22 @@ function loadDynamicClients() {
     for (var i = 0; i < data.clients.length; i++) {
       var c = data.clients[i];
       var existing = Object.values(CLIENTS).find(function(cl) { return cl.gmail_address === c.gmail || cl.venue === c.venue; });
-      if (existing) continue;
+      var authList = [];
+      try { authList = JSON.parse(c.authorized_emails || '[]') || []; } catch(e) { authList = []; }
+      if (existing) {
+        existing.slug = c.slug;
+        existing.authorized_emails = authList;
+        continue;
+      }
       if (c.status !== 'active') continue;
-      var slug = c.slug.replace(/[^a-z0-9]/g, '');
-      if (!c.gmail) continue;
-      CLIENTS[slug] = { gmail_address: c.gmail, venue: c.venue || c.slug, data: {} };
+      var key = c.slug.replace(/[^a-z0-9]/g, '');
+      CLIENTS[key] = {
+        slug: c.slug,
+        gmail_address: c.gmail || '',
+        venue: c.venue || c.slug,
+        authorized_emails: authList,
+        data: {}
+      };
     }
   }).catch(function() {});
 }
@@ -232,30 +295,96 @@ function renderPage(client) {
 }
 
 /* ═══ SETTINGS ═══ */
+// We need two things to load settings:
+//   1. The client_slug — looked up from the logged-in email via client_list
+//   2. The full row (incl. spaces_json, parking_info, etc.) — fetched via the
+//      authenticated get_settings action, which is scoped to the venue.
 function loadSettings() {
   if (!currentClient) return;
+  if (currentClient.slug) {
+    currentClient._slug = currentClient.slug;
+    fetchFullSettings(currentClient.slug);
+    return;
+  }
+  // Fallback: look up slug from client_list if we only have gmail_address
   fetch(DATA_URL + '?type=client_list')
     .then(function(r) { return r.json(); })
     .then(function(data) {
       var c = (data.clients || []).find(function(cl) { return cl.venue === currentClient.venue || cl.gmail === currentClient.gmail_address; });
       if (!c) return;
-      document.getElementById('set-venue-name').value = c.venue || '';
-      document.getElementById('set-website').value = c.website_url || '';
-      document.getElementById('set-ai-tone').value = c.ai_tone || '';
-      document.getElementById('set-brand-voice').value = c.brand_voice || '';
-      document.getElementById('set-escalation-threshold').value = c.escalation_threshold || 29;
-      document.getElementById('set-escalation-name').value = c.escalation_contact_name || '';
-      document.getElementById('set-escalation-email').value = c.escalation_contact_email || '';
-      var menuContainer = document.getElementById('menu-rows');
-      menuContainer.innerHTML = '';
-      try {
-        var menus = JSON.parse(c.menus_json || '[]');
-        menus.forEach(function(m) { addMenuRow(m.name, m.url); });
-      } catch(e) { addMenuRow('', ''); }
-      if (menuContainer.children.length === 0) addMenuRow('', '');
       currentClient._slug = c.slug;
+      currentClient.slug = c.slug;
+      return fetchFullSettings(c.slug);
     })
     .catch(function(err) { console.warn('Settings load failed:', err); });
+}
+
+function fetchFullSettings(slug) {
+  var idToken = sessionStorage.getItem('ef_id_token');
+  var exp = parseInt(sessionStorage.getItem('ef_id_token_exp') || '0', 10);
+  if (!idToken || !exp || Date.now() > exp) {
+    // Expired token — can't load the full row. Fall back to rendering empty rows.
+    hydrateFromRow({});
+    return;
+  }
+  fetch(DATA_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'get_settings', id_token: idToken, client_slug: slug })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      hydrateFromRow(data && data.success ? (data.settings || {}) : {});
+    })
+    .catch(function(err) {
+      console.warn('get_settings failed:', err);
+      hydrateFromRow({});
+    });
+}
+
+function hydrateFromRow(r) {
+  document.getElementById('set-venue-name').value = r.venue_name || '';
+  document.getElementById('set-website').value = r.website_url || '';
+  document.getElementById('set-ai-tone').value = r.ai_tone || '';
+  document.getElementById('set-brand-voice').value = r.brand_voice || '';
+  document.getElementById('set-escalation-threshold').value = r.escalation_threshold || 29;
+  document.getElementById('set-escalation-name').value = r.escalation_contact_name || '';
+  document.getElementById('set-escalation-email').value = r.escalation_contact_email || '';
+  document.getElementById('set-parking-info').value = r.parking_info || '';
+  document.getElementById('set-billing-policy-short').value = r.billing_policy_short || '';
+
+  // Spaces
+  var spacesContainer = document.getElementById('spaces-rows');
+  spacesContainer.innerHTML = '';
+  try {
+    var spaces = JSON.parse(r.spaces_json || '[]');
+    if (Array.isArray(spaces) && spaces.length) {
+      spaces.forEach(function(s) { addSpaceRow(s); });
+    } else {
+      addSpaceRow();
+    }
+  } catch(e) { addSpaceRow(); }
+
+  // Team access
+  var authContainer = document.getElementById('auth-rows');
+  authContainer.innerHTML = '';
+  try {
+    var emails = JSON.parse(r.authorized_emails || '[]');
+    if (Array.isArray(emails) && emails.length) {
+      emails.forEach(function(em) { addAuthRow(em); });
+    } else {
+      addAuthRow();
+    }
+  } catch(e) { addAuthRow(); }
+
+  // Menus
+  var menuContainer = document.getElementById('menu-rows');
+  menuContainer.innerHTML = '';
+  try {
+    var menus = JSON.parse(r.menus_json || '[]');
+    menus.forEach(function(m) { addMenuRow(m.name, m.url); });
+  } catch(e) { /* fall through */ }
+  if (menuContainer.children.length === 0) addMenuRow('', '');
 }
 
 function addMenuRow(name, url) {
@@ -264,6 +393,62 @@ function addMenuRow(name, url) {
   row.className = 'menu-row';
   row.innerHTML = '<input type="text" placeholder="Menu name" value="' + esc(name || '') + '" /><input type="url" placeholder="https://menu-link.com" value="' + esc(url || '') + '" />';
   container.appendChild(row);
+}
+
+function addSpaceRow(s) {
+  s = s || {};
+  var container = document.getElementById('spaces-rows');
+  var row = document.createElement('div');
+  row.className = 'space-row';
+  row.innerHTML =
+    '<div><label>Name</label><input type="text" class="s-name" value="' + esc(s.name || '') + '" placeholder="Private Dining Room" /></div>' +
+    '<div><label>Seated capacity</label><input type="number" class="s-seated" value="' + esc(s.capacity_seated != null ? s.capacity_seated : '') + '" min="1" /></div>' +
+    '<div class="full"><label>Description</label><textarea class="s-desc" placeholder="Short description of the space">' + esc(s.description || '') + '</textarea></div>' +
+    '<div><label>Standing capacity</label><input type="number" class="s-standing" value="' + esc(s.capacity_standing != null ? s.capacity_standing : '') + '" min="1" /></div>' +
+    '<div><label>&nbsp;</label><div class="buyout-line"><input type="checkbox" class="s-buyout" ' + (s.buyout ? 'checked' : '') + ' /> <span style="font-size:13px;">Full buyout of venue</span></div></div>' +
+    '<div><label>F&B minimum — weekday ($)</label><input type="number" class="s-fbwk" value="' + esc(s.fb_min_weekday != null ? s.fb_min_weekday : '') + '" min="0" /></div>' +
+    '<div><label>F&B minimum — weekend ($)</label><input type="number" class="s-fbwe" value="' + esc(s.fb_min_weekend != null ? s.fb_min_weekend : '') + '" min="0" /></div>' +
+    '<div class="full" style="text-align:right;"><button type="button" class="space-remove" onclick="this.closest(\'.space-row\').remove()">Remove this space</button></div>';
+  container.appendChild(row);
+}
+
+function addAuthRow(email) {
+  var container = document.getElementById('auth-rows');
+  var row = document.createElement('div');
+  row.className = 'auth-row';
+  row.innerHTML =
+    '<input type="email" placeholder="teammate@yourrestaurant.com" value="' + esc(email || '') + '" />' +
+    '<button type="button" class="space-remove" onclick="this.closest(\'.auth-row\').remove()">Remove</button>';
+  container.appendChild(row);
+}
+
+function collectSpaces() {
+  var rows = document.getElementById('spaces-rows').querySelectorAll('.space-row');
+  var out = [];
+  rows.forEach(function(row) {
+    var name = row.querySelector('.s-name').value.trim();
+    if (!name) return; // skip empty rows
+    out.push({
+      name: name,
+      description: row.querySelector('.s-desc').value.trim(),
+      capacity_seated: parseInt(row.querySelector('.s-seated').value, 10) || 0,
+      capacity_standing: parseInt(row.querySelector('.s-standing').value, 10) || 0,
+      buyout: row.querySelector('.s-buyout').checked,
+      fb_min_weekday: parseInt(row.querySelector('.s-fbwk').value, 10) || 0,
+      fb_min_weekend: parseInt(row.querySelector('.s-fbwe').value, 10) || 0
+    });
+  });
+  return out;
+}
+
+function collectAuthEmails() {
+  var rows = document.getElementById('auth-rows').querySelectorAll('.auth-row');
+  var out = [];
+  rows.forEach(function(row) {
+    var v = row.querySelector('input').value.trim().toLowerCase();
+    if (v && out.indexOf(v) === -1) out.push(v);
+  });
+  return out;
 }
 
 function saveSettings() {
@@ -310,6 +495,10 @@ function saveSettings() {
     escalation_threshold: parseInt(document.getElementById('set-escalation-threshold').value) || 29,
     escalation_contact_name: document.getElementById('set-escalation-name').value.trim(),
     escalation_contact_email: document.getElementById('set-escalation-email').value.trim(),
+    parking_info: document.getElementById('set-parking-info').value.trim(),
+    billing_policy_short: document.getElementById('set-billing-policy-short').value.trim(),
+    spaces_json: JSON.stringify(collectSpaces()),
+    authorized_emails: JSON.stringify(collectAuthEmails()),
     menus_json: JSON.stringify(menus)
   };
 
