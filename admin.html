@@ -466,9 +466,60 @@ function renderPending(pending) {
       '<td>' + esc(c.gmail || '—') + '</td>' +
       '<td>' + esc(onboarded) + '</td>' +
       '<td>' + esc(source) + '</td>' +
-      '<td><button class="btn-primary" style="padding:6px 14px;font-size:13px;" onclick="approveVenue(\'' + esc(c.slug) + '\', this)">Approve</button></td>' +
+      '<td>' +
+        '<button class="btn-primary" style="padding:6px 14px;font-size:13px;margin-right:6px;" onclick="approveVenue(\'' + esc(c.slug) + '\', this)">Approve</button>' +
+        '<button style="padding:6px 14px;font-size:13px;background:none;border:1px solid var(--border);color:var(--red);cursor:pointer;border-radius:6px;" onclick="deleteVenue(\'' + esc(c.slug) + '\', this)">Delete</button>' +
+      '</td>' +
       '</tr>';
   }).join('');
+}
+
+async function deleteVenue(slug, btn) {
+  if (!confirm('Delete ' + slug + '? This removes the venue from Google Sheets, Supabase (venue + access + spaces), and n8n (cloned WF B). Cannot be undone.')) return;
+  const resultEl = document.getElementById('approve-result');
+  const idToken = sessionStorage.getItem('ef_id_token');
+  const exp = parseInt(sessionStorage.getItem('ef_id_token_exp') || '0', 10);
+  if (!idToken || !exp || Date.now() > exp) {
+    resultEl.innerHTML = '<span style="color:var(--red);">Session expired. Please sign in again.</span>';
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = 'Deleting...';
+  resultEl.textContent = '';
+
+  try {
+    const res = await fetch(DATA_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'delete_venue', id_token: idToken, client_slug: slug, confirm: true })
+    });
+    const data = await res.json();
+    if (data.success) {
+      let msg = '<span style="color:var(--green);">&#10003; ' + esc(slug) + ' deleted.</span>';
+      if (data.deleted) {
+        const parts = [];
+        if (data.deleted.supabase_venue) parts.push('Supabase venue');
+        if (data.deleted.supabase_venue_users) parts.push('venue_users');
+        if (data.deleted.supabase_spaces) parts.push('spaces');
+        if (data.deleted.workflow_b_id && data.deleted.workflow_b_id !== '(none stored)') parts.push('n8n workflow');
+        if (data.deleted.client_registry_row) parts.push('sheet row');
+        if (parts.length) msg += ' <span style="color:var(--text-muted);font-size:12px;">(' + parts.join(' · ') + ')</span>';
+      }
+      if (data.warnings && data.warnings.length) {
+        msg += '<br><span style="color:var(--orange);font-size:12px;">Warnings: ' + data.warnings.map(esc).join(' · ') + '</span>';
+      }
+      resultEl.innerHTML = msg;
+      setTimeout(loadPendingSignups, 800);
+    } else {
+      resultEl.innerHTML = '<span style="color:var(--red);">Error: ' + esc(data.error || 'unknown') + '</span>';
+      btn.disabled = false;
+      btn.textContent = 'Delete';
+    }
+  } catch (err) {
+    resultEl.innerHTML = '<span style="color:var(--red);">Request failed: ' + esc(err.message) + '</span>';
+    btn.disabled = false;
+    btn.textContent = 'Delete';
+  }
 }
 
 async function approveVenue(slug, btn) {
