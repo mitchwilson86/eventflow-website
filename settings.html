@@ -12,6 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/eventflow-shared.css" />
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="/eventflow-admin.js" defer></script>
   <style>
     /* Settings-specific: add menu button styling */
     .add-menu-btn {
@@ -45,16 +46,7 @@
       border-radius: 8px; color: var(--text-primary); font-family: var(--font); font-size: 14px;
     }
     .auth-row input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(21,97,109,.1); }
-    .venue-picker-row {
-      display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
-      padding: 12px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px;
-    }
-    .venue-picker-row label { margin: 0; font-size: 12px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; }
-    .venue-picker-row select {
-      flex: 1; padding: 8px 12px; background: var(--bg); border: 1px solid var(--border);
-      border-radius: 6px; color: var(--text-primary); font-family: var(--font); font-size: 14px;
-    }
-    .admin-badge { font-size: 11px; color: var(--teal); background: rgba(21,97,109,.1); padding: 3px 8px; border-radius: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+    /* venue-picker-row + admin-badge styles are in eventflow-shared.css */
   </style>
 </head>
 <body>
@@ -112,6 +104,10 @@
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
           <span>Notifications</span>
         </a>
+        <a href="/admin" class="nav-item admin-nav-link" style="display:none;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <span>Admin Dashboard</span>
+        </a>
       </nav>
       <div class="sidebar-footer">
         <span class="user-email" id="user-email-sidebar"></span>
@@ -129,11 +125,7 @@
       </div>
       <div class="dash-body">
 
-        <div class="venue-picker-row" id="venue-picker-row" style="display:none;">
-          <span class="admin-badge">Admin</span>
-          <label for="venue-picker">Editing venue:</label>
-          <select id="venue-picker" onchange="onVenueChange()"></select>
-        </div>
+        <!-- Admin venue picker is injected by eventflow-admin.js when applicable -->
 
         <div class="panel">
           <div class="settings-grid">
@@ -205,64 +197,20 @@
 
 <script>
 /* ═══ CLIENT DATA ═══ */
-// Authorization: match signed-in email against a venue's gmail_address,
-// its authorized_emails list (loaded dynamically), or ADMIN_EMAILS.
+// Admin-aware auth lives in /eventflow-admin.js (window.EF_ADMIN).
+// Each CLIENTS entry: { slug, gmail_address, venue, authorized_emails, data }.
 var CLIENTS = {
   sunda: { slug: 'sunda-nashville', gmail_address: 'sales@eventflowsales.com', venue: 'Sunda Nashville', authorized_emails: [], data: {} }
 };
-
-var ADMIN_EMAILS = ['mitchwilson@eventflowsales.com'];
 
 var DATA_URL = 'https://script.google.com/macros/s/AKfycbxEpfGswzFnPTFLaKWlt332kv6Jy7vdagPcDEDMXbEDwrrFzpoPLc8wrmTW5UEB2xVj8w/exec';
 var GOOGLE_CLIENT_ID = '551797277858-ne7qntlo2jgmdp36o2lpcnv8qr6u7ofv.apps.googleusercontent.com';
 var currentClient = null;
 
 function resolveClientForEmail(email) {
-  email = (email || '').toLowerCase();
-  // Priority 1: venue where gmail_address matches
-  var byGmail = Object.values(CLIENTS).find(function(c) { return (c.gmail_address || '').toLowerCase() === email; });
-  if (byGmail) return byGmail;
-  // Priority 2: venue where email is in authorized_emails
-  var byAuth = Object.values(CLIENTS).find(function(c) {
-    return (c.authorized_emails || []).some(function(e) { return (e || '').toLowerCase() === email; });
-  });
-  if (byAuth) return byAuth;
-  // Priority 3: admin — default to first venue in the list
-  if (ADMIN_EMAILS.indexOf(email) !== -1) {
-    return Object.values(CLIENTS)[0] || null;
-  }
-  return null;
-}
-
-function isAdminCaller() {
-  var email = (sessionStorage.getItem('ef_user_email') || '').toLowerCase();
-  return ADMIN_EMAILS.indexOf(email) !== -1;
-}
-
-function refreshVenuePicker() {
-  if (!isAdminCaller()) return;
-  var row = document.getElementById('venue-picker-row');
-  var sel = document.getElementById('venue-picker');
-  var venues = Object.values(CLIENTS).filter(function(c){ return c.slug; });
-  if (!venues.length) return;
-  row.style.display = 'flex';
-  var currentSlug = currentClient && currentClient.slug;
-  sel.innerHTML = '';
-  venues.forEach(function(c){
-    var opt = document.createElement('option');
-    opt.value = c.slug;
-    opt.textContent = c.venue + ' (' + c.slug + ')';
-    if (c.slug === currentSlug) opt.selected = true;
-    sel.appendChild(opt);
-  });
-}
-
-function onVenueChange() {
-  var slug = document.getElementById('venue-picker').value;
-  var client = Object.values(CLIENTS).find(function(c){ return c.slug === slug; });
-  if (!client) return;
-  currentClient = client;
-  renderPage(client);
+  return (window.EF_ADMIN && EF_ADMIN.resolveClient(CLIENTS, email))
+    || Object.values(CLIENTS).find(function(c){ return (c.gmail_address || '').toLowerCase() === (email || '').toLowerCase(); })
+    || null;
 }
 
 /* ═══ SIDEBAR TOGGLE ═══ */
@@ -285,6 +233,7 @@ function initGoogleSignIn() {
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('dashboard').style.display = 'block';
       renderPage(client);
+      if (window.EF_ADMIN) EF_ADMIN.showAdminNav();
     }
   }
 }
@@ -304,6 +253,7 @@ function handleGoogleSignIn(response) {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
   renderPage(client);
+  if (window.EF_ADMIN) EF_ADMIN.showAdminNav();
 }
 
 window.addEventListener('load', function() { initGoogleSignIn(); loadDynamicClients(); });
@@ -331,19 +281,25 @@ function loadDynamicClients() {
         data: {}
       };
     }
-    // Admin may have signed in before the full client list arrived — refresh
-    // the picker and re-resolve their default venue now that we have all venues.
-    if (isAdminCaller()) {
+    // Admin may have signed in before the full client list arrived — set up
+    // the picker and (if they haven't resolved yet) land them on a default.
+    if (window.EF_ADMIN && EF_ADMIN.isAdminCaller()) {
       if (!currentClient) {
-        var defaultVenue = resolveClientForEmail(sessionStorage.getItem('ef_user_email'));
+        var defaultVenue = EF_ADMIN.resolveClient(CLIENTS, sessionStorage.getItem('ef_user_email'));
         if (defaultVenue) {
           currentClient = defaultVenue;
           document.getElementById('login-screen').style.display = 'none';
           document.getElementById('dashboard').style.display = 'block';
           renderPage(defaultVenue);
         }
+        EF_ADMIN.showAdminNav();
       }
-      refreshVenuePicker();
+      EF_ADMIN.setupVenuePicker(CLIENTS, function(slug) {
+        var c2 = Object.values(CLIENTS).find(function(x){ return x.slug === slug; });
+        if (!c2) return;
+        currentClient = c2;
+        renderPage(c2);
+      });
     }
   }).catch(function() {});
 }

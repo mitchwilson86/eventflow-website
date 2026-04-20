@@ -400,6 +400,25 @@ thead th.sorted .sort-arrow { opacity: 1; color: var(--orange); }
 .menu-row input:first-child { flex: 1; }
 .menu-row input:last-child { flex: 2; }
 
+/* ── Admin venue picker (shown on dashboard/campaigns/settings when admin is signed in) ─ */
+.venue-picker-row {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+  padding: 12px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px;
+}
+.venue-picker-row label {
+  margin: 0; font-size: 12px; font-weight: 500; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: .5px;
+}
+.venue-picker-row select {
+  flex: 1; padding: 8px 12px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text-primary); font-family: var(--font); font-size: 14px;
+}
+.admin-badge {
+  font-size: 11px; color: var(--teal); background: rgba(21,97,109,.1);
+  padding: 3px 8px; border-radius: 4px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .5px;
+}
+
 /* ── Buttons ────────────────────────────────────────────────── */
 .btn-primary {
   padding: 10px 24px; background: var(--teal); color: #fff; border: none;

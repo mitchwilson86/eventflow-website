@@ -12,6 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/eventflow-shared.css" />
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="/eventflow-admin.js" defer></script>
 </head>
 <body>
 <script>
@@ -69,6 +70,10 @@
         <a href="/notifications" class="nav-item">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
           <span>Notifications</span>
+        </a>
+        <a href="/admin" class="nav-item admin-nav-link" style="display:none;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <span>Admin Dashboard</span>
         </a>
       </nav>
       <div class="sidebar-footer">
@@ -201,13 +206,15 @@ function initGoogleSignIn() {
   );
   const savedEmail = sessionStorage.getItem('ef_user_email');
   if (savedEmail) {
-    const client = Object.values(CLIENTS).find(c => c.gmail_address === savedEmail);
+    const client = (window.EF_ADMIN && EF_ADMIN.resolveClient(CLIENTS, savedEmail))
+      || Object.values(CLIENTS).find(c => c.gmail_address === savedEmail);
     if (client) {
       document.getElementById('session-msg').style.display = 'block';
       currentClient = client;
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('dashboard').style.display = 'block';
       renderDashboard(client);
+      if (window.EF_ADMIN) EF_ADMIN.showAdminNav();
     }
   }
 }
@@ -217,7 +224,8 @@ function handleGoogleSignIn(response) {
   const payload = JSON.parse(atob(idToken.split('.')[1]));
   const email = payload.email;
   const errEl = document.getElementById('login-error');
-  const client = Object.values(CLIENTS).find(c => c.gmail_address === email);
+  const client = (window.EF_ADMIN && EF_ADMIN.resolveClient(CLIENTS, email))
+    || Object.values(CLIENTS).find(c => c.gmail_address === email);
   if (!client) {
     errEl.textContent = 'Access denied. ' + email + ' is not authorized for any venue.';
     errEl.style.display = 'block';
@@ -231,6 +239,7 @@ function handleGoogleSignIn(response) {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
   renderDashboard(client);
+  if (window.EF_ADMIN) EF_ADMIN.showAdminNav();
 }
 
 window.addEventListener('load', function() {
@@ -247,17 +256,44 @@ function loadDynamicClients() {
       let added = 0;
       for (const c of data.clients) {
         const existing = Object.values(CLIENTS).find(cl => cl.gmail_address === c.gmail || cl.venue === c.venue);
-        if (existing) continue;
+        let authList = [];
+        try { authList = JSON.parse(c.authorized_emails || '[]') || []; } catch (e) { authList = []; }
+        if (existing) {
+          existing.slug = c.slug;
+          existing.authorized_emails = authList;
+          continue;
+        }
         if (c.status !== 'active') continue;
-        if (!c.gmail) continue;  // no gmail = cannot sign in, skip
-        const slug = c.slug.replace(/[^a-z0-9]/g, '');
-        CLIENTS[slug] = {
-          gmail_address: c.gmail,
-          venue: c.venue || c.slug
+        const key = c.slug.replace(/[^a-z0-9]/g, '');
+        CLIENTS[key] = {
+          slug: c.slug,
+          gmail_address: c.gmail || '',
+          venue: c.venue || c.slug,
+          authorized_emails: authList
         };
         added++;
       }
       if (added > 0) console.log('Dynamic clients loaded:', added, 'new');
+      // Admin may have signed in before the full list arrived — set up the
+      // picker and (if they haven't resolved yet) land them on a default venue.
+      if (window.EF_ADMIN && EF_ADMIN.isAdminCaller()) {
+        if (!currentClient) {
+          const def = EF_ADMIN.resolveClient(CLIENTS, sessionStorage.getItem('ef_user_email'));
+          if (def) {
+            currentClient = def;
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            renderDashboard(def);
+          }
+          EF_ADMIN.showAdminNav();
+        }
+        EF_ADMIN.setupVenuePicker(CLIENTS, function(slug) {
+          const c = Object.values(CLIENTS).find(x => x.slug === slug);
+          if (!c) return;
+          currentClient = c;
+          renderDashboard(c);
+        });
+      }
     })
     .catch(err => console.warn('Dynamic client load failed:', err));
 }
