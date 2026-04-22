@@ -146,6 +146,26 @@
               <textarea id="set-brand-voice" placeholder="e.g., You sound like a real person who genuinely wants to help guests plan a great event."></textarea>
             </div>
             <div class="settings-field">
+              <label>Sender Name (how the AI signs replies)</label>
+              <input type="text" id="set-sender-name" placeholder="Flow" />
+            </div>
+            <div class="settings-field">
+              <label>Sender Role</label>
+              <input type="text" id="set-sender-role" placeholder="Junior Sales Manager" />
+            </div>
+            <div class="settings-field">
+              <label>Direct Line (optional)</label>
+              <input type="text" id="set-sender-direct-line" placeholder="(615) 555-0123" />
+            </div>
+            <div class="settings-field">
+              <label>Logo URL (optional)</label>
+              <input type="url" id="set-logo-url" placeholder="https://yourrestaurant.com/logo.png" />
+            </div>
+            <div class="settings-field full">
+              <label>Social Proof (optional, appears under signature)</label>
+              <textarea id="set-social-proof" placeholder="e.g., Recently hosted private dinners for Dollar General, Asurion, and the Bridgestone Arena team."></textarea>
+            </div>
+            <div class="settings-field">
               <label>Escalation Guest Count (triggers manager handoff)</label>
               <input type="number" id="set-escalation-threshold" min="1" max="500" />
             </div>
@@ -386,6 +406,11 @@ function hydrateFromRow(r) {
   document.getElementById('set-escalation-email').value = r.escalation_contact_email || '';
   document.getElementById('set-parking-info').value = r.parking_info || '';
   document.getElementById('set-billing-policy-short').value = r.billing_policy_short || '';
+  document.getElementById('set-sender-name').value = r.sender_name || '';
+  document.getElementById('set-sender-role').value = r.sender_role || '';
+  document.getElementById('set-sender-direct-line').value = r.sender_direct_line || '';
+  document.getElementById('set-social-proof').value = r.social_proof || '';
+  document.getElementById('set-logo-url').value = r.logo_url || '';
 
   // Spaces
   var spacesContainer = document.getElementById('spaces-rows');
@@ -536,6 +561,11 @@ function saveSettings() {
     escalation_contact_email: document.getElementById('set-escalation-email').value.trim(),
     parking_info: document.getElementById('set-parking-info').value.trim(),
     billing_policy_short: document.getElementById('set-billing-policy-short').value.trim(),
+    sender_name: document.getElementById('set-sender-name').value.trim(),
+    sender_role: document.getElementById('set-sender-role').value.trim(),
+    sender_direct_line: document.getElementById('set-sender-direct-line').value.trim(),
+    social_proof: document.getElementById('set-social-proof').value.trim(),
+    logo_url: document.getElementById('set-logo-url').value.trim(),
     spaces_json: JSON.stringify(collectSpaces()),
     authorized_emails: JSON.stringify(collectAuthEmails()),
     menus_json: JSON.stringify(menus)
