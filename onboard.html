@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>EventFlow — Venue Onboarding</title>
+<link rel="icon" type="image/svg+xml" href="/logo.svg">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --teal-dark:#0f4a54;--teal:#15616d;--teal-light:#1b7a89;
+    --orange:#ff7d00;--orange-light:#ff9b3d;--burnt:#78290f;
+    --dark:#001524;--dark-card:#001e30;--cream:#ffecd1;
+    --gray-900:#011b2d;--gray-800:#0a2a3f;--gray-700:#1a3d54;
+    --gray-600:#3a6070;--gray-400:#8faab8;--gray-300:#c5d8e2;
+    --font:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  }
+  html{scroll-behavior:smooth;}
+  body{font-family:var(--font);background:var(--dark);color:var(--gray-300);line-height:1.5;min-height:100vh;}
+
+  .page-wrap{max-width:820px;margin:0 auto;padding:40px 24px 80px;}
+  .header{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .header img{height:34px;}
+  .header .brand{font-size:1.3rem;font-weight:700;color:var(--cream);}
+  h1{font-size:2rem;font-weight:700;color:var(--cream);margin:18px 0 8px;line-height:1.15;}
+  .lede{color:var(--gray-300);margin-bottom:28px;max-width:620px;}
+
+  .progress{display:flex;gap:6px;margin-bottom:32px;}
+  .progress .step{flex:1;height:4px;border-radius:2px;background:var(--gray-800);transition:background .2s;}
+  .progress .step.done,.progress .step.active{background:var(--orange);}
+
+  .step-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;color:var(--gray-400);font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;}
+  .step-label .step-title{color:var(--cream);font-size:1rem;font-weight:600;text-transform:none;letter-spacing:0;}
+
+  .card{background:var(--dark-card);border:1px solid var(--gray-700);border-radius:14px;padding:28px;}
+  .card + .card{margin-top:16px;}
+
+  label{display:block;font-size:.82rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--gray-400);margin:16px 0 6px;}
+  .hint{display:block;margin-top:4px;font-size:.8rem;color:var(--gray-400);font-weight:400;text-transform:none;letter-spacing:0;}
+  input:not([type]),input[type=text],input[type=email],input[type=url],input[type=number],select,textarea{
+    width:100%;padding:11px 13px;border-radius:8px;border:1px solid var(--gray-700);
+    background:var(--gray-900);color:var(--cream);font-size:.95rem;font-family:inherit;
+  }
+  input:not([type]):focus,input[type=text]:focus,input[type=email]:focus,input[type=url]:focus,input[type=number]:focus,select:focus,textarea:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,125,0,.18);}
+  textarea{resize:vertical;min-height:80px;}
+
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+  @media (max-width:640px){.row,.row-3{grid-template-columns:1fr;}}
+
+  .checks{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px;}
+  .checks label{display:inline-flex;align-items:center;margin:0;padding:8px 12px;border:1px solid var(--gray-700);border-radius:999px;cursor:pointer;background:var(--gray-900);color:var(--gray-300);text-transform:none;letter-spacing:0;font-size:.88rem;font-weight:500;}
+  .checks input{appearance:none;width:14px;height:14px;border:1px solid var(--gray-600);border-radius:3px;margin-right:8px;display:inline-block;position:relative;}
+  .checks input:checked{background:var(--orange);border-color:var(--orange);}
+  .checks input:checked::after{content:'';position:absolute;left:3px;top:0;width:5px;height:9px;border:solid var(--dark);border-width:0 2px 2px 0;transform:rotate(45deg);}
+  .checks label:hover{border-color:var(--gray-600);}
+
+  .room-block{border:1px solid var(--gray-700);border-radius:10px;padding:18px;margin-top:14px;background:var(--gray-900);}
+  .room-block-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+  .room-block-head h3{color:var(--cream);font-size:1.05rem;font-weight:600;}
+  .btn-remove{background:transparent;color:var(--gray-400);border:1px solid var(--gray-700);border-radius:6px;padding:4px 10px;font-size:.8rem;cursor:pointer;font-family:inherit;}
+  .btn-remove:hover{color:var(--burnt);border-color:var(--burnt);}
+  .btn-add{background:transparent;color:var(--orange);border:1px dashed var(--orange);border-radius:10px;padding:12px;margin-top:14px;width:100%;cursor:pointer;font-family:inherit;font-weight:600;font-size:.95rem;}
+  .btn-add:hover{background:rgba(255,125,0,.08);}
+
+  .nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:28px;gap:12px;}
+  .btn{padding:12px 22px;border-radius:10px;border:0;font-weight:600;font-size:.95rem;cursor:pointer;font-family:inherit;transition:transform .08s,box-shadow .12s;}
+  .btn:active{transform:translateY(1px);}
+  .btn.primary{background:var(--orange);color:var(--dark);}
+  .btn.primary:hover{background:var(--orange-light);box-shadow:0 6px 18px rgba(255,125,0,.3);}
+  .btn.primary[disabled]{opacity:.6;cursor:wait;}
+  .btn.ghost{background:transparent;color:var(--gray-300);border:1px solid var(--gray-700);}
+  .btn.ghost:hover{color:var(--cream);border-color:var(--gray-600);}
+  .btn.ghost[disabled]{opacity:.4;cursor:not-allowed;}
+
+  .error-box{background:rgba(120,41,15,.35);border:1px solid var(--burnt);color:var(--cream);padding:12px;border-radius:8px;margin-top:14px;display:none;}
+  .error-box.show{display:block;}
+
+  .review dl{display:grid;grid-template-columns:220px 1fr;gap:10px 16px;font-size:.92rem;}
+  .review dt{color:var(--gray-400);}
+  .review dd{color:var(--cream);white-space:pre-wrap;}
+  @media (max-width:640px){.review dl{grid-template-columns:1fr;}.review dt{margin-top:6px;}}
+  .review h3{color:var(--cream);margin:22px 0 10px;font-size:1.05rem;font-weight:600;border-bottom:1px solid var(--gray-700);padding-bottom:6px;}
+  .review h3:first-child{margin-top:0;}
+
+  .success{text-align:center;padding:40px 20px;}
+  .success h2{color:var(--orange-light);font-size:1.6rem;margin-bottom:12px;}
+  .success p{color:var(--gray-300);max-width:480px;margin:0 auto;}
+</style>
+</head>
+<body>
+
+<div class="page-wrap">
+  <div class="header">
+    <img src="/logo.svg" alt="EventFlow logo">
+    <div class="brand">EventFlow</div>
+  </div>
+  <h1>Venue onboarding</h1>
+  <p class="lede">We use this to build your venue's AI knowledge base. Accuracy matters — your AI will quote these numbers and policies verbatim to prospects. Takes about 15 minutes.</p>
+
+  <div class="progress" id="progress">
+    <div class="step active"></div><div class="step"></div><div class="step"></div>
+    <div class="step"></div><div class="step"></div><div class="step"></div>
+  </div>
+
+  <form id="onboard-form" novalidate>
+
+    <!-- STEP 1: Venue basics -->
+    <section class="step-panel" data-step="0">
+      <div class="step-label"><span>Step 1 of 6</span><span class="step-title">Venue basics</span></div>
+      <div class="card">
+        <label for="venue-name">Restaurant / venue name *</label>
+        <input id="venue-name" name="venue_name" required>
+
+        <div class="row">
+          <div>
+            <label for="venue-address">Address *</label>
+            <input id="venue-address" name="venue_address" required placeholder="123 Main St, Nashville, TN">
+          </div>
+          <div>
+            <label for="venue-website">Website</label>
+            <input id="venue-website" name="venue_website" type="url" placeholder="https://…">
+          </div>
+        </div>
+
+        <label for="contact-name">Primary events contact *</label>
+        <input id="contact-name" name="contact_name" required>
+
+        <label for="venue-description">Describe your venue (tone, cuisine, setting)</label>
+        <textarea id="venue-description" name="venue_description" rows="3"></textarea>
+
+        <label for="typical-experience">Typical guest experience</label>
+        <textarea id="typical-experience" name="typical_experience" rows="2"></textarea>
+
+        <label for="unique-angle">What makes your venue uniquely suited for events?</label>
+        <textarea id="unique-angle" name="unique_angle" rows="2"></textarea>
+
+        <label>Event types hosted (select all that apply)</label>
+        <div class="checks" data-name="event_types">
+          <label><input type="checkbox" value="Corporate dinners"> Corporate dinners</label>
+          <label><input type="checkbox" value="Birthday dinners"> Birthday dinners</label>
+          <label><input type="checkbox" value="Anniversaries"> Anniversaries</label>
+          <label><input type="checkbox" value="Engagement celebrations"> Engagement celebrations</label>
+          <label><input type="checkbox" value="Wedding rehearsal dinners"> Wedding rehearsal dinners</label>
+          <label><input type="checkbox" value="Bachelor / bachelorette dinners"> Bachelor / bachelorette</label>
+          <label><input type="checkbox" value="Networking events"> Networking events</label>
+          <label><input type="checkbox" value="Full restaurant buyouts"> Full restaurant buyouts</label>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 2: Event spaces -->
+    <section class="step-panel" data-step="1" hidden>
+      <div class="step-label"><span>Step 2 of 6</span><span class="step-title">Event spaces</span></div>
+      <div class="card">
+        <p class="hint" style="margin-bottom:6px">Add one block per private dining room, semi-private space, or buyout configuration.</p>
+        <div id="rooms-container"></div>
+        <button type="button" class="btn-add" id="add-room">+ Add another space</button>
+      </div>
+    </section>
+
+    <!-- STEP 3: Pricing & minimums -->
+    <section class="step-panel" data-step="2" hidden>
+      <div class="step-label"><span>Step 3 of 6</span><span class="step-title">Pricing &amp; minimums</span></div>
+      <div class="card">
+        <label>Food &amp; beverage minimums (by day &amp; meal)<span class="hint">Dollar amounts, no symbols. Leave blank if not offered.</span></label>
+        <div class="row">
+          <div><label for="min-wd-lunch">Weekday lunch</label>
+            <input id="min-wd-lunch" name="min_weekday_lunch" type="number" min="0"></div>
+          <div><label for="min-wd-dinner">Weekday dinner</label>
+            <input id="min-wd-dinner" name="min_weekday_dinner" type="number" min="0"></div>
+        </div>
+        <div class="row">
+          <div><label for="min-we-lunch">Weekend lunch</label>
+            <input id="min-we-lunch" name="min_weekend_lunch" type="number" min="0"></div>
+          <div><label for="min-we-dinner">Weekend dinner</label>
+            <input id="min-we-dinner" name="min_weekend_dinner" type="number" min="0"></div>
+        </div>
+
+        <label for="room-rental-fee">Room rental fee (if any)</label>
+        <input id="room-rental-fee" name="room_rental_fee" placeholder="e.g. $500 flat, or waived above $2k F&B">
+
+        <div class="row">
+          <div>
+            <label for="service-charge">Service charge / gratuity</label>
+            <input id="service-charge" name="service_charge" placeholder="e.g. 22%">
+          </div>
+          <div>
+            <label for="tax">Sales tax</label>
+            <input id="tax" name="tax" placeholder="e.g. 9.25%">
+          </div>
+        </div>
+
+        <label for="deposit">Deposit amount / percentage</label>
+        <input id="deposit" name="deposit" placeholder="e.g. 25% of estimated total">
+
+        <div class="row">
+          <div>
+            <label for="deposit-refundable">Deposit refundable?</label>
+            <select id="deposit-refundable" name="deposit_refundable">
+              <option value="">Select…</option>
+              <option>Yes, fully refundable</option>
+              <option>Partially refundable</option>
+              <option>Non-refundable</option>
+              <option>Depends on notice</option>
+            </select>
+          </div>
+          <div>
+            <label for="payment-methods">Accepted payment methods</label>
+            <input id="payment-methods" name="payment_methods" placeholder="Credit card, ACH, check">
+          </div>
+        </div>
+
+        <label for="cancellation">Cancellation policy</label>
+        <textarea id="cancellation" name="cancellation" rows="2"></textarea>
+
+        <label for="rescheduling">Rescheduling policy</label>
+        <textarea id="rescheduling" name="rescheduling" rows="2"></textarea>
+      </div>
+    </section>
+
+    <!-- STEP 4: Food & beverage -->
+    <section class="step-panel" data-step="3" hidden>
+      <div class="step-label"><span>Step 4 of 6</span><span class="step-title">Food &amp; beverage</span></div>
+      <div class="card">
+        <label for="set-menus">Describe your package / set-menu tiers</label>
+        <textarea id="set-menus" name="set_menus" rows="3" placeholder="e.g. $65 pp 3-course, $85 pp family-style…"></textarea>
+
+        <label for="a-la-carte">Can guests order à la carte for private events?</label>
+        <select id="a-la-carte" name="a_la_carte">
+          <option value="">Select…</option>
+          <option>Yes, always</option>
+          <option>Yes, for small groups only</option>
+          <option>No, package menus only</option>
+          <option>Case by case</option>
+        </select>
+
+        <label>Dietary accommodations available</label>
+        <div class="checks" data-name="dietary">
+          <label><input type="checkbox" value="Vegetarian"> Vegetarian</label>
+          <label><input type="checkbox" value="Vegan"> Vegan</label>
+          <label><input type="checkbox" value="Gluten-free"> Gluten-free</label>
+          <label><input type="checkbox" value="Dairy-free"> Dairy-free</label>
+          <label><input type="checkbox" value="Nut allergies"> Nut allergies</label>
+          <label><input type="checkbox" value="Shellfish allergies"> Shellfish allergies</label>
+          <label><input type="checkbox" value="Halal"> Halal</label>
+          <label><input type="checkbox" value="Kosher"> Kosher</label>
+        </div>
+
+        <label for="dietary-notes">Any notes on dietary restrictions</label>
+        <textarea id="dietary-notes" name="dietary_notes" rows="2"></textarea>
+
+        <div class="row">
+          <div>
+            <label for="cake-policy">Outside cake policy</label>
+            <select id="cake-policy" name="cake_policy">
+              <option value="">Select…</option>
+              <option>Allowed with fee</option>
+              <option>Allowed, no fee</option>
+              <option>Not allowed</option>
+            </select>
+          </div>
+          <div>
+            <label for="cake-fee">Cake cutting fee</label>
+            <input id="cake-fee" name="cake_fee" placeholder="e.g. $3 pp">
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="byob">Outside alcohol (BYOB)?</label>
+            <select id="byob" name="byob">
+              <option value="">Select…</option>
+              <option>Allowed with corkage fee</option>
+              <option>Not allowed</option>
+              <option>Wine only, with corkage</option>
+            </select>
+          </div>
+          <div>
+            <label for="corkage">Corkage fee</label>
+            <input id="corkage" name="corkage" placeholder="e.g. $25 per bottle">
+          </div>
+        </div>
+
+        <label for="cocktail-hour">Cocktail hour options</label>
+        <textarea id="cocktail-hour" name="cocktail_hour" rows="2" placeholder="Passed hors d'oeuvres, stationary displays, bar packages…"></textarea>
+      </div>
+    </section>
+
+    <!-- STEP 5: Vendors / AV / Logistics -->
+    <section class="step-panel" data-step="4" hidden>
+      <div class="step-label"><span>Step 5 of 6</span><span class="step-title">Vendors, AV &amp; logistics</span></div>
+      <div class="card">
+        <label for="av">AV equipment available</label>
+        <textarea id="av" name="av" rows="2" placeholder="TV, projector, microphone, speakers…"></textarea>
+
+        <div class="row">
+          <div>
+            <label for="vendors">Outside vendors permitted?</label>
+            <select id="vendors" name="vendors">
+              <option value="">Select…</option>
+              <option>Yes</option>
+              <option>No</option>
+              <option>Case by case</option>
+              <option>From preferred list only</option>
+            </select>
+          </div>
+          <div>
+            <label for="vendor-restrictions">Vendor restrictions</label>
+            <input id="vendor-restrictions" name="vendor_restrictions" placeholder="e.g. no open flame, licensed only">
+          </div>
+        </div>
+
+        <label for="parking">Parking</label>
+        <textarea id="parking" name="parking" rows="2" placeholder="Valet, street, garage nearby…"></textarea>
+
+        <label for="dedicated-entrance">Dedicated event entrance?</label>
+        <select id="dedicated-entrance" name="dedicated_entrance">
+          <option value="">Select…</option>
+          <option>Yes, fully separate</option>
+          <option>Shared entrance</option>
+          <option>Case by case</option>
+        </select>
+
+        <div class="row">
+          <div>
+            <label for="arrival-time">Host / vendor earliest arrival</label>
+            <input id="arrival-time" name="arrival_time" placeholder="e.g. 2 hours before">
+          </div>
+          <div>
+            <label for="departure-time">Latest guest departure</label>
+            <input id="departure-time" name="departure_time" placeholder="e.g. 11:00 PM">
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="min-notice">Minimum booking notice</label>
+            <input id="min-notice" name="min_notice" placeholder="e.g. 72 hours">
+          </div>
+          <div>
+            <label for="proposal-turnaround">Typical proposal turnaround</label>
+            <input id="proposal-turnaround" name="proposal_turnaround" placeholder="e.g. 24 hours">
+          </div>
+        </div>
+
+        <label for="blackout-dates">Blackout / unavailable dates</label>
+        <textarea id="blackout-dates" name="blackout_dates" rows="2"></textarea>
+
+        <label for="holiday-surcharge">Holiday / peak surcharge</label>
+        <textarea id="holiday-surcharge" name="holiday_surcharge" rows="2"></textarea>
+      </div>
+    </section>
+
+    <!-- STEP 6: AI guardrails + review -->
+    <section class="step-panel" data-step="5" hidden>
+      <div class="step-label"><span>Step 6 of 6</span><span class="step-title">AI guardrails &amp; review</span></div>
+      <div class="card">
+        <label for="never-say">Things the AI should never say or promise<span class="hint">Think: claims you can't honor, competitor comparisons, discounts, etc.</span></label>
+        <textarea id="never-say" name="never_say" rows="3"></textarea>
+
+        <label for="escalation-guest-count">Escalate to a human at this guest count</label>
+        <input id="escalation-guest-count" name="escalation_guest_count" type="number" min="1" value="29">
+      </div>
+      <div class="card review">
+        <h3>Review your submission</h3>
+        <div id="review-target"></div>
+      </div>
+      <div class="error-box" id="submit-error" role="alert"></div>
+    </section>
+
+    <div class="nav-row">
+      <button type="button" class="btn ghost" id="btn-back" disabled>Back</button>
+      <button type="button" class="btn primary" id="btn-next">Next</button>
+    </div>
+
+  </form>
+
+  <div class="success" id="success" hidden>
+    <h2>You're onboarded.</h2>
+    <p>Thanks — we've added your venue to the EventFlow knowledge base. We'll be in touch shortly to complete the setup (inbox connection, domain verification, team training).</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var WEBHOOK_URL = 'https://tibbling.app.n8n.cloud/webhook/tally-venue-intake';
+
+  // Grab ?client=<slug> from URL (optional)
+  var params = new URLSearchParams(location.search);
+  var namespaceSlug = params.get('client') || '';
+
+  var currentStep = 0;
+  var TOTAL_STEPS = 6;
+  var panels = document.querySelectorAll('.step-panel');
+  var progressSteps = document.querySelectorAll('#progress .step');
+  var btnBack = document.getElementById('btn-back');
+  var btnNext = document.getElementById('btn-next');
+  var form = document.getElementById('onboard-form');
+  var errorBox = document.getElementById('submit-error');
+  var successEl = document.getElementById('success');
+  var reviewTarget = document.getElementById('review-target');
+
+  // ── Rooms (dynamic add/remove) ────────────────────────────────
+  var roomsContainer = document.getElementById('rooms-container');
+  var roomCount = 0;
+
+  function addRoom(focus) {
+    roomCount++;
+    var wrap = document.createElement('div');
+    wrap.className = 'room-block';
+    wrap.dataset.roomIndex = roomCount;
+    wrap.innerHTML =
+      '<div class="room-block-head">' +
+        '<h3>Space ' + roomCount + '</h3>' +
+        '<button type="button" class="btn-remove" data-remove-room>Remove</button>' +
+      '</div>' +
+      '<label>Space name *</label>' +
+      '<input class="rm-name" required placeholder="Private Dining Room, Wine Cellar, Full Buyout…">' +
+      '<label>Privacy</label>' +
+      '<select class="rm-privacy">' +
+        '<option value="">Select…</option>' +
+        '<option>Fully private room</option>' +
+        '<option>Semi private space</option>' +
+        '<option>Open dining area</option>' +
+      '</select>' +
+      '<div class="row-3">' +
+        '<div><label>Min seated</label><input class="rm-min-seated" type="number" min="1"></div>' +
+        '<div><label>Max seated</label><input class="rm-max-seated" type="number" min="1"></div>' +
+        '<div><label>Max standing</label><input class="rm-max-standing" type="number" min="1"></div>' +
+      '</div>' +
+      '<div class="row">' +
+        '<div><label>Available for lunch?</label>' +
+          '<select class="rm-lunch"><option value="">Select…</option><option>Yes</option><option>No</option><option>Weekends only</option></select></div>' +
+        '<div><label>Available for dinner?</label>' +
+          '<select class="rm-dinner"><option value="">Select…</option><option>Yes</option><option>No</option><option>Weekends only</option></select></div>' +
+      '</div>' +
+      '<label>Days available</label>' +
+      '<input class="rm-days" placeholder="e.g. Mon–Sun, or Tue–Sat">' +
+      '<label>Can combine with other spaces?</label>' +
+      '<input class="rm-combine" placeholder="e.g. Combines with Lounge for 60 seated">' +
+      '<label>Description</label>' +
+      '<textarea class="rm-description" rows="2" placeholder="Ambiance, features, views, anything distinctive"></textarea>';
+    roomsContainer.appendChild(wrap);
+    wrap.querySelector('[data-remove-room]').addEventListener('click', function () {
+      wrap.remove();
+      renumberRooms();
+    });
+    if (focus) wrap.querySelector('.rm-name').focus();
+  }
+  function renumberRooms() {
+    var blocks = roomsContainer.querySelectorAll('.room-block');
+    blocks.forEach(function (b, i) { b.querySelector('h3').textContent = 'Space ' + (i + 1); });
+    roomCount = blocks.length;
+  }
+  document.getElementById('add-room').addEventListener('click', function () { addRoom(true); });
+  addRoom(false); // start with one room block
+
+  // ── Step navigation ────────────────────────────────────────────
+  function showStep(n) {
+    panels.forEach(function (p, i) { p.hidden = (i !== n); });
+    progressSteps.forEach(function (s, i) {
+      s.classList.toggle('active', i === n);
+      s.classList.toggle('done', i < n);
+    });
+    btnBack.disabled = (n === 0);
+    btnNext.textContent = (n === TOTAL_STEPS - 1) ? 'Submit onboarding' : 'Next';
+    currentStep = n;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (n === TOTAL_STEPS - 1) renderReview();
+  }
+
+  function validateStep(n) {
+    var panel = panels[n];
+    var required = panel.querySelectorAll('input[required], textarea[required], select[required]');
+    for (var i = 0; i < required.length; i++) {
+      if (!required[i].value.trim()) {
+        required[i].focus();
+        required[i].style.borderColor = 'var(--burnt)';
+        setTimeout(function (el) { return function () { el.style.borderColor = ''; }; }(required[i]), 2500);
+        return false;
+      }
+    }
+    // Rooms step — require at least one room with a name
+    if (n === 1) {
+      var names = roomsContainer.querySelectorAll('.rm-name');
+      var hasName = false;
+      for (var j = 0; j < names.length; j++) if (names[j].value.trim()) { hasName = true; break; }
+      if (!hasName) {
+        if (names[0]) { names[0].focus(); names[0].style.borderColor = 'var(--burnt)'; }
+        return false;
+      }
+    }
+    return true;
+  }
+
+  btnNext.addEventListener('click', function () {
+    if (!validateStep(currentStep)) return;
+    if (currentStep === TOTAL_STEPS - 1) { submit(); return; }
+    showStep(currentStep + 1);
+  });
+  btnBack.addEventListener('click', function () { if (currentStep > 0) showStep(currentStep - 1); });
+
+  // ── Build payload ──────────────────────────────────────────────
+  function getChecks(name) {
+    var out = [];
+    document.querySelectorAll('[data-name="' + name + '"] input:checked').forEach(function (el) { out.push(el.value); });
+    return out;
+  }
+  function v(id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; }
+  function num(id) { var s = v(id); return s === '' ? null : Number(s); }
+
+  function collectRooms() {
+    var out = [];
+    roomsContainer.querySelectorAll('.room-block').forEach(function (b) {
+      var name = b.querySelector('.rm-name').value.trim();
+      if (!name) return;
+      out.push({
+        name: name,
+        privacy: b.querySelector('.rm-privacy').value || null,
+        min_seated: b.querySelector('.rm-min-seated').value ? Number(b.querySelector('.rm-min-seated').value) : null,
+        max_seated: b.querySelector('.rm-max-seated').value ? Number(b.querySelector('.rm-max-seated').value) : null,
+        max_standing: b.querySelector('.rm-max-standing').value ? Number(b.querySelector('.rm-max-standing').value) : null,
+        lunch_available: b.querySelector('.rm-lunch').value || null,
+        dinner_available: b.querySelector('.rm-dinner').value || null,
+        days_available: b.querySelector('.rm-days').value.trim() || null,
+        combine_with: b.querySelector('.rm-combine').value.trim() || null,
+        description: b.querySelector('.rm-description').value.trim() || null
+      });
+    });
+    return out;
+  }
+
+  function buildPayload() {
+    return {
+      namespace_slug: namespaceSlug || null,
+      venue: {
+        name: v('venue-name'),
+        address: v('venue-address'),
+        website: v('venue-website'),
+        contact_name: v('contact-name'),
+        description: v('venue-description'),
+        typical_experience: v('typical-experience'),
+        unique_angle: v('unique-angle'),
+        event_types: getChecks('event_types')
+      },
+      rooms: collectRooms(),
+      pricing: {
+        min_weekday_lunch: num('min-wd-lunch'),
+        min_weekday_dinner: num('min-wd-dinner'),
+        min_weekend_lunch: num('min-we-lunch'),
+        min_weekend_dinner: num('min-we-dinner'),
+        room_rental_fee: v('room-rental-fee') || null,
+        service_charge: v('service-charge') || null,
+        tax: v('tax') || null,
+        deposit: v('deposit') || null,
+        deposit_refundable: v('deposit-refundable') || null,
+        payment_methods: v('payment-methods') || null,
+        cancellation: v('cancellation') || null,
+        rescheduling: v('rescheduling') || null
+      },
+      food_beverage: {
+        set_menus: v('set-menus') || null,
+        a_la_carte: v('a-la-carte') || null,
+        dietary: getChecks('dietary'),
+        dietary_notes: v('dietary-notes') || null,
+        cake_policy: v('cake-policy') || null,
+        cake_fee: v('cake-fee') || null,
+        byob: v('byob') || null,
+        corkage: v('corkage') || null,
+        cocktail_hour: v('cocktail-hour') || null
+      },
+      logistics: {
+        av: v('av') || null,
+        vendors: v('vendors') || null,
+        vendor_restrictions: v('vendor-restrictions') || null,
+        parking: v('parking') || null,
+        dedicated_entrance: v('dedicated-entrance') || null,
+        arrival_time: v('arrival-time') || null,
+        departure_time: v('departure-time') || null,
+        min_notice: v('min-notice') || null,
+        proposal_turnaround: v('proposal-turnaround') || null,
+        blackout_dates: v('blackout-dates') || null,
+        holiday_surcharge: v('holiday-surcharge') || null
+      },
+      ai: {
+        never_say: v('never-say') || null,
+        escalation_guest_count: num('escalation-guest-count')
+      }
+    };
+  }
+
+  // ── Review panel ──────────────────────────────────────────────
+  function renderReview() {
+    var p = buildPayload();
+    var html = '';
+    function section(title, pairs) {
+      var rows = pairs.filter(function (r) { return r[1] && r[1] !== '' && !(Array.isArray(r[1]) && r[1].length === 0); });
+      if (!rows.length) return '';
+      var s = '<h3>' + title + '</h3><dl>';
+      rows.forEach(function (r) {
+        var val = Array.isArray(r[1]) ? r[1].join(', ') : String(r[1]);
+        s += '<dt>' + r[0] + '</dt><dd>' + escapeHtml(val) + '</dd>';
+      });
+      return s + '</dl>';
+    }
+    html += section('Venue', [
+      ['Name', p.venue.name], ['Address', p.venue.address], ['Website', p.venue.website],
+      ['Contact', p.venue.contact_name], ['Description', p.venue.description],
+      ['Event types', p.venue.event_types]
+    ]);
+    if (p.rooms.length) {
+      html += '<h3>Event spaces (' + p.rooms.length + ')</h3><dl>';
+      p.rooms.forEach(function (r, i) {
+        var parts = [];
+        if (r.privacy) parts.push(r.privacy);
+        if (r.min_seated || r.max_seated) parts.push('seated ' + (r.min_seated || '?') + '-' + (r.max_seated || '?'));
+        if (r.max_standing) parts.push('standing up to ' + r.max_standing);
+        html += '<dt>Space ' + (i + 1) + ': ' + escapeHtml(r.name) + '</dt><dd>' + escapeHtml(parts.join(' · ')) + '</dd>';
+      });
+      html += '</dl>';
+    }
+    html += section('Pricing', [
+      ['Weekday lunch min', p.pricing.min_weekday_lunch ? '$' + p.pricing.min_weekday_lunch : null],
+      ['Weekday dinner min', p.pricing.min_weekday_dinner ? '$' + p.pricing.min_weekday_dinner : null],
+      ['Weekend lunch min', p.pricing.min_weekend_lunch ? '$' + p.pricing.min_weekend_lunch : null],
+      ['Weekend dinner min', p.pricing.min_weekend_dinner ? '$' + p.pricing.min_weekend_dinner : null],
+      ['Service charge', p.pricing.service_charge],
+      ['Tax', p.pricing.tax],
+      ['Deposit', p.pricing.deposit],
+      ['Cancellation', p.pricing.cancellation]
+    ]);
+    html += section('Food & beverage', [
+      ['Set menus', p.food_beverage.set_menus],
+      ['À la carte', p.food_beverage.a_la_carte],
+      ['Dietary', p.food_beverage.dietary],
+      ['Cake policy', p.food_beverage.cake_policy],
+      ['BYOB', p.food_beverage.byob]
+    ]);
+    html += section('Logistics', [
+      ['AV', p.logistics.av],
+      ['Vendors', p.logistics.vendors],
+      ['Parking', p.logistics.parking],
+      ['Min notice', p.logistics.min_notice]
+    ]);
+    html += section('AI guardrails', [
+      ['Never say', p.ai.never_say],
+      ['Escalate at guest count', p.ai.escalation_guest_count]
+    ]);
+    reviewTarget.innerHTML = html || '<p>Nothing to review yet.</p>';
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+    });
+  }
+
+  // ── Submit ────────────────────────────────────────────────────
+  function submit() {
+    errorBox.classList.remove('show');
+    btnNext.disabled = true; btnBack.disabled = true;
+    btnNext.textContent = 'Submitting…';
+    var payload = buildPayload();
+    fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(function (res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      form.hidden = true;
+      document.getElementById('progress').hidden = true;
+      successEl.hidden = false;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }).catch(function (err) {
+      errorBox.textContent = 'Something went wrong — please try again or email sales@eventflowsales.com. (' + err.message + ')';
+      errorBox.classList.add('show');
+      btnNext.disabled = false; btnBack.disabled = false;
+      btnNext.textContent = 'Submit onboarding';
+    });
+  }
+
+  // Init
+  showStep(0);
+})();
+</script>
+</body>
+</html>
