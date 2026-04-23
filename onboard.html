@@ -63,6 +63,15 @@
   .btn-remove:hover{color:var(--burnt);border-color:var(--burnt);}
   .btn-add{background:transparent;color:var(--orange);border:1px dashed var(--orange);border-radius:10px;padding:12px;margin-top:14px;width:100%;cursor:pointer;font-family:inherit;font-weight:600;font-size:.95rem;}
   .btn-add:hover{background:rgba(255,125,0,.08);}
+  .photo-rows{display:flex;flex-direction:column;gap:8px;margin-top:6px;}
+  .photo-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;}
+  .photo-row input{padding:8px 10px;background:var(--gray-900);border:1px solid var(--gray-700);border-radius:6px;color:var(--cream);font-family:inherit;font-size:.85rem;}
+  .photo-row input:focus{outline:none;border-color:var(--orange);}
+  .photo-row .btn-remove-photo{background:transparent;color:var(--gray-400);border:1px solid var(--gray-700);border-radius:6px;padding:6px 10px;font-size:.78rem;cursor:pointer;font-family:inherit;}
+  .photo-row .btn-remove-photo:hover{color:var(--burnt);border-color:var(--burnt);}
+  .btn-add-photo{background:transparent;color:var(--orange);border:1px dashed var(--gray-600);border-radius:8px;padding:8px;margin-top:6px;cursor:pointer;font-family:inherit;font-weight:500;font-size:.82rem;}
+  .btn-add-photo:hover{border-color:var(--orange);background:rgba(255,125,0,.05);}
+  .photos-hint{font-size:.75rem;color:var(--gray-400);margin-top:4px;margin-bottom:4px;}
 
   .nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:28px;gap:12px;}
   .btn{padding:12px 22px;border-radius:10px;border:0;font-weight:600;font-size:.95rem;cursor:pointer;font-family:inherit;transition:transform .08s,box-shadow .12s;}
@@ -443,13 +452,33 @@
       '<label>Can combine with other spaces?</label>' +
       '<input class="rm-combine" placeholder="e.g. Combines with Lounge for 60 seated">' +
       '<label>Description</label>' +
-      '<textarea class="rm-description" rows="2" placeholder="Ambiance, features, views, anything distinctive"></textarea>';
+      '<textarea class="rm-description" rows="2" placeholder="Ambiance, features, views, anything distinctive"></textarea>' +
+      '<label>Photos</label>' +
+      '<div class="photos-hint">Add one or more photos of this space. Captions are optional but help the AI describe the space accurately in first-touch replies.</div>' +
+      '<div class="photo-rows"></div>' +
+      '<button type="button" class="btn-add-photo">+ Add photo</button>';
     roomsContainer.appendChild(wrap);
     wrap.querySelector('[data-remove-room]').addEventListener('click', function () {
       wrap.remove();
       renumberRooms();
     });
+    var photosContainer = wrap.querySelector('.photo-rows');
+    wrap.querySelector('.btn-add-photo').addEventListener('click', function () {
+      addPhotoRow(photosContainer, '', '');
+    });
+    addPhotoRow(photosContainer, '', ''); // start with one empty photo row
     if (focus) wrap.querySelector('.rm-name').focus();
+  }
+
+  function addPhotoRow(container, url, caption) {
+    var row = document.createElement('div');
+    row.className = 'photo-row';
+    row.innerHTML =
+      '<input type="url" class="rm-photo-url" placeholder="https://photos.example.com/space.jpg" value="' + (url || '') + '">' +
+      '<input type="text" class="rm-photo-caption" placeholder="Caption (optional)" value="' + (caption || '') + '">' +
+      '<button type="button" class="btn-remove-photo">Remove</button>';
+    row.querySelector('.btn-remove-photo').addEventListener('click', function () { row.remove(); });
+    container.appendChild(row);
   }
   function renumberRooms() {
     var blocks = roomsContainer.querySelectorAll('.room-block');
@@ -518,6 +547,13 @@
     roomsContainer.querySelectorAll('.room-block').forEach(function (b) {
       var name = b.querySelector('.rm-name').value.trim();
       if (!name) return;
+      var photos = [];
+      b.querySelectorAll('.photo-row').forEach(function (pr) {
+        var url = pr.querySelector('.rm-photo-url').value.trim();
+        if (!url) return; // skip rows without a URL
+        var caption = pr.querySelector('.rm-photo-caption').value.trim();
+        photos.push({ url: url, caption: caption });
+      });
       out.push({
         name: name,
         privacy: b.querySelector('.rm-privacy').value || null,
@@ -528,7 +564,8 @@
         dinner_available: b.querySelector('.rm-dinner').value || null,
         days_available: b.querySelector('.rm-days').value.trim() || null,
         combine_with: b.querySelector('.rm-combine').value.trim() || null,
-        description: b.querySelector('.rm-description').value.trim() || null
+        description: b.querySelector('.rm-description').value.trim() || null,
+        photos: photos
       });
     });
     return out;

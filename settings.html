@@ -31,6 +31,15 @@
     }
     .space-row input:focus, .space-row textarea:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(21,97,109,.1); }
     .space-row textarea { min-height: 60px; resize: vertical; }
+    .photo-rows { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+    .photo-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: center; }
+    .photo-row input { width: 100%; padding: 8px 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary); font-family: var(--font); font-size: 13px; }
+    .photo-row input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(21,97,109,.1); }
+    .photo-row .photo-remove { background: none; border: 1px solid var(--border); color: var(--text-muted); padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+    .photo-row .photo-remove:hover { border-color: var(--red); color: var(--red); }
+    .add-photo-btn { margin-top: 6px; background: none; border: 1px dashed var(--border); color: var(--text-secondary); padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: var(--font); }
+    .add-photo-btn:hover { border-style: solid; border-color: var(--teal); color: var(--teal); }
+    .photos-hint { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
     .buyout-label {
       display: inline-flex; align-items: center; gap: 10px; padding: 10px 14px;
       background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px;
@@ -456,7 +465,6 @@ function addMenuRow(name, url) {
 
 function addSpaceRow(s) {
   s = s || {};
-  var photoLines = Array.isArray(s.photos) ? s.photos.join('\n') : '';
   var container = document.getElementById('spaces-rows');
   var row = document.createElement('div');
   row.className = 'space-row';
@@ -468,8 +476,36 @@ function addSpaceRow(s) {
     '<div><label>F&B minimum — weekday ($)</label><input type="number" class="s-fbwk" value="' + esc(s.fb_min_weekday != null ? s.fb_min_weekday : '') + '" min="0" /></div>' +
     '<div><label>F&B minimum — weekend ($)</label><input type="number" class="s-fbwe" value="' + esc(s.fb_min_weekend != null ? s.fb_min_weekend : '') + '" min="0" /></div>' +
     '<div class="full"><label class="buyout-label"><input type="checkbox" class="s-buyout" ' + (s.buyout ? 'checked' : '') + ' /> This space is a full buyout of the venue</label></div>' +
-    '<div class="full"><label>Photo URLs (one per line)</label><textarea class="s-photos" placeholder="https://your-photos.com/space1.jpg\nhttps://your-photos.com/space1-close.jpg">' + esc(photoLines) + '</textarea></div>' +
+    '<div class="full">' +
+      '<label>Photos</label>' +
+      '<div class="photos-hint">Add a photo URL and an optional caption. Captions help the AI describe the space accurately in first-touch replies.</div>' +
+      '<div class="photo-rows"></div>' +
+      '<button type="button" class="add-photo-btn">+ Add photo</button>' +
+    '</div>' +
     '<div class="full" style="text-align:right;"><button type="button" class="space-remove" onclick="this.closest(\'.space-row\').remove()">Remove this space</button></div>';
+  container.appendChild(row);
+
+  var photosContainer = row.querySelector('.photo-rows');
+  var existing = Array.isArray(s.photos) ? s.photos : [];
+  existing.forEach(function(p) {
+    if (typeof p === 'string') addPhotoRow(photosContainer, p, '');
+    else if (p && typeof p === 'object') addPhotoRow(photosContainer, p.url || '', p.caption || '');
+  });
+  if (existing.length === 0) addPhotoRow(photosContainer, '', '');
+
+  row.querySelector('.add-photo-btn').addEventListener('click', function() {
+    addPhotoRow(photosContainer, '', '');
+  });
+}
+
+function addPhotoRow(container, url, caption) {
+  var row = document.createElement('div');
+  row.className = 'photo-row';
+  row.innerHTML =
+    '<input type="url" class="p-url" placeholder="https://photos.example.com/space1.jpg" value="' + esc(url || '') + '" />' +
+    '<input type="text" class="p-caption" placeholder="Caption (optional) — e.g. Main dining room" value="' + esc(caption || '') + '" />' +
+    '<button type="button" class="photo-remove">Remove</button>';
+  row.querySelector('.photo-remove').addEventListener('click', function() { row.remove(); });
   container.appendChild(row);
 }
 
@@ -489,8 +525,14 @@ function collectSpaces() {
   rows.forEach(function(row) {
     var name = row.querySelector('.s-name').value.trim();
     if (!name) return; // skip empty rows
-    var photosRaw = row.querySelector('.s-photos').value || '';
-    var photos = photosRaw.split(/\r?\n/).map(function(s){ return s.trim(); }).filter(Boolean);
+    var photoRows = row.querySelectorAll('.photo-row');
+    var photos = [];
+    photoRows.forEach(function(pr) {
+      var url = pr.querySelector('.p-url').value.trim();
+      if (!url) return; // skip rows without a URL
+      var caption = pr.querySelector('.p-caption').value.trim();
+      photos.push({ url: url, caption: caption });
+    });
     out.push({
       name: name,
       description: row.querySelector('.s-desc').value.trim(),
