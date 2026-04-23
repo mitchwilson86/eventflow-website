@@ -475,6 +475,7 @@ function addSpaceRow(s) {
     '<div><label>Standing capacity</label><input type="number" class="s-standing" value="' + esc(s.capacity_standing != null ? s.capacity_standing : '') + '" min="1" /></div>' +
     '<div><label>F&B minimum — weekday ($)</label><input type="number" class="s-fbwk" value="' + esc(s.fb_min_weekday != null ? s.fb_min_weekday : '') + '" min="0" /></div>' +
     '<div><label>F&B minimum — weekend ($)</label><input type="number" class="s-fbwe" value="' + esc(s.fb_min_weekend != null ? s.fb_min_weekend : '') + '" min="0" /></div>' +
+    '<div class="full"><label class="buyout-label"><input type="checkbox" class="s-private" ' + ((s.is_private === false) ? '' : 'checked') + ' /> Private space (guests have the room to themselves — uncheck for shared or semi-private areas)</label></div>' +
     '<div class="full"><label class="buyout-label"><input type="checkbox" class="s-buyout" ' + (s.buyout ? 'checked' : '') + ' /> This space is a full buyout of the venue</label></div>' +
     '<div class="full">' +
       '<label>Photos</label>' +
@@ -538,6 +539,7 @@ function collectSpaces() {
       description: row.querySelector('.s-desc').value.trim(),
       capacity_seated: parseInt(row.querySelector('.s-seated').value, 10) || 0,
       capacity_standing: parseInt(row.querySelector('.s-standing').value, 10) || 0,
+      is_private: row.querySelector('.s-private').checked,
       buyout: row.querySelector('.s-buyout').checked,
       fb_min_weekday: parseInt(row.querySelector('.s-fbwk').value, 10) || 0,
       fb_min_weekend: parseInt(row.querySelector('.s-fbwe').value, 10) || 0,

@@ -554,9 +554,14 @@
         var caption = pr.querySelector('.rm-photo-caption').value.trim();
         photos.push({ url: url, caption: caption });
       });
+      var privacyVal = b.querySelector('.rm-privacy').value || null;
+      // Derive is_private from the privacy dropdown. Only "Fully private room"
+      // counts as fully private; semi-private and open dining are shared spaces.
+      var isPrivate = privacyVal === 'Fully private room';
       out.push({
         name: name,
-        privacy: b.querySelector('.rm-privacy').value || null,
+        privacy: privacyVal,
+        is_private: isPrivate,
         min_seated: b.querySelector('.rm-min-seated').value ? Number(b.querySelector('.rm-min-seated').value) : null,
         max_seated: b.querySelector('.rm-max-seated').value ? Number(b.querySelector('.rm-max-seated').value) : null,
         max_standing: b.querySelector('.rm-max-standing').value ? Number(b.querySelector('.rm-max-standing').value) : null,
