@@ -85,6 +85,50 @@
       </div>
       <div class="dash-body">
 
+        <!-- SMS Signup -->
+        <div class="panel">
+          <h3>Sign Up for SMS Alerts</h3>
+          <p style="font-size:13px;color:var(--text-muted);margin:-8px 0 18px;">Get text alerts when a high-value inquiry comes in.</p>
+          <form id="sms-signup-form" onsubmit="submitSMSSignup(event)" novalidate>
+            <div class="settings-grid">
+              <div class="settings-field">
+                <label for="sms-signup-first">First Name</label>
+                <input type="text" id="sms-signup-first" name="first" placeholder="Jane" required>
+              </div>
+              <div class="settings-field">
+                <label for="sms-signup-last">Last Name</label>
+                <input type="text" id="sms-signup-last" name="last" placeholder="Smith" required>
+              </div>
+              <div class="settings-field">
+                <label for="sms-signup-role">Role</label>
+                <input type="text" id="sms-signup-role" name="role" placeholder="Events Manager" required>
+              </div>
+              <div class="settings-field">
+                <label for="sms-signup-venue">Venue</label>
+                <input type="text" id="sms-signup-venue" name="venue" readonly required>
+              </div>
+              <div class="settings-field full">
+                <label for="sms-signup-phone">Mobile Number</label>
+                <input type="tel" id="sms-signup-phone" name="phone" placeholder="+1 (615) 000-0000" required>
+              </div>
+              <div class="settings-field full">
+                <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;line-height:1.55;color:var(--text-muted);">
+                  <input type="checkbox" id="sms-signup-consent" required style="width:16px;height:16px;margin-top:2px;flex-shrink:0;">
+                  <span>I agree to receive automated SMS alerts from EventFlow regarding inbound event inquiries at my venue. Message frequency varies based on inquiry volume. Message &amp; data rates may apply. Reply <strong>STOP</strong> at any time to unsubscribe or <strong>HELP</strong> for assistance. View our <a href="/privacy" style="color:var(--teal);">Privacy Policy</a>.</span>
+                </label>
+              </div>
+            </div>
+            <div class="settings-actions">
+              <button type="submit" class="settings-save">Confirm Enrollment</button>
+              <span class="settings-status" id="sms-signup-status"></span>
+            </div>
+            <p style="margin-top:14px;font-size:11px;color:var(--text-muted);line-height:1.6;">
+              Msg &amp; data rates may apply &middot; Reply STOP to cancel &middot; Reply HELP for help<br>
+              Recurring automated alerts &middot; Carriers not liable for delayed or undelivered messages
+            </p>
+          </form>
+        </div>
+
         <!-- SMS Enrollment -->
         <div class="panel">
           <h3>SMS Enrollment</h3>
@@ -198,7 +242,63 @@ function renderPage(client) {
   if (client.gmail_address) {
     document.getElementById('user-email-sidebar').textContent = client.gmail_address;
   }
+  var venueInput = document.getElementById('sms-signup-venue');
+  if (venueInput) venueInput.value = client.venue || '';
   loadSMSData();
+}
+
+/* ═══ SMS SIGNUP ═══ */
+function submitSMSSignup(event) {
+  event.preventDefault();
+  var form = document.getElementById('sms-signup-form');
+  var consent = document.getElementById('sms-signup-consent');
+  var btn = form.querySelector('.settings-save');
+  var status = document.getElementById('sms-signup-status');
+
+  if (!consent.checked) { consent.reportValidity(); return; }
+  if (!form.checkValidity()) { form.reportValidity(); return; }
+
+  btn.disabled = true;
+  status.style.color = '';
+  status.textContent = 'Submitting…';
+
+  var fields = {
+    first: document.getElementById('sms-signup-first').value.trim(),
+    last: document.getElementById('sms-signup-last').value.trim(),
+    role: document.getElementById('sms-signup-role').value.trim(),
+    venue: document.getElementById('sms-signup-venue').value.trim(),
+    phone: document.getElementById('sms-signup-phone').value.trim()
+  };
+
+  fetch('https://api.ipify.org?format=json')
+    .then(function(r) { return r.json(); })
+    .catch(function() { return { ip: '' }; })
+    .then(function(ipData) {
+      var payload = Object.assign({}, fields, { ip: (ipData && ipData.ip) || '' });
+      return fetch(SMS_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    })
+    .then(function() {
+      status.style.color = '';
+      status.textContent = '✓ Enrolled — you’ll receive a confirmation text shortly.';
+      document.getElementById('sms-signup-first').value = '';
+      document.getElementById('sms-signup-last').value = '';
+      document.getElementById('sms-signup-role').value = '';
+      document.getElementById('sms-signup-phone').value = '';
+      consent.checked = false;
+      btn.disabled = false;
+      setTimeout(loadSMSData, 1500);
+    })
+    .catch(function(err) {
+      console.error('SMS signup error:', err);
+      status.style.color = 'var(--red, #c0392b)';
+      status.textContent = 'Something went wrong. Please try again.';
+      btn.disabled = false;
+    });
 }
 
 /* ═══ SMS ENROLLMENT TABLE ═══ */
