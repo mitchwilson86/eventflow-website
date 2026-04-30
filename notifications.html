@@ -88,7 +88,16 @@
         <!-- SMS Signup -->
         <div class="panel">
           <h3>Sign Up for SMS Alerts</h3>
-          <p style="font-size:13px;color:var(--text-muted);margin:-8px 0 18px;">Get text alerts when a high-value inquiry comes in.</p>
+          <p style="font-size:13px;color:var(--text-muted);margin:-8px 0 14px;">EventFlow Sales LLC sends real-time text alerts to venue staff at <span id="sms-signup-venue-name">Sunda Nashville</span> when high-value event inquiries are received.</p>
+          <div style="background:var(--bg-input,#f1f5f9);border-radius:8px;padding:14px 16px;margin-bottom:18px;">
+            <p style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin:0 0 8px;">What you'll receive</p>
+            <ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.6;color:var(--text);">
+              <li>Instant alerts for large group inquiries (20+ guests)</li>
+              <li>Key details: guest count, event type, and sender info</li>
+              <li>Notification when AI draft response is ready to review</li>
+              <li>Up to 10 messages per month &mdash; only high-priority leads trigger an alert</li>
+            </ul>
+          </div>
           <form id="sms-signup-form" onsubmit="submitSMSSignup(event)" novalidate>
             <div class="settings-grid">
               <div class="settings-field">
@@ -114,7 +123,7 @@
               <div class="settings-field full">
                 <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;line-height:1.55;color:var(--text-muted);">
                   <input type="checkbox" id="sms-signup-consent" required style="width:16px;height:16px;margin-top:2px;flex-shrink:0;">
-                  <span>I agree to receive automated SMS alerts from EventFlow regarding inbound event inquiries at my venue. Message frequency varies based on inquiry volume. Message &amp; data rates may apply. Reply <strong>STOP</strong> at any time to unsubscribe or <strong>HELP</strong> for assistance. View our <a href="/privacy" style="color:var(--teal);">Privacy Policy</a>.</span>
+                  <span>I agree to receive automated SMS alerts from EventFlow Sales LLC regarding inbound event inquiries at <span id="sms-signup-consent-venue">Sunda Nashville</span>. You'll receive up to 10 messages per month. Message &amp; data rates may apply. Reply <strong>STOP</strong> at any time to unsubscribe or <strong>HELP</strong> for assistance. View our <a href="/privacy" style="color:var(--teal);">Privacy Policy</a> and <a href="/terms" style="color:var(--teal);">Terms of Service</a>.</span>
                 </label>
               </div>
             </div>
@@ -244,6 +253,11 @@ function renderPage(client) {
   }
   var venueInput = document.getElementById('sms-signup-venue');
   if (venueInput) venueInput.value = client.venue || '';
+  var venueName = client.venue || 'your venue';
+  var venueNameEl = document.getElementById('sms-signup-venue-name');
+  if (venueNameEl) venueNameEl.textContent = venueName;
+  var consentVenueEl = document.getElementById('sms-signup-consent-venue');
+  if (consentVenueEl) consentVenueEl.textContent = venueName;
   loadSMSData();
 }
 
