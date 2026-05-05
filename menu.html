@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Choose your event menu</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/eventflow-shared.css" />
+  <link rel="stylesheet" href="/bookings.css" />
+  <script src="/bookings-shared.js"></script>
+  <style>
+    .menu-wrap { max-width: 920px; margin: 0 auto; padding: 24px 16px 80px; }
+    .menu-card {
+      background: #fff; border-radius: 12px; padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 16px;
+    }
+    .event-summary {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px; padding-top: 12px;
+    }
+    .event-summary div { font-size: 13px; }
+    .event-summary div strong { display: block; color: var(--text-secondary); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
+    .menu-option, .upsell-option {
+      display: flex; align-items: flex-start; gap: 12px; padding: 14px;
+      border: 2px solid #E2E8F0; border-radius: 10px; cursor: pointer;
+      margin-bottom: 8px; transition: border-color 0.15s, background 0.15s;
+    }
+    .menu-option:hover, .upsell-option:hover { border-color: #94A3B8; }
+    .menu-option.selected { border-color: var(--green, #15616D); background: #F0FDFA; }
+    .menu-option input[type="radio"], .upsell-option input[type="checkbox"] {
+      margin-top: 4px; flex-shrink: 0;
+    }
+    .menu-option-body, .upsell-option-body { flex: 1; }
+    .menu-option-title, .upsell-option-title {
+      display: flex; justify-content: space-between; align-items: baseline;
+      font-weight: 600; margin-bottom: 4px;
+    }
+    .menu-option-meta, .upsell-option-meta {
+      font-size: 13px; color: var(--text-secondary, #64748B);
+    }
+    .menu-option-price, .upsell-option-price {
+      font-weight: 700; color: var(--text-primary, #1E293B); margin-left: 12px;
+      white-space: nowrap;
+    }
+    .upsell-qty {
+      margin-top: 6px; display: none; align-items: center; gap: 6px; font-size: 13px;
+    }
+    .upsell-option.checked .upsell-qty { display: inline-flex; }
+    .upsell-qty input { width: 60px; padding: 4px 6px; border: 1px solid #CBD5E1; border-radius: 6px; }
+    .upsell-category-label {
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.05em; color: #64748B; margin: 16px 0 6px;
+    }
+    .total-bar {
+      position: sticky; bottom: 0; background: #fff;
+      border-top: 1px solid #E2E8F0; padding: 16px;
+      display: flex; justify-content: space-between; align-items: center;
+      margin: 24px -24px -24px; border-radius: 0 0 12px 12px;
+    }
+    .total-bar .label { font-size: 13px; color: var(--text-secondary); }
+    .total-bar .amount { font-size: 24px; font-weight: 700; font-family: var(--serif); }
+    .flag-notice {
+      background: #FEF3C7; border-left: 3px solid #F59E0B;
+      padding: 10px 12px; border-radius: 6px; font-size: 13px;
+      margin-top: 8px; color: #78350F;
+    }
+    .flag-notice.hidden { display: none; }
+    @media (max-width: 600px) {
+      .menu-wrap { padding: 12px 8px 80px; }
+      .menu-card { padding: 16px; border-radius: 8px; }
+    }
+  </style>
+</head>
+<body style="background:#E2E8F0">
+
+<div class="menu-wrap">
+  <div id="loader" style="text-align:center;padding:60px">Loading…</div>
+
+  <div id="error" style="display:none" class="menu-card">
+    <h2 style="font-family:var(--serif);margin-bottom:8px">Can't load this page</h2>
+    <p id="error-msg" style="color:var(--text-secondary)"></p>
+  </div>
+
+  <div id="already-submitted" style="display:none" class="menu-card" style="text-align:center">
+    <div style="font-size:48px;color:var(--green, #15616D)">✓</div>
+    <h2 style="font-family:var(--serif);margin:8px 0 4px">Thanks — your selection is locked in!</h2>
+    <p style="color:var(--text-secondary)">Our team is reviewing the details and will follow up with your contract shortly.</p>
+  </div>
+
+  <div id="content" style="display:none">
+
+    <div class="menu-card">
+      <h1 style="font-family:var(--serif);font-size:28px;margin-bottom:4px" id="venue-name"></h1>
+      <p style="color:var(--text-secondary);font-size:14px">Choose your menu and add-ons for your event.</p>
+      <div class="event-summary" id="event-summary"></div>
+    </div>
+
+    <div class="menu-card">
+      <h2 style="font-family:var(--serif);font-size:22px;margin-bottom:6px">1. Choose your menu</h2>
+      <p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px">Pick the menu that best fits your event size.</p>
+      <div id="menu-options"></div>
+    </div>
+
+    <div class="menu-card" id="upsells-card" style="display:none">
+      <h2 style="font-family:var(--serif);font-size:22px;margin-bottom:6px">2. Make it special</h2>
+      <p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px">Optional add-ons to round out the night.</p>
+      <div id="upsell-options"></div>
+    </div>
+
+    <div class="menu-card">
+      <h2 style="font-family:var(--serif);font-size:22px;margin-bottom:6px">3. Anything else?</h2>
+      <p style="color:var(--text-secondary);font-size:13px;margin-bottom:10px">Special requests, dietary notes, or anything our team should know.</p>
+      <textarea id="additional-notes" rows="4" style="width:100%;padding:10px;border:1px solid #CBD5E1;border-radius:8px;font-family:inherit;font-size:14px"></textarea>
+      <div id="flag-notice" class="flag-notice hidden">
+        <strong>Heads up:</strong> Wine pairings, tasting menus, custom menus, and chef's table experiences are handled directly by our event team. We'll route this note to them — no need to do anything else.
+      </div>
+
+      <div class="total-bar">
+        <div>
+          <div class="label">Estimated total</div>
+          <div class="amount" id="total-amount">$0</div>
+        </div>
+        <button class="btn primary" id="submit-btn" onclick="submitSelection()" disabled>
+          Confirm selection
+        </button>
+      </div>
+
+      <div id="submit-error" style="display:none;color:var(--red);font-size:13px;margin-top:8px;text-align:right"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const FLAG_REGEX = /(wine|sommelier|pairing|tasting menu|chef'?s table|custom menu|bespoke)/i;
+
+const token = new URLSearchParams(window.location.search).get('token') || '';
+let ctx = null;
+let selectedMenuId = null;
+let selectedUpsells = {}; // { upsell_id: qty }
+
+window.addEventListener('load', boot);
+
+async function boot() {
+  if (!token) return showError('No token in URL.');
+  try {
+    const sb = await getSupabase();
+    const { data, error } = await sb.rpc('get_menu_selection_context', { p_token: token });
+    if (error) return showError(humanizeError(error.message));
+    ctx = data;
+
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+
+    if (ctx.booking.menu_selection_status === 'completed' || ctx.existing_selection) {
+      showAlreadySubmitted();
+      return;
+    }
+
+    renderHeader();
+    renderMenus();
+    renderUpsells();
+    document.getElementById('additional-notes').addEventListener('input', onNotesInput);
+  } catch (err) {
+    showError(err.message || String(err));
+  }
+}
+
+function renderHeader() {
+  document.getElementById('venue-name').textContent = ctx.venue.name;
+  const b = ctx.booking;
+  const summary = document.getElementById('event-summary');
+  const fields = [
+    ['Event', b.event_name || '—'],
+    ['Type', b.event_type || '—'],
+    ['Date', fmtDate(b.event_date)],
+    ['Guests', b.guest_count || '—']
+  ];
+  summary.innerHTML = fields.map(([k, v]) => `<div><strong>${k}</strong>${esc(String(v))}</div>`).join('');
+}
+
+function renderMenus() {
+  const host = document.getElementById('menu-options');
+  if (!ctx.menus.length) {
+    host.innerHTML = '<p style="color:var(--text-secondary)">No menus available for this event size. Our team will reach out directly.</p>';
+    return;
+  }
+  host.innerHTML = ctx.menus.map(m => {
+    const guests = ctx.booking.guest_count || m.min_guests;
+    const ppText = Number(m.price_per_person) === 0
+      ? 'À la carte'
+      : `${fmtMoney(m.price_per_person)} / guest`;
+    const lineText = Number(m.price_per_person) === 0
+      ? ''
+      : ` · est. ${fmtMoney(m.price_per_person * guests)} for ${guests} guests`;
+    const courseText = m.course_count ? `${m.course_count} courses · ` : '';
+    return `
+      <label class="menu-option" data-id="${m.id}">
+        <input type="radio" name="menu" value="${m.id}" />
+        <div class="menu-option-body">
+          <div class="menu-option-title">
+            <span>${esc(m.name)}</span>
+            <span class="menu-option-price">${ppText}</span>
+          </div>
+          <div class="menu-option-meta">${esc(m.description || '')}</div>
+          <div class="menu-option-meta" style="margin-top:4px">
+            ${courseText}fits ${m.min_guests}–${m.max_guests} guests${lineText}
+            ${m.menu_url ? ` · <a href="${esc(m.menu_url)}" target="_blank" rel="noopener">View menu</a>` : ''}
+          </div>
+        </div>
+      </label>`;
+  }).join('');
+
+  host.querySelectorAll('.menu-option').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.dataset.id;
+      selectedMenuId = id;
+      host.querySelectorAll('.menu-option').forEach(o => o.classList.toggle('selected', o.dataset.id === id));
+      el.querySelector('input').checked = true;
+      document.getElementById('upsells-card').style.display = ctx.upsells.length ? 'block' : 'none';
+      updateTotalAndButton();
+    });
+  });
+}
+
+function renderUpsells() {
+  if (!ctx.upsells.length) return;
+  const host = document.getElementById('upsell-options');
+  const groups = {};
+  for (const u of ctx.upsells) {
+    (groups[u.category] = groups[u.category] || []).push(u);
+  }
+  const order = ['cocktail_hour', 'dessert', 'late_night', 'photo', 'decor', 'av', 'staffing', 'other'];
+  const labels = {
+    cocktail_hour: 'Cocktail hour', dessert: 'Dessert', late_night: 'Late-night bites',
+    photo: 'Photography', decor: 'Decor & signage', av: 'A/V', staffing: 'Staffing', other: 'Other'
+  };
+  host.innerHTML = order.filter(k => groups[k]).map(cat => `
+    <div class="upsell-category-label">${labels[cat] || cat}</div>
+    ${groups[cat].map(u => upsellHtml(u)).join('')}
+  `).join('');
+
+  host.querySelectorAll('.upsell-option').forEach(el => {
+    const cb = el.querySelector('input[type="checkbox"]');
+    const qtyInput = el.querySelector('input[type="number"]');
+    cb.addEventListener('change', () => {
+      el.classList.toggle('checked', cb.checked);
+      const id = el.dataset.id;
+      if (cb.checked) {
+        selectedUpsells[id] = parseInt(qtyInput?.value || '1', 10);
+      } else {
+        delete selectedUpsells[id];
+      }
+      updateTotalAndButton();
+    });
+    if (qtyInput) {
+      qtyInput.addEventListener('input', () => {
+        const id = el.dataset.id;
+        if (selectedUpsells[id] !== undefined) {
+          selectedUpsells[id] = Math.max(1, parseInt(qtyInput.value || '1', 10));
+          updateTotalAndButton();
+        }
+      });
+    }
+  });
+}
+
+function upsellHtml(u) {
+  const guests = ctx.booking.guest_count || u.min_guests;
+  let priceLabel, qtyHtml = '';
+  if (u.price_unit === 'per_person') {
+    priceLabel = `${fmtMoney(u.price)}/guest`;
+  } else if (u.price_unit === 'per_hour') {
+    priceLabel = `${fmtMoney(u.price)}/hour`;
+    qtyHtml = `<div class="upsell-qty">Hours: <input type="number" min="1" value="1" /></div>`;
+  } else {
+    priceLabel = `${fmtMoney(u.price)} flat`;
+  }
+  return `
+    <label class="upsell-option" data-id="${u.id}" data-price="${u.price}" data-unit="${u.price_unit}">
+      <input type="checkbox" />
+      <div class="upsell-option-body">
+        <div class="upsell-option-title">
+          <span>${esc(u.name)}</span>
+          <span class="upsell-option-price">${priceLabel}</span>
+        </div>
+        <div class="upsell-option-meta">${esc(u.description || '')}</div>
+        ${qtyHtml}
+      </div>
+    </label>`;
+}
+
+function onNotesInput(e) {
+  const matched = FLAG_REGEX.test(e.target.value);
+  document.getElementById('flag-notice').classList.toggle('hidden', !matched);
+}
+
+function updateTotalAndButton() {
+  if (!ctx) return;
+  const guests = ctx.booking.guest_count || 1;
+  let total = 0;
+
+  if (selectedMenuId) {
+    const m = ctx.menus.find(x => x.id === selectedMenuId);
+    if (m) total += Number(m.price_per_person) * guests;
+  }
+
+  for (const [id, qty] of Object.entries(selectedUpsells)) {
+    const u = ctx.upsells.find(x => x.id === id);
+    if (!u) continue;
+    if (u.price_unit === 'per_person') total += Number(u.price) * guests * qty;
+    else total += Number(u.price) * qty;
+  }
+
+  document.getElementById('total-amount').textContent = fmtMoney(total);
+  document.getElementById('submit-btn').disabled = !selectedMenuId;
+}
+
+async function submitSelection() {
+  const btn = document.getElementById('submit-btn');
+  const errEl = document.getElementById('submit-error');
+  errEl.style.display = 'none';
+  if (!selectedMenuId) return;
+
+  const upsellArr = Object.entries(selectedUpsells).map(([upsell_id, qty]) => ({ upsell_id, qty }));
+  const notes = document.getElementById('additional-notes').value.trim() || null;
+
+  btn.disabled = true; btn.textContent = 'Submitting…';
+  try {
+    const sb = await getSupabase();
+    const { data, error } = await sb.rpc('submit_menu_selection', {
+      p_token: token,
+      p_menu_catalog_id: selectedMenuId,
+      p_selected_upsells: upsellArr,
+      p_additional_notes: notes
+    });
+    if (error) throw error;
+    if (!data || data.ok !== true) throw new Error('Unexpected response');
+    showAlreadySubmitted();
+  } catch (err) {
+    btn.disabled = false; btn.textContent = 'Confirm selection';
+    errEl.textContent = humanizeError(err.message || String(err));
+    errEl.style.display = 'block';
+  }
+}
+
+function showAlreadySubmitted() {
+  document.getElementById('content').style.display = 'none';
+  document.getElementById('already-submitted').style.display = 'block';
+}
+function showError(msg) {
+  document.getElementById('loader').style.display = 'none';
+  document.getElementById('error').style.display = 'block';
+  document.getElementById('error-msg').textContent = msg;
+}
+function humanizeError(msg) {
+  if (!msg) return 'Unknown error.';
+  if (/token not found|invalid token/i.test(msg)) return 'This menu link is no longer valid. Please contact the venue.';
+  if (/not in selectable status/i.test(msg)) return 'This event is no longer accepting menu changes. Please contact the venue.';
+  return msg;
+}
+function fmtMoney(n) {
+  const v = Number(n) || 0;
+  return v.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: v % 1 === 0 ? 0 : 2 });
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d + 'T00:00:00');
+  if (isNaN(dt.getTime())) return d;
+  return dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+}
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+</script>
+</body>
+</html>
