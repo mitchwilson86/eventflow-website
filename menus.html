@@ -207,6 +207,19 @@
       <div style="margin-top:4px;font-size:12px;color:#6366f1;">Max 25 MB · PDF, PNG, JPG, WebP</div>
     </div>
 
+    <div style="display:flex;align-items:center;gap:10px;margin:14px 0;color:#9ca3af;font-size:12px;">
+      <div style="flex:1;height:1px;background:#e5e7eb;"></div><span>OR</span><div style="flex:1;height:1px;background:#e5e7eb;"></div>
+    </div>
+
+    <div class="field" style="gap:6px;">
+      <label style="font-size:12px;color:#4b5563;font-weight:500;">Paste a Google Doc / Drive URL</label>
+      <div style="display:flex;gap:6px;">
+        <input type="url" id="drive-url-input" placeholder="https://docs.google.com/document/d/..." style="flex:1;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;" />
+        <button class="btn btn-primary" id="btn-import-drive">Import</button>
+      </div>
+      <div style="font-size:11px;color:#9ca3af;margin-top:2px;">Doc must be shared with mitchwilson@eventflowsales.com</div>
+    </div>
+
     <div class="upload-status" id="upload-status"></div>
     <div class="draft-preview" id="draft-preview" style="display:none;"></div>
 
@@ -761,6 +774,7 @@ document.getElementById('upload-cancel').addEventListener('click', closeUploadMo
 uploadDrop.addEventListener('click', () => uploadInput.click());
 uploadInput.addEventListener('change', handleUploadFile);
 uploadApplyBtn.addEventListener('click', applyDraft);
+document.getElementById('btn-import-drive').addEventListener('click', handleImportDrive);
 
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
@@ -773,6 +787,24 @@ function fileToBase64(file) {
     reader.onerror = () => reject(reader.error);
     reader.readAsDataURL(file);
   });
+}
+
+async function handleImportDrive() {
+  const url = document.getElementById('drive-url-input').value.trim();
+  if (!url) { setUploadStatus('Paste a Google Drive URL first', true); return; }
+  setUploadStatus('Importing from Drive…');
+  try {
+    const upload = await apiPost('import_drive_doc', { drive_url: url });
+    currentUploadId = upload.upload.id;
+    setUploadStatus('Parsing menu with AI… (this can take 20-40 seconds)');
+    const parsed = await apiPost('parse_menu_upload', { upload_id: currentUploadId });
+    currentDraft = parsed.parsed;
+    setUploadStatus('Parsed ✓ — review below, then click Apply.');
+    renderDraft(currentDraft);
+    uploadApplyBtn.style.display = 'inline-flex';
+  } catch (err) {
+    setUploadStatus('Error: ' + (err.message || err), true);
+  }
 }
 
 async function handleUploadFile(e) {
