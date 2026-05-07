@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EventFlow — Menus</title>
+  <meta name="description" content="EventFlow menus admin — define group menus, sections, dishes, and selection rules for your venue.">
+  <link rel="canonical" href="https://eventflowsales.com/menus">
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/eventflow-shared.css" />
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js" defer></script>
+  <script src="/eventflow-admin.js" defer></script>
+  <style>
+    .menus-layout { display: grid; grid-template-columns: 280px 1fr; gap: 0; min-height: calc(100vh - 56px); }
+    @media (max-width: 900px) { .menus-layout { grid-template-columns: 1fr; } }
+    .menus-rail { border-right: 1px solid var(--ef-border, #e5e7eb); padding: 16px 12px; background: #fafafa; }
+    .menus-rail h3 { margin: 8px 8px 12px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: #6b7280; }
+    .menu-pill { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 8px; cursor: pointer; margin-bottom: 4px; font-size: 14px; }
+    .menu-pill:hover { background: #fff; }
+    .menu-pill.active { background: #fff; border: 1px solid #d1d5db; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+    .menu-pill .name { flex: 1; font-weight: 500; }
+    .menu-pill .badge { font-size: 11px; padding: 2px 6px; border-radius: 999px; background: #eef2ff; color: #4338ca; font-weight: 600; }
+    .menu-pill .badge.per_guest { background: #fef3c7; color: #92400e; }
+    .menu-pill.inactive { opacity: 0.55; }
+    .menus-main { padding: 24px 32px; }
+    .menus-main h1 { margin: 0 0 4px; }
+    .menus-main .sub { color: #6b7280; font-size: 14px; margin-bottom: 18px; }
+    .empty { padding: 60px 20px; text-align: center; color: #6b7280; }
+    .empty .big { font-size: 18px; font-weight: 600; color: #111827; margin-bottom: 8px; }
+    .menu-form { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px 20px; margin-bottom: 18px; }
+    .menu-form h2 { margin: 0 0 12px; font-size: 18px; }
+    .field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px 16px; margin-bottom: 8px; }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field label { font-size: 12px; color: #4b5563; font-weight: 500; }
+    .field input, .field select, .field textarea {
+      padding: 7px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;
+      font-family: inherit; background: #fff;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.15);
+    }
+    .field textarea { resize: vertical; min-height: 70px; }
+    .row-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1px solid #d1d5db; border-radius: 6px; background: #fff; font-size: 13px; cursor: pointer; font-family: inherit; }
+    .btn:hover { background: #f3f4f6; }
+    .btn-primary { background: #4f46e5; color: #fff; border-color: #4f46e5; }
+    .btn-primary:hover { background: #4338ca; }
+    .btn-danger { color: #b91c1c; }
+    .btn-danger:hover { background: #fef2f2; }
+    .btn-ghost { border: none; padding: 4px 8px; }
+    .save-indicator { font-size: 12px; color: #6b7280; margin-left: 8px; }
+    .save-indicator.saved { color: #047857; }
+    .save-indicator.error { color: #b91c1c; }
+
+    .section-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; }
+    .section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .section-head .drag { cursor: grab; color: #9ca3af; user-select: none; padding: 0 4px; font-size: 18px; }
+    .section-head .drag:active { cursor: grabbing; }
+    .section-head .name-input { flex: 1; font-weight: 600; font-size: 15px; padding: 6px 8px; border: 1px solid transparent; border-radius: 6px; }
+    .section-head .name-input:hover { border-color: #e5e7eb; }
+    .section-head .name-input:focus { border-color: #6366f1; outline: none; }
+    .section-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px 12px; margin-bottom: 10px; }
+    .section-meta .field label { font-size: 11px; }
+    .section-meta input[type="number"] { width: 100%; }
+    .section-included { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #4b5563; }
+
+    .options-list { padding: 8px 0 4px; border-top: 1px dashed #e5e7eb; }
+    .option-row { display: grid; grid-template-columns: 24px 1.5fr 2fr auto auto; gap: 8px; align-items: start; padding: 8px 0; }
+    .option-row .drag { cursor: grab; color: #9ca3af; padding-top: 6px; }
+    .option-row input, .option-row textarea { padding: 6px 8px; font-size: 13px; }
+    .option-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+    .tag-chip { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #f3f4f6; color: #374151; cursor: pointer; user-select: none; border: 1px solid #e5e7eb; }
+    .tag-chip.selected { background: #eef2ff; color: #4338ca; border-color: #c7d2fe; }
+    .tag-chip.allergen.selected { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+    .option-detail { display: flex; flex-direction: column; gap: 4px; }
+    .option-upcharge { width: 80px; }
+
+    .top-bar-pill { display: inline-flex; gap: 6px; align-items: center; background: #eef2ff; color: #4338ca; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; margin-left: 12px; }
+    .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+<script>
+  (function(){
+    try {
+      if (sessionStorage.getItem('ef_user_email')) {
+        var s = document.createElement('style');
+        s.textContent = '#login-screen{display:none !important}';
+        document.head.appendChild(s);
+      }
+    } catch(e) {}
+  })();
+</script>
+
+<div id="login-screen">
+  <div class="login-box">
+    <div class="logo">EventFlow</div>
+    <div class="subtitle">Menus</div>
+    <div class="login-divider">Sign in with Google</div>
+    <div id="google-signin-btn"></div>
+    <div class="login-error" id="login-error">Access denied.</div>
+    <div class="login-session-msg" id="session-msg">Signing you in...</div>
+  </div>
+</div>
+
+<div id="app" style="display:none;">
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-logo">EventFlow</span>
+        <span class="venue-name" id="venue-name"></span>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/dashboard" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          <span>Dashboard</span>
+        </a>
+        <a href="/bookings" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span>Bookings</span>
+        </a>
+        <a href="/menus" class="nav-item active">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+          <span>Menus</span>
+        </a>
+        <a href="/campaigns" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          <span>Campaigns</span>
+        </a>
+        <a href="/settings" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>Settings</span>
+        </a>
+        <a href="/admin" class="nav-item admin-nav-link" style="display:none;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <span>Admin Dashboard</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <span class="user-email" id="user-email-sidebar"></span>
+        <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+      </div>
+    </aside>
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <div class="main-content">
+      <div class="top-bar">
+        <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()">&#9776;</button>
+        <span class="page-title">Menus</span>
+        <span id="save-status" class="save-indicator"></span>
+      </div>
+      <div class="dash-body" style="padding:0;">
+
+        <div class="menus-layout">
+          <aside class="menus-rail">
+            <h3>Your Menus</h3>
+            <div id="menu-list"></div>
+            <button class="btn btn-primary" id="btn-new-menu" style="width:100%;margin-top:10px;">+ New Menu</button>
+          </aside>
+
+          <div class="menus-main" id="menu-editor">
+            <div class="empty">
+              <div class="big">Pick a menu on the left to start editing</div>
+              <div>Or create a new one — sections and dishes will appear here.</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let CLIENTS = {};
+const DATA_URL = 'https://script.google.com/macros/s/AKfycbxEpfGswzFnPTFLaKWlt332kv6Jy7vdagPcDEDMXbEDwrrFzpoPLc8wrmTW5UEB2xVj8w/exec';
+const GOOGLE_CLIENT_ID = '551797277858-ne7qntlo2jgmdp36o2lpcnv8qr6u7ofv.apps.googleusercontent.com';
+let currentClient = null;
+let currentMenus = [];   // [{...menu, sections: [{...,options:[]}]}]
+let currentMenuId = null;
+const DIETARY_TAGS = ['vegetarian','vegan','gluten_free','dairy_free','nut_free','shellfish_free','pescatarian'];
+const ALLERGEN_TAGS = ['dairy','eggs','fish','shellfish','tree_nuts','peanuts','wheat','soy','sesame','gluten'];
+const tagLabel = (t) => t.replace(/_/g, ' ');
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('active');
+}
+
+function doLogout() {
+  sessionStorage.clear();
+  location.reload();
+}
+
+function initGoogleSignIn() {
+  if (typeof google === 'undefined' || !google.accounts) {
+    setTimeout(initGoogleSignIn, 500);
+    return;
+  }
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleGoogleSignIn,
+    auto_select: true
+  });
+  google.accounts.id.renderButton(
+    document.getElementById('google-signin-btn'),
+    { theme: 'outline', size: 'large', width: 340, text: 'signin_with', shape: 'rectangular' }
+  );
+  const savedEmail = sessionStorage.getItem('ef_user_email');
+  if (savedEmail) {
+    afterAuth(savedEmail);
+  }
+}
+
+function handleGoogleSignIn(response) {
+  const idToken = response.credential;
+  const payload = JSON.parse(atob(idToken.split('.')[1]));
+  const email = payload.email;
+  sessionStorage.setItem('ef_user_email', email);
+  sessionStorage.setItem('ef_id_token', idToken);
+  sessionStorage.setItem('ef_id_token_exp', String(payload.exp * 1000));
+  afterAuth(email);
+}
+
+function afterAuth(email) {
+  document.getElementById('user-email-sidebar').textContent = email;
+  // Wait for clients to load
+  loadClients().then(() => {
+    const client = (window.EF_ADMIN && EF_ADMIN.resolveClient(CLIENTS, email))
+      || Object.values(CLIENTS).find(c => c.gmail_address === email);
+    if (!client) {
+      document.getElementById('login-error').textContent = 'Access denied. ' + email + ' is not authorized for any venue.';
+      document.getElementById('login-error').style.display = 'block';
+      return;
+    }
+    currentClient = client;
+    document.getElementById('venue-name').textContent = client.venue;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    if (window.EF_ADMIN) {
+      EF_ADMIN.showAdminNav();
+      EF_ADMIN.setupVenuePicker(CLIENTS, function(slug){
+        currentClient = Object.values(CLIENTS).find(c => c.slug === slug);
+        document.getElementById('venue-name').textContent = currentClient.venue;
+        loadMenus();
+      });
+    }
+    loadMenus();
+  });
+}
+
+function loadClients() {
+  return fetch(DATA_URL + '?type=client_list')
+    .then(r => r.json())
+    .then(data => {
+      if (!data.clients) return;
+      data.clients.forEach(c => {
+        let auth = []; try { auth = JSON.parse(c.authorized_emails || '[]'); } catch(e) {}
+        const key = c.slug.replace(/[^a-z0-9]/g, '');
+        CLIENTS[key] = { slug: c.slug, gmail_address: c.gmail || '', venue: c.venue || c.slug, authorized_emails: auth };
+      });
+    })
+    .catch(() => {});
+}
+
+function setStatus(msg, kind) {
+  const el = document.getElementById('save-status');
+  el.textContent = msg;
+  el.className = 'save-indicator' + (kind ? (' ' + kind) : '');
+  if (kind === 'saved') setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 1500);
+}
+
+function apiPost(action, body) {
+  setStatus('Saving…');
+  const idToken = sessionStorage.getItem('ef_id_token');
+  return fetch(DATA_URL, {
+    method: 'POST',
+    body: JSON.stringify(Object.assign({}, body, {
+      action: action,
+      id_token: idToken,
+      client_slug: currentClient.slug
+    }))
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) {
+        setStatus('Error: ' + data.error, 'error');
+        throw new Error(data.error);
+      }
+      setStatus('Saved ✓', 'saved');
+      return data;
+    });
+}
+
+function loadMenus() {
+  setStatus('Loading…');
+  return fetch(DATA_URL + '?type=menus_full&client=' + encodeURIComponent(currentClient.slug))
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) { setStatus('Error: ' + data.error, 'error'); return; }
+      currentMenus = data.menus || [];
+      setStatus('');
+      renderMenuList();
+      if (currentMenuId && currentMenus.find(m => m.id === currentMenuId)) {
+        renderEditor(currentMenuId);
+      } else if (currentMenus.length) {
+        renderEditor(currentMenus[0].id);
+      } else {
+        renderEmpty();
+      }
+    });
+}
+
+function renderMenuList() {
+  const list = document.getElementById('menu-list');
+  if (!currentMenus.length) {
+    list.innerHTML = '<div style="padding:14px 8px;color:#6b7280;font-size:13px;">No menus yet</div>';
+    return;
+  }
+  list.innerHTML = currentMenus.map(m => {
+    const styleBadge = m.service_style === 'per_guest' ? 'per_guest' : '';
+    const styleLabel = m.service_style === 'per_guest' ? 'Per guest' : 'Family';
+    return '<div class="menu-pill ' + (m.id === currentMenuId ? 'active ' : '') + (m.is_active ? '' : 'inactive') + '" data-id="' + m.id + '">' +
+      '<span class="name">' + escHtml(m.name || 'Untitled') + '</span>' +
+      '<span class="badge ' + styleBadge + '">' + styleLabel + '</span>' +
+      '</div>';
+  }).join('');
+  list.querySelectorAll('.menu-pill').forEach(el => {
+    el.addEventListener('click', () => renderEditor(el.dataset.id));
+  });
+}
+
+function renderEmpty() {
+  document.getElementById('menu-editor').innerHTML =
+    '<div class="empty"><div class="big">No menu selected</div><div>Use "+ New Menu" to create one.</div></div>';
+}
+
+function renderEditor(menuId) {
+  currentMenuId = menuId;
+  const m = currentMenus.find(x => x.id === menuId);
+  if (!m) { renderEmpty(); return; }
+
+  // Update sidebar selection
+  document.querySelectorAll('.menu-pill').forEach(el => el.classList.toggle('active', el.dataset.id === menuId));
+
+  const eventTypes = (m.applicable_event_types || []).join(', ');
+  const editor = document.getElementById('menu-editor');
+  editor.innerHTML = `
+    <div class="toolbar">
+      <h1 style="margin:0;flex:1;">${escHtml(m.name || 'Untitled menu')}</h1>
+      <button class="btn btn-danger" data-act="delete-menu">Delete menu</button>
+    </div>
+    <div class="sub">Edit menu details, then add sections + dishes below.</div>
+
+    <div class="menu-form">
+      <div class="field-row">
+        <div class="field"><label>Name</label><input data-mf="name" value="${escAttr(m.name || '')}" /></div>
+        <div class="field"><label>Service style</label>
+          <select data-mf="service_style">
+            <option value="family_style" ${m.service_style==='family_style'?'selected':''}>Family-style (table shares picks)</option>
+            <option value="per_guest" ${m.service_style==='per_guest'?'selected':''}>Per-guest (counts must total guest count × pick count)</option>
+          </select>
+        </div>
+        <div class="field"><label>Price per person ($)</label><input type="number" step="0.01" min="0" data-mf="price_per_person" value="${m.price_per_person||0}" /></div>
+        <div class="field"><label>Course count (optional)</label><input type="number" min="1" data-mf="course_count" value="${m.course_count||''}" /></div>
+        <div class="field"><label>Min guests</label><input type="number" min="1" data-mf="min_guests" value="${m.min_guests||1}" /></div>
+        <div class="field"><label>Max guests</label><input type="number" min="1" data-mf="max_guests" value="${m.max_guests||9999}" /></div>
+        <div class="field"><label>Sort order</label><input type="number" data-mf="sort_order" value="${m.sort_order||0}" /></div>
+        <div class="field" style="display:flex;flex-direction:row;align-items:center;gap:6px;">
+          <input type="checkbox" data-mf="is_active" ${m.is_active!==false?'checked':''} id="mf-active-${m.id}" />
+          <label for="mf-active-${m.id}">Active (shown to guests)</label>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field" style="grid-column:1/-1;">
+          <label>Description (optional)</label>
+          <textarea data-mf="description">${escHtml(m.description||'')}</textarea>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>External menu URL (PDF link, optional)</label><input data-mf="menu_url" placeholder="https://..." value="${escAttr(m.menu_url||'')}" /></div>
+        <div class="field"><label>Applicable event types (comma-separated, blank = all)</label><input data-mf="applicable_event_types" placeholder="e.g. corporate, birthday" value="${escAttr(eventTypes)}" /></div>
+      </div>
+    </div>
+
+    <div class="toolbar"><h2 style="margin:0;flex:1;font-size:18px;">Sections</h2><button class="btn btn-primary" data-act="new-section">+ Add section</button></div>
+    <div id="sections-host"></div>
+  `;
+
+  // Wire menu field saves
+  editor.querySelectorAll('[data-mf]').forEach(el => bindAutosave(el, 'mf', menuId));
+  editor.querySelector('[data-act="delete-menu"]').addEventListener('click', () => deleteMenu(menuId));
+  editor.querySelector('[data-act="new-section"]').addEventListener('click', () => createSection(menuId));
+  renderSections(m);
+}
+
+function renderSections(menu) {
+  const host = document.getElementById('sections-host');
+  if (!host) return;
+  if (!menu.sections.length) {
+    host.innerHTML = '<div class="empty" style="padding:30px 20px;">No sections yet. Click <strong>+ Add section</strong> to create one (e.g. Appetizer, Entrée).</div>';
+    return;
+  }
+  host.innerHTML = menu.sections.map(renderSectionHtml).join('');
+  host.querySelectorAll('.section-card').forEach(card => wireSection(card, menu));
+
+  // Drag-drop sections
+  if (window.Sortable) {
+    Sortable.create(host, {
+      handle: '.section-drag', animation: 150,
+      onEnd: () => {
+        const ids = [...host.querySelectorAll('.section-card')].map(el => el.dataset.id);
+        apiPost('reorder_sections', { menu_catalog_id: menu.id, ordered_ids: ids })
+          .then(() => loadMenus());
+      }
+    });
+  }
+}
+
+function renderSectionHtml(s) {
+  return `
+    <div class="section-card" data-id="${s.id}">
+      <div class="section-head">
+        <span class="drag section-drag">⋮⋮</span>
+        <input class="name-input" data-sf="name" value="${escAttr(s.name||'')}" placeholder="Section name (e.g. Appetizer)" />
+        <button class="btn btn-ghost btn-danger" data-act="delete-section">✕</button>
+      </div>
+      <div class="section-meta">
+        <div class="field section-included"><input type="checkbox" data-sf="all_included" ${s.all_included?'checked':''} id="ai-${s.id}" /><label for="ai-${s.id}">All items included (no picking)</label></div>
+        <div class="field"><label>Min picks</label><input type="number" min="0" data-sf="min_choices" value="${s.min_choices}" ${s.all_included?'disabled':''} /></div>
+        <div class="field"><label>Max picks</label><input type="number" min="0" data-sf="max_choices" value="${s.max_choices}" ${s.all_included?'disabled':''} /></div>
+        <div class="field"><label>Notes (optional)</label><input data-sf="notes" value="${escAttr(s.notes||'')}" /></div>
+      </div>
+      <div class="options-list">
+        ${s.options.map(renderOptionHtml).join('') || '<div style="font-size:13px;color:#9ca3af;padding:8px 4px;">No dishes yet</div>'}
+      </div>
+      <div style="margin-top:6px;"><button class="btn" data-act="new-option">+ Add dish</button></div>
+    </div>
+  `;
+}
+
+function renderOptionHtml(o) {
+  const dietary = DIETARY_TAGS.map(t => {
+    const sel = (o.dietary_tags || []).indexOf(t) !== -1;
+    return `<span class="tag-chip dietary ${sel?'selected':''}" data-tag="${t}" data-kind="dietary">${tagLabel(t)}</span>`;
+  }).join('');
+  const allergens = ALLERGEN_TAGS.map(t => {
+    const sel = (o.allergen_tags || []).indexOf(t) !== -1;
+    return `<span class="tag-chip allergen ${sel?'selected':''}" data-tag="${t}" data-kind="allergen">${tagLabel(t)}</span>`;
+  }).join('');
+  return `
+    <div class="option-row" data-id="${o.id}">
+      <span class="drag option-drag">⋮⋮</span>
+      <input data-of="name" value="${escAttr(o.name||'')}" placeholder="Dish name" />
+      <div class="option-detail">
+        <textarea data-of="description" rows="1" placeholder="Description (optional)">${escHtml(o.description||'')}</textarea>
+        <div class="option-tags">
+          <strong style="font-size:10px;color:#6b7280;align-self:center;">Diet:</strong>${dietary}
+        </div>
+        <div class="option-tags">
+          <strong style="font-size:10px;color:#6b7280;align-self:center;">Allergens:</strong>${allergens}
+        </div>
+      </div>
+      <input class="option-upcharge" type="number" step="0.01" min="0" data-of="upcharge_per_person" value="${o.upcharge_per_person||0}" title="Upcharge per person ($)" />
+      <button class="btn btn-ghost btn-danger" data-act="delete-option">✕</button>
+    </div>
+  `;
+}
+
+function wireSection(card, menu) {
+  const sectionId = card.dataset.id;
+  card.querySelectorAll('[data-sf]').forEach(el => bindAutosave(el, 'sf', sectionId, menu.id));
+  card.querySelector('[data-act="delete-section"]').addEventListener('click', () => deleteSection(sectionId));
+  card.querySelector('[data-act="new-option"]').addEventListener('click', () => createOption(sectionId));
+
+  // Toggle min/max disabled when all_included flips
+  const ai = card.querySelector('[data-sf="all_included"]');
+  ai.addEventListener('change', () => {
+    card.querySelectorAll('[data-sf="min_choices"],[data-sf="max_choices"]').forEach(i => i.disabled = ai.checked);
+  });
+
+  // Wire each option
+  card.querySelectorAll('.option-row').forEach(row => {
+    const optId = row.dataset.id;
+    row.querySelectorAll('[data-of]').forEach(el => bindAutosave(el, 'of', optId, sectionId));
+    row.querySelector('[data-act="delete-option"]').addEventListener('click', () => deleteOption(optId, sectionId));
+    row.querySelectorAll('.tag-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        chip.classList.toggle('selected');
+        saveOptionTags(optId, sectionId, row);
+      });
+    });
+  });
+
+  // Drag-drop options within section
+  if (window.Sortable) {
+    Sortable.create(card.querySelector('.options-list'), {
+      handle: '.option-drag', animation: 150,
+      onEnd: () => {
+        const ids = [...card.querySelectorAll('.option-row')].map(el => el.dataset.id);
+        apiPost('reorder_options', { section_id: sectionId, ordered_ids: ids });
+      }
+    });
+  }
+}
+
+let saveTimers = {};
+function bindAutosave(el, kind, id, parentId) {
+  const event = (el.tagName === 'SELECT' || el.type === 'checkbox') ? 'change' : 'input';
+  el.addEventListener(event, () => {
+    const key = kind + ':' + id + ':' + el.dataset[el.dataset.mf?'mf':(el.dataset.sf?'sf':'of')];
+    clearTimeout(saveTimers[key]);
+    saveTimers[key] = setTimeout(() => commitField(el, kind, id, parentId), 500);
+  });
+  if (event === 'input') {
+    el.addEventListener('blur', () => commitField(el, kind, id, parentId));
+  }
+}
+
+function commitField(el, kind, id, parentId) {
+  let value;
+  if (el.type === 'checkbox') value = el.checked;
+  else if (el.type === 'number') value = el.value === '' ? null : Number(el.value);
+  else value = el.value;
+
+  const fieldName = el.dataset.mf || el.dataset.sf || el.dataset.of;
+  if (!fieldName) return;
+
+  if (kind === 'mf') {
+    const payload = { id: id };
+    if (fieldName === 'applicable_event_types') {
+      payload[fieldName] = (value || '').toString().split(',').map(s => s.trim()).filter(Boolean);
+    } else {
+      payload[fieldName] = value;
+    }
+    apiPost('upsert_menu', { menu: payload }).then(() => loadMenus());
+  } else if (kind === 'sf') {
+    const payload = { id: id, menu_catalog_id: parentId };
+    payload[fieldName] = value;
+    apiPost('upsert_section', { section: payload }).then(() => loadMenus());
+  } else if (kind === 'of') {
+    const payload = { id: id, section_id: parentId };
+    payload[fieldName] = value;
+    apiPost('upsert_option', { option: payload }).then(() => loadMenus());
+  }
+}
+
+function saveOptionTags(optId, sectionId, row) {
+  const dietary = [...row.querySelectorAll('.tag-chip.dietary.selected')].map(c => c.dataset.tag);
+  const allergens = [...row.querySelectorAll('.tag-chip.allergen.selected')].map(c => c.dataset.tag);
+  apiPost('upsert_option', { option: { id: optId, section_id: sectionId, dietary_tags: dietary, allergen_tags: allergens } });
+}
+
+function createMenu() {
+  const name = prompt('Menu name (e.g. "$65 Group Menu")');
+  if (!name) return;
+  apiPost('upsert_menu', { menu: { name: name, service_style: 'family_style', is_active: true } })
+    .then(res => { currentMenuId = res.menu.id; loadMenus(); });
+}
+
+function deleteMenu(id) {
+  if (!confirm('Delete this menu and all its sections + dishes? This cannot be undone.')) return;
+  apiPost('delete_menu', { menu_id: id }).then(() => { currentMenuId = null; loadMenus(); });
+}
+
+function createSection(menuId) {
+  apiPost('upsert_section', { section: { menu_catalog_id: menuId, name: 'New section', position: (currentMenus.find(m => m.id === menuId).sections.length) || 0, min_choices: 1, max_choices: 1 } })
+    .then(() => loadMenus());
+}
+
+function deleteSection(id) {
+  if (!confirm('Delete this section and all its dishes?')) return;
+  apiPost('delete_section', { section_id: id }).then(() => loadMenus());
+}
+
+function createOption(sectionId) {
+  let pos = 0;
+  for (const m of currentMenus) {
+    const s = (m.sections || []).find(x => x.id === sectionId);
+    if (s) { pos = (s.options || []).length; break; }
+  }
+  apiPost('upsert_option', { option: { section_id: sectionId, name: 'New dish', position: pos } })
+    .then(() => loadMenus());
+}
+
+function deleteOption(id) {
+  if (!confirm('Delete this dish?')) return;
+  apiPost('delete_option', { option_id: id }).then(() => loadMenus());
+}
+
+function escHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+}
+function escAttr(s) { return escHtml(s); }
+
+document.getElementById('btn-new-menu').addEventListener('click', createMenu);
+
+window.addEventListener('load', initGoogleSignIn);
+</script>
+</body>
+</html>

@@ -23,22 +23,23 @@
     }
     .event-summary div { font-size: 13px; }
     .event-summary div strong { display: block; color: var(--text-secondary); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
-    .menu-option, .upsell-option {
+    .menu-option, .upsell-option, .dish-option {
       display: flex; align-items: flex-start; gap: 12px; padding: 14px;
       border: 2px solid #E2E8F0; border-radius: 10px; cursor: pointer;
       margin-bottom: 8px; transition: border-color 0.15s, background 0.15s;
     }
-    .menu-option:hover, .upsell-option:hover { border-color: #94A3B8; }
-    .menu-option.selected { border-color: var(--green, #15616D); background: #F0FDFA; }
-    .menu-option input[type="radio"], .upsell-option input[type="checkbox"] {
+    .menu-option:hover, .upsell-option:hover, .dish-option:hover { border-color: #94A3B8; }
+    .menu-option.selected, .dish-option.selected { border-color: var(--green, #15616D); background: #F0FDFA; }
+    .dish-option.disabled { opacity: 0.5; cursor: not-allowed; }
+    .menu-option input[type="radio"], .upsell-option input[type="checkbox"], .dish-option input[type="checkbox"] {
       margin-top: 4px; flex-shrink: 0;
     }
-    .menu-option-body, .upsell-option-body { flex: 1; }
-    .menu-option-title, .upsell-option-title {
+    .menu-option-body, .upsell-option-body, .dish-option-body { flex: 1; }
+    .menu-option-title, .upsell-option-title, .dish-option-title {
       display: flex; justify-content: space-between; align-items: baseline;
       font-weight: 600; margin-bottom: 4px;
     }
-    .menu-option-meta, .upsell-option-meta {
+    .menu-option-meta, .upsell-option-meta, .dish-option-meta {
       font-size: 13px; color: var(--text-secondary, #64748B);
     }
     .menu-option-price, .upsell-option-price {
@@ -50,7 +51,7 @@
     }
     .upsell-option.checked .upsell-qty { display: inline-flex; }
     .upsell-qty input { width: 60px; padding: 4px 6px; border: 1px solid #CBD5E1; border-radius: 6px; }
-    .upsell-category-label {
+    .upsell-category-label, .section-label {
       font-size: 11px; font-weight: 600; text-transform: uppercase;
       letter-spacing: 0.05em; color: #64748B; margin: 16px 0 6px;
     }
@@ -68,6 +69,33 @@
       margin-top: 8px; color: #78350F;
     }
     .flag-notice.hidden { display: none; }
+
+    /* Section walkthrough */
+    .section-block { padding: 14px 0; border-bottom: 1px solid #F1F5F9; }
+    .section-block:last-child { border-bottom: none; padding-bottom: 0; }
+    .section-block-head {
+      display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;
+    }
+    .section-block-head h3 { margin: 0; font-size: 17px; font-weight: 600; }
+    .section-rule {
+      font-size: 12px; color: var(--text-secondary); padding: 3px 8px; background: #F1F5F9; border-radius: 999px;
+    }
+    .section-rule.warn { background: #FEF3C7; color: #92400E; }
+    .section-rule.ok { background: #DCFCE7; color: #166534; }
+    .section-notes { font-size: 13px; color: var(--text-secondary); margin-bottom: 10px; }
+
+    .pg-row {
+      display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;
+      padding: 10px 12px; border: 1px solid #E2E8F0; border-radius: 8px; margin-bottom: 6px;
+    }
+    .pg-row .pg-name { font-weight: 500; }
+    .pg-row .pg-desc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    .pg-row input[type="number"] { width: 80px; padding: 6px 8px; border: 1px solid #CBD5E1; border-radius: 6px; text-align: right; font-size: 14px; }
+
+    .dietary-chips { margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px; }
+    .diet-chip { font-size: 10px; background: #F1F5F9; color: #475569; padding: 1px 6px; border-radius: 4px; }
+    .diet-chip.allergen { background: #FEF2F2; color: #B91C1C; }
+
     @media (max-width: 600px) {
       .menu-wrap { padding: 12px 8px 80px; }
       .menu-card { padding: 16px; border-radius: 8px; }
@@ -104,14 +132,20 @@
       <div id="menu-options"></div>
     </div>
 
+    <div class="menu-card" id="sections-card" style="display:none">
+      <h2 style="font-family:var(--serif);font-size:22px;margin-bottom:6px">2. Customize your menu</h2>
+      <p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px" id="sections-help"></p>
+      <div id="sections-host"></div>
+    </div>
+
     <div class="menu-card" id="upsells-card" style="display:none">
-      <h2 style="font-family:var(--serif);font-size:22px;margin-bottom:6px">2. Make it special</h2>
+      <h2 style="font-family:var(--serif);font-size:22px;margin-bottom:6px">3. Make it special</h2>
       <p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px">Optional add-ons to round out the night.</p>
       <div id="upsell-options"></div>
     </div>
 
     <div class="menu-card">
-      <h2 style="font-family:var(--serif);font-size:22px;margin-bottom:6px">3. Anything else?</h2>
+      <h2 style="font-family:var(--serif);font-size:22px;margin-bottom:6px">4. Anything else?</h2>
       <p style="color:var(--text-secondary);font-size:13px;margin-bottom:10px">Special requests, dietary notes, or anything our team should know.</p>
       <textarea id="additional-notes" rows="4" style="width:100%;padding:10px;border:1px solid #CBD5E1;border-radius:8px;font-family:inherit;font-size:14px"></textarea>
       <div id="flag-notice" class="flag-notice hidden">
@@ -139,7 +173,9 @@ const FLAG_REGEX = /(wine|sommelier|pairing|tasting menu|chef'?s table|custom me
 const token = new URLSearchParams(window.location.search).get('token') || '';
 let ctx = null;
 let selectedMenuId = null;
-let selectedUpsells = {}; // { upsell_id: qty }
+let selectedUpsells = {};        // { upsell_id: qty }
+// section_id -> { option_id: qty }   (qty=1 for family-style; per-guest = entered count)
+let sectionPicks = {};
 
 window.addEventListener('load', boot);
 
@@ -181,6 +217,8 @@ function renderHeader() {
   summary.innerHTML = fields.map(([k, v]) => `<div><strong>${k}</strong>${esc(String(v))}</div>`).join('');
 }
 
+function currentMenu() { return ctx.menus.find(m => m.id === selectedMenuId); }
+
 function renderMenus() {
   const host = document.getElementById('menu-options');
   if (!ctx.menus.length) {
@@ -189,13 +227,10 @@ function renderMenus() {
   }
   host.innerHTML = ctx.menus.map(m => {
     const guests = ctx.booking.guest_count || m.min_guests;
-    const ppText = Number(m.price_per_person) === 0
-      ? 'À la carte'
-      : `${fmtMoney(m.price_per_person)} / guest`;
-    const lineText = Number(m.price_per_person) === 0
-      ? ''
-      : ` · est. ${fmtMoney(m.price_per_person * guests)} for ${guests} guests`;
+    const ppText = Number(m.price_per_person) === 0 ? 'À la carte' : `${fmtMoney(m.price_per_person)} / guest`;
+    const lineText = Number(m.price_per_person) === 0 ? '' : ` · est. ${fmtMoney(m.price_per_person * guests)} for ${guests} guests`;
     const courseText = m.course_count ? `${m.course_count} courses · ` : '';
+    const styleBadge = m.service_style === 'per_guest' ? ' · per-guest selections' : (m.sections && m.sections.length ? ' · choose options' : '');
     return `
       <label class="menu-option" data-id="${m.id}">
         <input type="radio" name="menu" value="${m.id}" />
@@ -206,7 +241,7 @@ function renderMenus() {
           </div>
           <div class="menu-option-meta">${esc(m.description || '')}</div>
           <div class="menu-option-meta" style="margin-top:4px">
-            ${courseText}fits ${m.min_guests}–${m.max_guests} guests${lineText}
+            ${courseText}fits ${m.min_guests}–${m.max_guests} guests${styleBadge}${lineText}
             ${m.menu_url ? ` · <a href="${esc(m.menu_url)}" target="_blank" rel="noopener">View menu</a>` : ''}
           </div>
         </div>
@@ -217,12 +252,152 @@ function renderMenus() {
     el.addEventListener('click', () => {
       const id = el.dataset.id;
       selectedMenuId = id;
+      sectionPicks = {};
       host.querySelectorAll('.menu-option').forEach(o => o.classList.toggle('selected', o.dataset.id === id));
       el.querySelector('input').checked = true;
+
+      const m = currentMenu();
+      const hasSections = m && m.sections && m.sections.length;
+      document.getElementById('sections-card').style.display = hasSections ? 'block' : 'none';
       document.getElementById('upsells-card').style.display = ctx.upsells.length ? 'block' : 'none';
+      if (hasSections) renderSections(m);
       updateTotalAndButton();
     });
   });
+}
+
+function renderSections(menu) {
+  const host = document.getElementById('sections-host');
+  const help = document.getElementById('sections-help');
+  const guests = ctx.booking.guest_count || 1;
+  help.textContent = menu.service_style === 'per_guest'
+    ? `For each section, enter how many of each option your ${guests} guests want. Each section's totals must equal your guest count × the section's pick count.`
+    : 'Pick the dishes for the whole table.';
+
+  host.innerHTML = menu.sections.map(s => sectionHtml(s, menu.service_style, guests)).join('');
+  menu.sections.forEach(s => wireSection(s, menu.service_style, guests));
+  updateAllRules(menu);
+}
+
+function sectionHtml(s, style, guests) {
+  const rule = ruleText(s, style, guests);
+  const optsHtml = s.options.map(o => {
+    const tags = [
+      ...(o.dietary_tags||[]).map(t => `<span class="diet-chip">${tagLabel(t)}</span>`),
+      ...(o.allergen_tags||[]).map(t => `<span class="diet-chip allergen">contains ${tagLabel(t)}</span>`)
+    ].join('');
+    if (s.all_included) {
+      return `
+        <div class="dish-option" style="cursor:default" data-id="${o.id}">
+          <div class="dish-option-body">
+            <div class="dish-option-title"><span>${esc(o.name)}</span></div>
+            ${o.description ? `<div class="dish-option-meta">${esc(o.description)}</div>` : ''}
+            <div class="dietary-chips">${tags}</div>
+          </div>
+        </div>`;
+    }
+    if (style === 'per_guest') {
+      return `
+        <div class="pg-row" data-id="${o.id}">
+          <div>
+            <div class="pg-name">${esc(o.name)}</div>
+            ${o.description ? `<div class="pg-desc">${esc(o.description)}</div>` : ''}
+            <div class="dietary-chips">${tags}</div>
+          </div>
+          <input type="number" min="0" value="0" data-section="${s.id}" data-option="${o.id}" />
+        </div>`;
+    }
+    // family-style: checkbox cards
+    return `
+      <label class="dish-option" data-id="${o.id}">
+        <input type="checkbox" data-section="${s.id}" data-option="${o.id}" />
+        <div class="dish-option-body">
+          <div class="dish-option-title"><span>${esc(o.name)}</span></div>
+          ${o.description ? `<div class="dish-option-meta">${esc(o.description)}</div>` : ''}
+          <div class="dietary-chips">${tags}</div>
+        </div>
+      </label>`;
+  }).join('');
+
+  return `
+    <div class="section-block" data-section="${s.id}">
+      <div class="section-block-head">
+        <h3>${esc(s.name)}</h3>
+        <span class="section-rule" data-rule-for="${s.id}">${rule}</span>
+      </div>
+      ${s.notes ? `<div class="section-notes">${esc(s.notes)}</div>` : ''}
+      ${optsHtml}
+    </div>
+  `;
+}
+
+function ruleText(s, style, guests) {
+  if (s.all_included) return 'All included';
+  if (style === 'per_guest') {
+    return `Pick ${s.max_choices} per guest · totals must = ${guests * s.max_choices}`;
+  }
+  if (s.min_choices === s.max_choices) return `Pick ${s.max_choices}`;
+  return `Pick ${s.min_choices}–${s.max_choices}`;
+}
+
+function wireSection(s, style, guests) {
+  const block = document.querySelector(`.section-block[data-section="${s.id}"]`);
+  if (!block) return;
+  if (s.all_included) return;
+
+  if (style === 'per_guest') {
+    block.querySelectorAll('input[type="number"]').forEach(input => {
+      input.addEventListener('input', () => {
+        const optId = input.dataset.option;
+        const qty = Math.max(0, parseInt(input.value || '0', 10));
+        sectionPicks[s.id] = sectionPicks[s.id] || {};
+        if (qty > 0) sectionPicks[s.id][optId] = qty;
+        else delete sectionPicks[s.id][optId];
+        updateAllRules(currentMenu());
+        updateTotalAndButton();
+      });
+    });
+  } else {
+    block.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const optId = cb.dataset.option;
+        sectionPicks[s.id] = sectionPicks[s.id] || {};
+        if (cb.checked) {
+          // Enforce max
+          const picked = Object.keys(sectionPicks[s.id]).length;
+          if (picked >= s.max_choices) {
+            cb.checked = false;
+            return;
+          }
+          sectionPicks[s.id][optId] = 1;
+          cb.closest('.dish-option').classList.add('selected');
+        } else {
+          delete sectionPicks[s.id][optId];
+          cb.closest('.dish-option').classList.remove('selected');
+        }
+        updateAllRules(currentMenu());
+        updateTotalAndButton();
+      });
+    });
+  }
+}
+
+function updateAllRules(menu) {
+  if (!menu) return;
+  const guests = ctx.booking.guest_count || 1;
+  for (const s of menu.sections) {
+    const ruleEl = document.querySelector(`[data-rule-for="${s.id}"]`);
+    if (!ruleEl) continue;
+    if (s.all_included) { ruleEl.textContent = 'All included'; ruleEl.className = 'section-rule ok'; continue; }
+    const picks = sectionPicks[s.id] || {};
+    const total = Object.values(picks).reduce((a,b) => a+b, 0);
+    let target;
+    if (menu.service_style === 'per_guest') target = guests * s.max_choices;
+    else target = s.max_choices; // family-style: pick exactly max_choices
+    if (total === target && total > 0) { ruleEl.textContent = `${total} / ${target} ✓`; ruleEl.className = 'section-rule ok'; }
+    else if (total === 0) { ruleEl.textContent = ruleText(s, menu.service_style, guests); ruleEl.className = 'section-rule'; }
+    else { ruleEl.textContent = `${total} / ${target}`; ruleEl.className = 'section-rule warn'; }
+  }
 }
 
 function renderUpsells() {
@@ -268,11 +443,9 @@ function renderUpsells() {
 }
 
 function upsellHtml(u) {
-  const guests = ctx.booking.guest_count || u.min_guests;
   let priceLabel, qtyHtml = '';
-  if (u.price_unit === 'per_person') {
-    priceLabel = `${fmtMoney(u.price)}/guest`;
-  } else if (u.price_unit === 'per_hour') {
+  if (u.price_unit === 'per_person') priceLabel = `${fmtMoney(u.price)}/guest`;
+  else if (u.price_unit === 'per_hour') {
     priceLabel = `${fmtMoney(u.price)}/hour`;
     qtyHtml = `<div class="upsell-qty">Hours: <input type="number" min="1" value="1" /></div>`;
   } else {
@@ -297,14 +470,37 @@ function onNotesInput(e) {
   document.getElementById('flag-notice').classList.toggle('hidden', !matched);
 }
 
+function isAllSectionsValid(menu) {
+  if (!menu) return false;
+  if (!menu.sections || !menu.sections.length) return true;
+  const guests = ctx.booking.guest_count || 1;
+  for (const s of menu.sections) {
+    if (s.all_included) continue;
+    const picks = sectionPicks[s.id] || {};
+    const total = Object.values(picks).reduce((a,b) => a+b, 0);
+    const target = menu.service_style === 'per_guest' ? guests * s.max_choices : s.max_choices;
+    if (total !== target) return false;
+  }
+  return true;
+}
+
 function updateTotalAndButton() {
   if (!ctx) return;
   const guests = ctx.booking.guest_count || 1;
   let total = 0;
 
-  if (selectedMenuId) {
-    const m = ctx.menus.find(x => x.id === selectedMenuId);
-    if (m) total += Number(m.price_per_person) * guests;
+  const m = currentMenu();
+  if (m) {
+    total += Number(m.price_per_person) * guests;
+    // Add per-option upcharges
+    for (const s of m.sections || []) {
+      const picks = sectionPicks[s.id] || {};
+      for (const [optId, qty] of Object.entries(picks)) {
+        const opt = s.options.find(o => o.id === optId);
+        if (!opt) continue;
+        total += Number(opt.upcharge_per_person || 0) * guests * qty;
+      }
+    }
   }
 
   for (const [id, qty] of Object.entries(selectedUpsells)) {
@@ -315,7 +511,7 @@ function updateTotalAndButton() {
   }
 
   document.getElementById('total-amount').textContent = fmtMoney(total);
-  document.getElementById('submit-btn').disabled = !selectedMenuId;
+  document.getElementById('submit-btn').disabled = !selectedMenuId || !isAllSectionsValid(m);
 }
 
 async function submitSelection() {
@@ -324,7 +520,14 @@ async function submitSelection() {
   errEl.style.display = 'none';
   if (!selectedMenuId) return;
 
+  const m = currentMenu();
   const upsellArr = Object.entries(selectedUpsells).map(([upsell_id, qty]) => ({ upsell_id, qty }));
+  const sectionArr = (m.sections || [])
+    .filter(s => !s.all_included)
+    .map(s => ({
+      section_id: s.id,
+      options: Object.entries(sectionPicks[s.id] || {}).map(([option_id, qty]) => ({ option_id, qty }))
+    }));
   const notes = document.getElementById('additional-notes').value.trim() || null;
 
   btn.disabled = true; btn.textContent = 'Submitting…';
@@ -334,7 +537,8 @@ async function submitSelection() {
       p_token: token,
       p_menu_catalog_id: selectedMenuId,
       p_selected_upsells: upsellArr,
-      p_additional_notes: notes
+      p_additional_notes: notes,
+      p_section_selections: sectionArr
     });
     if (error) throw error;
     if (!data || data.ok !== true) throw new Error('Unexpected response');
@@ -359,6 +563,7 @@ function humanizeError(msg) {
   if (!msg) return 'Unknown error.';
   if (/token not found|invalid token/i.test(msg)) return 'This menu link is no longer valid. Please contact the venue.';
   if (/not in selectable status/i.test(msg)) return 'This event is no longer accepting menu changes. Please contact the venue.';
+  if (/qty mismatch/i.test(msg)) return msg;
   return msg;
 }
 function fmtMoney(n) {
@@ -374,6 +579,7 @@ function fmtDate(d) {
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+function tagLabel(t) { return String(t || '').replace(/_/g, ' '); }
 </script>
 </body>
 </html>
