@@ -81,6 +81,24 @@
 
     .top-bar-pill { display: inline-flex; gap: 6px; align-items: center; background: #eef2ff; color: #4338ca; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; margin-left: 12px; }
     .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+
+    /* Upload modal */
+    .modal-mask { position: fixed; inset: 0; background: rgba(15,23,42,.55); display:none; align-items:center; justify-content:center; z-index: 100; }
+    .modal-mask.open { display: flex; }
+    .modal { background:#fff; border-radius:12px; max-width:640px; width:92%; max-height:88vh; overflow:auto; padding:22px 24px; box-shadow:0 12px 40px rgba(0,0,0,.18); }
+    .modal h2 { margin:0 0 6px; font-size:18px; }
+    .modal .sub { color:#6b7280; font-size:13px; margin-bottom:14px; }
+    .upload-drop { border:2px dashed #c7d2fe; border-radius:10px; padding:28px 20px; text-align:center; color:#4338ca; cursor:pointer; background:#eef2ff; }
+    .upload-drop:hover { background:#e0e7ff; }
+    .upload-status { margin-top:14px; font-size:14px; color:#374151; }
+    .upload-status.error { color:#b91c1c; }
+    .draft-preview { margin-top:14px; max-height:50vh; overflow:auto; border:1px solid #e5e7eb; border-radius:8px; padding:12px 14px; font-size:13px; background:#fafafa; }
+    .draft-preview h4 { margin:8px 0 4px; font-size:14px; }
+    .draft-preview ul { margin:4px 0 6px 18px; padding:0; }
+    .draft-preview li { margin-bottom:2px; }
+    .draft-preview .pill { display:inline-block; font-size:10px; background:#e5e7eb; color:#374151; padding:1px 6px; border-radius:4px; margin-left:6px; }
+    .draft-preview .pill.warn { background:#fef3c7; color:#92400e; }
+    .modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:14px; }
   </style>
 </head>
 <body>
@@ -160,6 +178,7 @@
             <h3>Your Menus</h3>
             <div id="menu-list"></div>
             <button class="btn btn-primary" id="btn-new-menu" style="width:100%;margin-top:10px;">+ New Menu</button>
+            <button class="btn" id="btn-upload-menu" style="width:100%;margin-top:6px;">📄 Upload menu PDF</button>
           </aside>
 
           <div class="menus-main" id="menu-editor">
@@ -175,8 +194,33 @@
   </div>
 </div>
 
+<!-- Upload modal -->
+<div class="modal-mask" id="upload-modal">
+  <div class="modal">
+    <h2>Upload a menu PDF</h2>
+    <div class="sub">We'll send it to AI and propose a menu structure with sections, dishes, and pick rules. You'll review before saving.</div>
+
+    <input type="file" id="upload-file-input" accept=".pdf,.png,.jpg,.jpeg,.webp" style="display:none;" />
+    <div class="upload-drop" id="upload-drop">
+      <div style="font-size:30px;">📄</div>
+      <div style="margin-top:6px;font-weight:600;">Click to choose a PDF or image</div>
+      <div style="margin-top:4px;font-size:12px;color:#6366f1;">Max 25 MB · PDF, PNG, JPG, WebP</div>
+    </div>
+
+    <div class="upload-status" id="upload-status"></div>
+    <div class="draft-preview" id="draft-preview" style="display:none;"></div>
+
+    <div class="modal-actions">
+      <button class="btn" id="upload-cancel">Cancel</button>
+      <button class="btn btn-primary" id="upload-apply" style="display:none;">Apply &amp; create menu</button>
+    </div>
+  </div>
+</div>
+
 <script>
 let CLIENTS = {};
+let currentDraft = null;
+let currentUploadId = null;
 const DATA_URL = 'https://script.google.com/macros/s/AKfycbxEpfGswzFnPTFLaKWlt332kv6Jy7vdagPcDEDMXbEDwrrFzpoPLc8wrmTW5UEB2xVj8w/exec';
 const GOOGLE_CLIENT_ID = '551797277858-ne7qntlo2jgmdp36o2lpcnv8qr6u7ofv.apps.googleusercontent.com';
 let currentClient = null;
@@ -689,6 +733,131 @@ function escHtml(s) {
 function escAttr(s) { return escHtml(s); }
 
 document.getElementById('btn-new-menu').addEventListener('click', createMenu);
+
+/* === Upload + parse + apply ============================ */
+
+const uploadModal = document.getElementById('upload-modal');
+const uploadDrop = document.getElementById('upload-drop');
+const uploadInput = document.getElementById('upload-file-input');
+const uploadStatus = document.getElementById('upload-status');
+const draftPreview = document.getElementById('draft-preview');
+const uploadApplyBtn = document.getElementById('upload-apply');
+
+function openUploadModal() {
+  currentDraft = null;
+  currentUploadId = null;
+  uploadStatus.textContent = '';
+  uploadStatus.className = 'upload-status';
+  draftPreview.style.display = 'none';
+  draftPreview.innerHTML = '';
+  uploadApplyBtn.style.display = 'none';
+  uploadInput.value = '';
+  uploadModal.classList.add('open');
+}
+function closeUploadModal() { uploadModal.classList.remove('open'); }
+
+document.getElementById('btn-upload-menu').addEventListener('click', openUploadModal);
+document.getElementById('upload-cancel').addEventListener('click', closeUploadModal);
+uploadDrop.addEventListener('click', () => uploadInput.click());
+uploadInput.addEventListener('change', handleUploadFile);
+uploadApplyBtn.addEventListener('click', applyDraft);
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result || '';
+      const base64 = String(dataUrl).split(',')[1] || '';
+      resolve(base64);
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleUploadFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 25 * 1024 * 1024) {
+    setUploadStatus('File too large (max 25 MB)', true);
+    return;
+  }
+  setUploadStatus('Reading file…');
+  try {
+    const b64 = await fileToBase64(file);
+    setUploadStatus('Uploading…');
+    const upload = await apiPost('upload_menu', {
+      file_base64: b64, filename: file.name, mime_type: file.type || 'application/pdf'
+    });
+    currentUploadId = upload.upload.id;
+    setUploadStatus('Parsing menu with AI… (this can take 20-40 seconds)');
+    const parsed = await apiPost('parse_menu_upload', { upload_id: currentUploadId });
+    currentDraft = parsed.parsed;
+    setUploadStatus('Parsed ✓ — review below, then click Apply.');
+    renderDraft(currentDraft);
+    uploadApplyBtn.style.display = 'inline-flex';
+  } catch (err) {
+    setUploadStatus('Error: ' + (err.message || err), true);
+  }
+}
+
+function setUploadStatus(msg, isError) {
+  uploadStatus.textContent = msg;
+  uploadStatus.className = 'upload-status' + (isError ? ' error' : '');
+}
+
+function renderDraft(draft) {
+  if (!draft) return;
+  const sectionsHtml = (draft.sections || []).map(s => {
+    let rule;
+    if (s.all_included) rule = '<span class="pill">All included</span>';
+    else if (s.min_choices === s.max_choices) rule = `<span class="pill">Pick ${s.max_choices}</span>`;
+    else rule = `<span class="pill">Pick ${s.min_choices}–${s.max_choices}</span>`;
+    const opts = (s.options || []).map(o => {
+      const tags = [
+        ...(o.dietary_tags||[]).map(t => `<span class="pill">${escHtml(t)}</span>`),
+        ...(o.allergen_tags||[]).map(t => `<span class="pill warn">contains ${escHtml(t)}</span>`)
+      ].join('');
+      const upcharge = Number(o.upcharge_per_person) > 0 ? `<span class="pill">+$${o.upcharge_per_person}/guest</span>` : '';
+      const desc = o.description ? `<div style="font-size:12px;color:#6b7280;">${escHtml(o.description)}</div>` : '';
+      return `<li><strong>${escHtml(o.name)}</strong> ${tags}${upcharge}${desc}</li>`;
+    }).join('');
+    return `<h4>${escHtml(s.name)} ${rule}${s.notes ? ' <span style="font-weight:400;color:#6b7280;font-size:12px;">' + escHtml(s.notes) + '</span>' : ''}</h4><ul>${opts}</ul>`;
+  }).join('');
+  draftPreview.style.display = 'block';
+  draftPreview.innerHTML = `
+    <div style="font-weight:600;font-size:15px;">${escHtml(draft.name || 'Untitled')}
+      <span class="pill">${draft.service_style === 'per_guest' ? 'Per-guest' : 'Family-style'}</span>
+      ${draft.price_per_person ? `<span class="pill">$${draft.price_per_person}/guest</span>` : ''}
+      ${draft.min_guests || draft.max_guests ? `<span class="pill">${draft.min_guests||1}–${draft.max_guests||9999} guests</span>` : ''}
+    </div>
+    ${draft.description ? `<div style="margin-top:4px;color:#374151;">${escHtml(draft.description)}</div>` : ''}
+    ${sectionsHtml}
+  `;
+}
+
+async function applyDraft() {
+  if (!currentDraft || !currentUploadId) return;
+  uploadApplyBtn.disabled = true;
+  setUploadStatus('Creating menu…');
+  try {
+    const res = await apiPost('apply_menu_upload', {
+      upload_id: currentUploadId,
+      draft: currentDraft
+    });
+    setUploadStatus('Menu created ✓');
+    setTimeout(() => {
+      closeUploadModal();
+      uploadApplyBtn.disabled = false;
+      // Refresh from server to pick up the new menu + sections
+      currentMenuId = res.menu_id;
+      loadMenus();
+    }, 600);
+  } catch (err) {
+    uploadApplyBtn.disabled = false;
+    setUploadStatus('Error: ' + (err.message || err), true);
+  }
+}
 
 window.addEventListener('load', initGoogleSignIn);
 </script>
