@@ -537,44 +537,132 @@ function commitField(el, kind, id, parentId) {
     } else {
       payload[fieldName] = value;
     }
-    apiPost('upsert_menu', { menu: payload }).then(() => loadMenus());
+    apiPost('upsert_menu', { menu: payload }).then(res => mergeMenu(res.menu));
   } else if (kind === 'sf') {
     const payload = { id: id, menu_catalog_id: parentId };
     payload[fieldName] = value;
-    apiPost('upsert_section', { section: payload }).then(() => loadMenus());
+    apiPost('upsert_section', { section: payload }).then(res => mergeSection(parentId, res.section));
   } else if (kind === 'of') {
     const payload = { id: id, section_id: parentId };
     payload[fieldName] = value;
-    apiPost('upsert_option', { option: payload }).then(() => loadMenus());
+    apiPost('upsert_option', { option: payload }).then(res => mergeOption(parentId, res.option));
   }
+}
+
+/* === Local state helpers — splice server responses into currentMenus === */
+
+function findMenuById(id) { return currentMenus.find(m => m.id === id); }
+function findSectionById(menuId, sectionId) {
+  const m = findMenuById(menuId);
+  return m && (m.sections || []).find(s => s.id === sectionId);
+}
+
+function mergeMenu(updated) {
+  if (!updated || !updated.id) return;
+  const idx = currentMenus.findIndex(m => m.id === updated.id);
+  if (idx >= 0) {
+    Object.assign(currentMenus[idx], updated);
+    // Refresh just the sidebar pill (name/service_style/active) without re-rendering the editor
+    renderMenuList();
+  } else {
+    updated.sections = updated.sections || [];
+    currentMenus.push(updated);
+    renderMenuList();
+  }
+}
+
+function mergeSection(menuId, section) {
+  if (!section) return;
+  const m = findMenuById(menuId);
+  if (!m) return;
+  m.sections = m.sections || [];
+  const idx = m.sections.findIndex(s => s.id === section.id);
+  if (idx >= 0) {
+    section.options = m.sections[idx].options || [];
+    m.sections[idx] = section;
+  } else {
+    section.options = section.options || [];
+    m.sections.push(section);
+    m.sections.sort((a, b) => (a.position || 0) - (b.position || 0));
+  }
+  renderSections(m);
+}
+
+function mergeOption(sectionId, option) {
+  if (!option) return;
+  const m = currentMenus.find(menu => (menu.sections || []).some(s => s.id === sectionId));
+  if (!m) return;
+  const s = m.sections.find(x => x.id === sectionId);
+  s.options = s.options || [];
+  const idx = s.options.findIndex(o => o.id === option.id);
+  if (idx >= 0) s.options[idx] = option;
+  else { s.options.push(option); s.options.sort((a, b) => (a.position || 0) - (b.position || 0)); }
+  renderSections(m);
+}
+
+function removeMenuLocal(id) {
+  currentMenus = currentMenus.filter(m => m.id !== id);
+}
+function removeSectionLocal(sectionId) {
+  for (const m of currentMenus) {
+    const before = (m.sections || []).length;
+    m.sections = (m.sections || []).filter(s => s.id !== sectionId);
+    if (m.sections.length !== before) return m;
+  }
+  return null;
+}
+function removeOptionLocal(optionId) {
+  for (const m of currentMenus) {
+    for (const s of (m.sections || [])) {
+      const before = (s.options || []).length;
+      s.options = (s.options || []).filter(o => o.id !== optionId);
+      if (s.options.length !== before) return m;
+    }
+  }
+  return null;
 }
 
 function saveOptionTags(optId, sectionId, row) {
   const dietary = [...row.querySelectorAll('.tag-chip.dietary.selected')].map(c => c.dataset.tag);
   const allergens = [...row.querySelectorAll('.tag-chip.allergen.selected')].map(c => c.dataset.tag);
-  apiPost('upsert_option', { option: { id: optId, section_id: sectionId, dietary_tags: dietary, allergen_tags: allergens } });
+  apiPost('upsert_option', { option: { id: optId, section_id: sectionId, dietary_tags: dietary, allergen_tags: allergens } })
+    .then(res => mergeOption(sectionId, res.option));
 }
 
 function createMenu() {
   const name = prompt('Menu name (e.g. "$65 Group Menu")');
   if (!name) return;
   apiPost('upsert_menu', { menu: { name: name, service_style: 'family_style', is_active: true } })
-    .then(res => { currentMenuId = res.menu.id; loadMenus(); });
+    .then(res => {
+      mergeMenu(res.menu);
+      currentMenuId = res.menu.id;
+      renderEditor(currentMenuId);
+    });
 }
 
 function deleteMenu(id) {
   if (!confirm('Delete this menu and all its sections + dishes? This cannot be undone.')) return;
-  apiPost('delete_menu', { menu_id: id }).then(() => { currentMenuId = null; loadMenus(); });
+  apiPost('delete_menu', { menu_id: id }).then(() => {
+    removeMenuLocal(id);
+    currentMenuId = currentMenus[0]?.id || null;
+    renderMenuList();
+    if (currentMenuId) renderEditor(currentMenuId); else renderEmpty();
+  });
 }
 
 function createSection(menuId) {
-  apiPost('upsert_section', { section: { menu_catalog_id: menuId, name: 'New section', position: (currentMenus.find(m => m.id === menuId).sections.length) || 0, min_choices: 1, max_choices: 1 } })
-    .then(() => loadMenus());
+  const m = findMenuById(menuId);
+  const pos = (m?.sections || []).length;
+  apiPost('upsert_section', { section: { menu_catalog_id: menuId, name: 'New section', position: pos, min_choices: 1, max_choices: 1 } })
+    .then(res => mergeSection(menuId, res.section));
 }
 
 function deleteSection(id) {
   if (!confirm('Delete this section and all its dishes?')) return;
-  apiPost('delete_section', { section_id: id }).then(() => loadMenus());
+  apiPost('delete_section', { section_id: id }).then(() => {
+    const m = removeSectionLocal(id);
+    if (m) renderSections(m);
+  });
 }
 
 function createOption(sectionId) {
@@ -584,12 +672,15 @@ function createOption(sectionId) {
     if (s) { pos = (s.options || []).length; break; }
   }
   apiPost('upsert_option', { option: { section_id: sectionId, name: 'New dish', position: pos } })
-    .then(() => loadMenus());
+    .then(res => mergeOption(sectionId, res.option));
 }
 
 function deleteOption(id) {
   if (!confirm('Delete this dish?')) return;
-  apiPost('delete_option', { option_id: id }).then(() => loadMenus());
+  apiPost('delete_option', { option_id: id }).then(() => {
+    const m = removeOptionLocal(id);
+    if (m) renderSections(m);
+  });
 }
 
 function escHtml(s) {
