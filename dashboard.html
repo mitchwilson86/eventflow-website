@@ -166,6 +166,12 @@
           </div>
         </div>
 
+        <!-- LLM Cost -->
+        <div class="panel" style="margin-top: 1.5rem;">
+          <h3>LLM Cost <span style="font-weight: normal; color: var(--muted); font-size: 0.85em;">— top 3 spenders</span></h3>
+          <div id="cost-summary" style="color: var(--muted); font-size: 0.9em;">Loading cost data...</div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -328,6 +334,7 @@ function renderDashboard(client) {
     document.getElementById('user-email-sidebar').textContent = signedInEmail;
   }
   const slug = client.slug || '';
+  loadCostSummary();
   loadLiveKpis(slug);
   loadLivePipeline(slug);
   loadLiveActivity(slug);
@@ -479,6 +486,88 @@ function formatMinutes(min) {
   const hr = Math.floor(min / 60);
   const rem = min % 60;
   return rem === 0 ? `${hr}h` : `${hr}h ${rem}m`;
+}
+
+/* ═══ COST SUMMARY ═══════════════════════════════════════════ */
+function loadCostSummary() {
+  fetch(DATA_URL + '?type=cost_summary')
+    .then(r => r.json())
+    .then(data => {
+      const el = document.getElementById('cost-summary');
+      if (!el) return;
+      if (data.error) { el.innerHTML = `<em>Cost data unavailable: ${data.error}</em>`; return; }
+      if (data.note) { el.innerHTML = `<em>${data.note}</em>`; return; }
+
+      const fmt = n => '$' + (Number(n) || 0).toFixed(2);
+      const fmtSmall = n => '$' + (Number(n) || 0).toFixed(4);
+
+      const tw = data.thisWeek || { total: 0, byWorkflow: {}, callCount: 0 };
+      const lw = data.lastWeek || { total: 0, byWorkflow: {}, callCount: 0 };
+
+      // Delta vs last week
+      let deltaHtml = '';
+      if (lw.total > 0) {
+        const pct = ((tw.total - lw.total) / lw.total) * 100;
+        const arrow = pct > 0 ? '▲' : pct < 0 ? '▼' : '';
+        const color = pct > 5 ? '#ef4444' : pct < -5 ? 'var(--green)' : 'var(--muted)';
+        deltaHtml = `<span style="color:${color}">${arrow} ${Math.abs(pct).toFixed(0)}%</span> vs ${fmt(lw.total)} last week`;
+      } else if (tw.total > 0) {
+        deltaHtml = `(no spend last week)`;
+      } else {
+        deltaHtml = `(no spend this week or last)`;
+      }
+
+      // By-workflow breakdown for this week (sorted desc)
+      const byWf = Object.entries(tw.byWorkflow).sort((a, b) => b[1] - a[1]);
+      const breakdownHtml = byWf.length
+        ? byWf.map(([name, usd]) => {
+            const pct = tw.total > 0 ? (usd / tw.total) * 100 : 0;
+            return `<div style="display:flex;justify-content:space-between;font-size:0.9em;padding:4px 0;border-bottom:1px solid var(--border, #eee)">
+                      <span>${name}</span>
+                      <span style="font-variant-numeric:tabular-nums;color:var(--muted)">${fmt(usd)} <span style="color:#aaa">(${pct.toFixed(0)}%)</span></span>
+                    </div>`;
+          }).join('')
+        : '<em style="color:var(--muted)">No spend logged this week yet.</em>';
+
+      // 8-week trend sparkline (CSS bars)
+      const trend = data.weeklyTrend || [];
+      const maxTotal = Math.max(...trend.map(t => t.total), 0.01);
+      const sparkHtml = trend.map(t => {
+        const heightPct = (t.total / maxTotal) * 100;
+        const isThisWeek = trend.indexOf(t) === trend.length - 1;
+        return `<div title="${t.week}: ${fmt(t.total)} (${t.callCount} calls)" style="display:inline-block;width:11%;margin:0 0.5%;vertical-align:bottom;text-align:center">
+                  <div style="height:50px;display:flex;align-items:flex-end;justify-content:center">
+                    <div style="width:100%;height:${heightPct}%;background:${isThisWeek ? '#4a90e2' : '#b8d4f0'};border-radius:2px 2px 0 0;min-height:2px"></div>
+                  </div>
+                  <div style="font-size:0.7em;color:var(--muted);margin-top:2px">${t.week.slice(-3)}</div>
+                </div>`;
+      }).join('');
+
+      el.innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start">
+          <div>
+            <div style="font-size:1.6em;font-weight:600;color:#222">${fmt(tw.total)}</div>
+            <div style="font-size:0.85em;color:var(--muted);margin-top:2px">This week — ${tw.callCount} LLM calls</div>
+            <div style="font-size:0.85em;margin-top:6px">${deltaHtml}</div>
+            <div style="margin-top:10px;font-size:0.8em;color:var(--muted)">4-week avg: <strong>${fmt(data.last4WeeksAvgPerWeek)}</strong>/week</div>
+          </div>
+          <div>
+            <div style="font-size:0.85em;color:var(--muted);margin-bottom:6px">By workflow (this week)</div>
+            ${breakdownHtml}
+          </div>
+        </div>
+        <div style="margin-top:14px">
+          <div style="font-size:0.8em;color:var(--muted);margin-bottom:4px">Last 8 weeks</div>
+          <div style="white-space:nowrap;font-size:0">${sparkHtml}</div>
+        </div>
+      `;
+      console.log('Cost summary loaded');
+    })
+    .catch(err => {
+      const el = document.getElementById('cost-summary');
+      if (el) el.innerHTML = `<em>Cost fetch failed — ${err.message}</em>`;
+      console.warn('Cost summary fetch failed:', err);
+    });
 }
 
 /* ═══ DONUT CHART ════════════════════════════════════════════ */
