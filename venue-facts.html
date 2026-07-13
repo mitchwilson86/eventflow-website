@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EventFlow — Venue Facts</title>
+  <meta name="description" content="EventFlow venue facts — keep the details your AI assistant quotes to guests up to date.">
+  <link rel="canonical" href="https://eventflowsales.com/venue-facts">
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/eventflow-shared.css" />
+  <style>
+    .vf-wrap { max-width: 780px; margin: 0 auto; padding: 40px 20px 80px; }
+    .vf-title { font-family: 'DM Serif Display', serif; font-size: 30px; color: var(--text-primary); margin-bottom: 6px; }
+    .vf-sub { color: var(--text-secondary); font-size: 14px; margin-bottom: 28px; }
+    .vf-card { background: var(--bg-card, #fff); border: 1px solid var(--border); border-radius: 12px; padding: 26px; margin-bottom: 20px; }
+    .vf-card h2 { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 14px; }
+    .vf-field { margin-bottom: 16px; }
+    .vf-field label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+    .vf-field .hint { display: block; font-size: 11px; color: var(--text-muted); text-transform: none; letter-spacing: 0; font-weight: 400; margin-top: 3px; }
+    .vf-field input[type=text], .vf-field input[type=number], .vf-field input[type=email], .vf-field textarea {
+      width: 100%; padding: 10px 14px; background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text-primary); font-family: var(--font); font-size: 14px;
+    }
+    .vf-field input:focus, .vf-field textarea:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(21,97,109,.1); }
+    .vf-field textarea { min-height: 70px; resize: vertical; }
+    .vf-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .vf-check { display: inline-flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; font-size: 14px; color: var(--text-primary); cursor: pointer; margin-right: 10px; }
+    .vf-check input { width: 16px; height: 16px; accent-color: var(--teal); margin: 0; }
+    .vf-fixed { background: var(--bg-input); border: 1px dashed var(--border); border-radius: 10px; padding: 16px 18px; font-size: 13px; color: var(--text-secondary); }
+    .vf-fixed strong { color: var(--text-primary); }
+    .vf-fixed ul { margin: 8px 0 0 18px; }
+    .vf-fixed li { margin-bottom: 4px; }
+    .vf-msg { padding: 12px 16px; border-radius: 8px; font-size: 14px; margin-bottom: 18px; display: none; }
+    .vf-msg.ok { background: rgba(34,150,94,.1); color: #1d7a4f; border: 1px solid rgba(34,150,94,.35); display: block; }
+    .vf-msg.err { background: rgba(200,60,60,.08); color: #b23b3b; border: 1px solid rgba(200,60,60,.3); display: block; }
+    .vf-actions { display: flex; gap: 12px; align-items: center; }
+    .vf-signout { background: none; border: none; color: var(--text-muted); font-size: 12px; cursor: pointer; text-decoration: underline; }
+    #signinView, #editorView { display: none; }
+  </style>
+</head>
+<body>
+  <div class="vf-wrap">
+    <div class="vf-title">Venue Facts</div>
+    <div class="vf-sub" id="subLine">The details your AI assistant quotes to guests. Edits go live within minutes.</div>
+
+    <div id="msg" class="vf-msg"></div>
+
+    <!-- ============ SIGN-IN (email magic link — works with any email provider) ============ -->
+    <div id="signinView">
+      <div class="vf-card">
+        <h2>Sign in</h2>
+        <p style="font-size:14px;color:var(--text-secondary);margin-bottom:14px;">
+          Enter your work email and we'll send you a sign-in link. It works with any
+          email account (Outlook, Gmail, anything) — no password needed.
+        </p>
+        <div class="vf-field">
+          <label for="loginEmail">Your email</label>
+          <input type="email" id="loginEmail" placeholder="you@yourvenue.com" autocomplete="email" />
+        </div>
+        <button class="btn-primary" id="sendLinkBtn" onclick="requestLink()">Email me a sign-in link</button>
+      </div>
+    </div>
+
+    <!-- ============ EDITOR ============ -->
+    <div id="editorView">
+      <div class="vf-card">
+        <h2>Private Dining Room</h2>
+        <div class="vf-field">
+          <label for="privacy_layouts">Privacy &amp; seated layouts</label>
+          <textarea id="privacy_layouts" placeholder="e.g. fully private with four walls and two double doors, no windows. Seats up to 28 guests with a four-round-table setup, or 24 with a two-long-table setup. Presentation-style layout (all guests at one table facing the screen): up to 12 guests."></textarea>
+          <span class="hint">Written exactly as the assistant may say it to a guest.</span>
+        </div>
+        <div class="vf-grid2">
+          <div class="vf-field">
+            <label for="min_low">F&amp;B minimum — typical low ($)</label>
+            <input type="number" id="min_low" min="0" step="50" />
+          </div>
+          <div class="vf-field">
+            <label for="min_high">F&amp;B minimum — typical high ($)</label>
+            <input type="number" id="min_high" min="0" step="50" />
+          </div>
+        </div>
+        <span class="hint" style="font-size:11px;color:var(--text-muted);">The assistant says minimums "vary by date, typically in this range" and never promises an exact number.</span>
+      </div>
+
+      <div class="vf-card">
+        <h2>Spaces &amp; formats</h2>
+        <div class="vf-field">
+          <label for="semi_private">Semi-private spaces</label>
+          <input type="text" id="semi_private" placeholder="e.g. the communal tables and the South Bar area" />
+        </div>
+        <div class="vf-field">
+          <label for="standing_text">Standing / reception capacities</label>
+          <textarea id="standing_text" placeholder="e.g. South Bar area approximately 80 guests, communal tables area approximately 80, Private Dining Room up to 38, full venue buyout approximately 100"></textarea>
+        </div>
+        <div class="vf-grid2">
+          <div class="vf-field">
+            <label for="alacarte_max">A la carte allowed up to (guests)</label>
+            <input type="number" id="alacarte_max" min="1" step="1" />
+          </div>
+          <div class="vf-field">
+            <label for="happy_hour">Private happy-hour window</label>
+            <input type="text" id="happy_hour" placeholder="e.g. 5:00-7:00 PM" />
+          </div>
+        </div>
+      </div>
+
+      <div class="vf-card">
+        <h2>Bar, dietary &amp; extras</h2>
+        <div class="vf-field">
+          <label for="bar_formats">Bar formats offered</label>
+          <input type="text" id="bar_formats" placeholder="e.g. open bar, on-consumption, drink tickets, wine-and-beer-only, and champagne toasts" />
+        </div>
+        <div class="vf-grid2">
+          <div class="vf-field">
+            <label for="corkage">Corkage fee ($ per bottle)</label>
+            <input type="number" id="corkage" min="0" step="1" />
+          </div>
+          <div class="vf-field">
+            <label for="cake_fee">Cake-cutting fee ($ per person)</label>
+            <input type="number" id="cake_fee" min="0" step="1" />
+          </div>
+        </div>
+        <div class="vf-field">
+          <label for="dietary">Dietary accommodations</label>
+          <input type="text" id="dietary" placeholder="e.g. gluten-free, vegetarian, and vegan diners are readily accommodated on all menus" />
+        </div>
+        <div class="vf-grid2">
+          <div class="vf-field">
+            <label for="high_chairs">High chairs available (count)</label>
+            <input type="number" id="high_chairs" min="0" step="1" />
+          </div>
+          <div class="vf-field">
+            <label>&nbsp;</label>
+            <label class="vf-check"><input type="checkbox" id="step_free" /> Step-free access</label>
+            <label class="vf-check"><input type="checkbox" id="gift_cards" /> Gift cards</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="vf-card">
+        <h2>Set policies (not editable here)</h2>
+        <div class="vf-fixed">
+          These stay fixed so the assistant always hands the sensitive topics to your events manager:
+          <ul>
+            <li><strong>Full buyout pricing</strong> is never quoted; the assistant connects the guest with your events manager.</li>
+            <li><strong>Off-site catering</strong> and <strong>private brunch/lunch</strong> requests are acknowledged, then handed to your events manager.</li>
+            <li><strong>No room rental fee</strong> is stated; spaces book against F&amp;B minimums.</li>
+            <li><strong>Decor sourcing pricing</strong> is arranged by your events manager.</li>
+          </ul>
+          Need one of these changed? Contact EventFlow.
+        </div>
+      </div>
+
+      <div class="vf-actions">
+        <button class="btn-primary" id="saveBtn" onclick="saveFacts()">Save changes</button>
+        <button class="vf-signout" onclick="signOut()">Sign out</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var DATA_URL = 'https://script.google.com/macros/s/AKfycbxEpfGswzFnPTFLaKWlt332kv6Jy7vdagPcDEDMXbEDwrrFzpoPLc8wrmTW5UEB2xVj8w/exec';
+    var params = new URLSearchParams(location.search);
+    var SLUG = params.get('client') || 'sunda-nashville';
+    var TOKEN_KEY = 'ef_vf_token_' + SLUG;
+    var FIELDS = ['privacy_layouts','semi_private','min_low','min_high','alacarte_max','standing_text',
+                  'happy_hour','bar_formats','corkage','cake_fee','dietary','high_chairs','step_free','gift_cards'];
+
+    function showMsg(text, kind) {
+      var m = document.getElementById('msg');
+      m.textContent = text; m.className = 'vf-msg ' + kind;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    function clearMsg() { document.getElementById('msg').className = 'vf-msg'; }
+
+    // A fresh magic link arrives as #st=<token> — capture it, then clean the URL.
+    (function captureToken() {
+      var h = location.hash || '';
+      if (h.indexOf('#st=') === 0) {
+        localStorage.setItem(TOKEN_KEY, h.slice(4));
+        history.replaceState(null, '', location.pathname + location.search);
+      }
+    })();
+
+    function getToken() { return localStorage.getItem(TOKEN_KEY) || ''; }
+    function signOut() { localStorage.removeItem(TOKEN_KEY); location.reload(); }
+
+    function api(payload) {
+      payload.client_slug = SLUG;
+      return fetch(DATA_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      }).then(function (r) { return r.json(); });
+    }
+
+    function requestLink() {
+      var email = (document.getElementById('loginEmail').value || '').trim();
+      if (!email || email.indexOf('@') === -1) { showMsg('Please enter your email address.', 'err'); return; }
+      var btn = document.getElementById('sendLinkBtn');
+      btn.disabled = true; btn.textContent = 'Sending…';
+      api({ action: 'request_link', email: email }).then(function (res) {
+        btn.disabled = false; btn.textContent = 'Email me a sign-in link';
+        showMsg(res.message || 'If that address has access, a sign-in link is on its way.', 'ok');
+      }).catch(function () {
+        btn.disabled = false; btn.textContent = 'Email me a sign-in link';
+        showMsg('Something went wrong. Please try again.', 'err');
+      });
+    }
+
+    function fillForm(facts) {
+      FIELDS.forEach(function (f) {
+        var el = document.getElementById(f);
+        if (!el) return;
+        if (el.type === 'checkbox') el.checked = !!facts[f];
+        else if (facts[f] !== undefined && facts[f] !== null) el.value = facts[f];
+      });
+    }
+
+    function readForm() {
+      var facts = {};
+      FIELDS.forEach(function (f) {
+        var el = document.getElementById(f);
+        facts[f] = el.type === 'checkbox' ? el.checked : el.value;
+      });
+      return facts;
+    }
+
+    function saveFacts() {
+      clearMsg();
+      var btn = document.getElementById('saveBtn');
+      btn.disabled = true; btn.textContent = 'Saving…';
+      api({ action: 'save_venue_facts', session_token: getToken(), facts: readForm() }).then(function (res) {
+        btn.disabled = false; btn.textContent = 'Save changes';
+        if (res.error) {
+          if (/Unauthorized/i.test(res.error)) { signOut(); return; }
+          showMsg(res.error, 'err'); return;
+        }
+        showMsg('Saved. The assistant now uses the updated facts (live within a few minutes).', 'ok');
+      }).catch(function () {
+        btn.disabled = false; btn.textContent = 'Save changes';
+        showMsg('Save failed. Please try again.', 'err');
+      });
+    }
+
+    (function init() {
+      if (!getToken()) { document.getElementById('signinView').style.display = 'block'; return; }
+      api({ action: 'get_venue_facts', session_token: getToken() }).then(function (res) {
+        if (res.error) {
+          localStorage.removeItem(TOKEN_KEY);
+          document.getElementById('signinView').style.display = 'block';
+          if (!/Unauthorized/i.test(res.error)) showMsg(res.error, 'err');
+          return;
+        }
+        document.getElementById('subLine').textContent =
+          (res.venue_name || SLUG) + ' — the details your AI assistant quotes to guests. Signed in as ' + (res.caller || '') + '.';
+        fillForm(res.facts || {});
+        document.getElementById('editorView').style.display = 'block';
+      }).catch(function () {
+        document.getElementById('signinView').style.display = 'block';
+        showMsg('Could not reach the server. Please refresh.', 'err');
+      });
+    })();
+  </script>
+</body>
+</html>
