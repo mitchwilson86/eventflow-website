@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EventFlow — Venue</title>
+  <meta name="description" content="EventFlow venue management — spaces, capacities, minimums, venue facts, and AI assistant settings.">
+  <link rel="canonical" href="https://eventflowsales.com/venue">
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/eventflow-shared.css" />
+  <script src="/eventflow-admin.js" defer></script>
+  <style>
+    /* venue-facts field system (ported) */
+    .vf-field { margin-bottom: 16px; }
+    .vf-field label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+    .vf-field .hint { display: block; font-size: 11px; color: var(--text-muted); text-transform: none; letter-spacing: 0; font-weight: 400; margin-top: 3px; }
+    .vf-field input[type=text], .vf-field input[type=number], .vf-field input[type=email], .vf-field textarea, .vf-field select {
+      width: 100%; padding: 10px 14px; background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text-primary); font-family: var(--font); font-size: 14px;
+    }
+    .vf-field input:focus, .vf-field textarea:focus, .vf-field select:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(21,97,109,.1); }
+    .vf-field textarea { min-height: 70px; resize: vertical; }
+    .vf-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .vf-check { display: inline-flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; font-size: 14px; color: var(--text-primary); cursor: pointer; margin-right: 10px; margin-bottom: 6px; }
+    .vf-check input { width: 16px; height: 16px; accent-color: var(--teal); margin: 0; }
+    .vf-fixed { background: var(--bg-input); border: 1px dashed var(--border); border-radius: 10px; padding: 16px 18px; font-size: 13px; color: var(--text-secondary); }
+    .vf-fixed strong { color: var(--text-primary); }
+    .vf-fixed ul { margin: 8px 0 0 18px; }
+    .vf-fixed li { margin-bottom: 4px; }
+    .vf-msg { padding: 12px 16px; border-radius: 8px; font-size: 14px; margin-bottom: 18px; display: none; }
+    .vf-msg.ok { background: rgba(34,150,94,.1); color: #1d7a4f; border: 1px solid rgba(34,150,94,.35); display: block; }
+    .vf-msg.err { background: rgba(200,60,60,.08); color: #b23b3b; border: 1px solid rgba(200,60,60,.3); display: block; }
+
+    /* venue-builder additions */
+    .vb-tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--border); margin-bottom: 22px; flex-wrap: wrap; }
+    .vb-tab { padding: 10px 18px; border: none; background: none; font-family: var(--font); font-size: 14px; font-weight: 500;
+      color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+    .vb-tab:hover { color: var(--text-primary); }
+    .vb-tab.active { color: var(--teal); border-bottom-color: var(--teal); font-weight: 600; }
+    .vb-panel { display: none; max-width: 860px; }
+    .vb-panel.active { display: block; }
+    .vb-space-list { display: grid; gap: 12px; margin-bottom: 18px; }
+    .vb-space { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px;
+      display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
+    .vb-space-info { min-width: 0; }
+    .vb-space-name { font-size: 15px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .vb-badge { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; padding: 2px 8px; border-radius: 20px; }
+    .vb-badge.combo { background: rgba(255,125,0,.12); color: var(--burnt); }
+    .vb-badge.private { background: rgba(21,97,109,.1); color: var(--teal); }
+    .vb-badge.shared { background: var(--bg-input); color: var(--text-secondary); }
+    .vb-badge.buyout { background: rgba(0,21,36,.08); color: var(--dark-navy); }
+    .vb-space-meta { font-size: 12.5px; color: var(--text-secondary); margin-top: 5px; line-height: 1.6; }
+    .vb-space-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .vb-mini-btn { font-size: 12px; padding: 6px 12px; border-radius: 7px; border: 1px solid var(--border); background: var(--bg-card);
+      color: var(--text-primary); cursor: pointer; font-family: var(--font); }
+    .vb-mini-btn:hover { border-color: var(--teal); color: var(--teal); }
+    .vb-mini-btn.danger:hover { border-color: #b23b3b; color: #b23b3b; }
+    .vb-photo-row { display: grid; grid-template-columns: 2fr 1.4fr auto; gap: 8px; margin-bottom: 8px; align-items: center; }
+    .vb-photo-row input { width: 100%; padding: 8px 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 7px; font-family: var(--font); font-size: 13px; color: var(--text-primary); }
+    .vb-combo-picker { display: flex; flex-wrap: wrap; gap: 8px; }
+    .vb-actions { display: flex; gap: 12px; align-items: center; margin-top: 6px; }
+    .vb-editor-card { border-color: var(--teal) !important; }
+    .panel h3 .vb-h-hint { font-weight: 400; font-size: 12px; color: var(--text-muted); margin-left: 8px; text-transform: none; }
+    @media (max-width: 700px) { .vf-grid2 { grid-template-columns: 1fr; } .vb-space { flex-direction: column; } .vb-photo-row { grid-template-columns: 1fr; } }
+    #signin-screen, #venue-app { display: none; }
+    .vb-signin-wrap { max-width: 520px; margin: 60px auto; padding: 0 20px; }
+  </style>
+</head>
+<body>
+
+<!-- SIGN-IN (magic link; Google dashboard sessions are honored automatically) -->
+<div id="signin-screen">
+  <div class="vb-signin-wrap">
+    <div style="font-family:'DM Serif Display',serif;font-size:30px;color:var(--text-primary);margin-bottom:6px;">Venue</div>
+    <div style="color:var(--text-secondary);font-size:14px;margin-bottom:24px;">Manage your spaces, venue facts, and AI assistant settings.</div>
+    <div id="signin-msg" class="vf-msg"></div>
+    <div class="panel">
+      <h3>Sign in</h3>
+      <p style="font-size:14px;color:var(--text-secondary);margin-bottom:14px;">
+        Enter your work email and we'll send you a sign-in link. It works with any
+        email account (Outlook, Gmail, anything). No password needed.
+      </p>
+      <div class="vf-field">
+        <label for="loginEmail">Your email</label>
+        <input type="email" id="loginEmail" placeholder="you@yourvenue.com" autocomplete="email" />
+      </div>
+      <button class="btn-primary" id="sendLinkBtn" onclick="requestLink()">Email me a sign-in link</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="venue-app">
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-logo">EventFlow</span>
+        <span class="venue-name" id="venue-name"></span>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/dashboard" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          <span>Dashboard</span>
+        </a>
+        <a href="/bookings" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span>Bookings</span>
+        </a>
+        <a href="/venue" class="nav-item active">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
+          <span>Venue</span>
+        </a>
+        <a href="/menus" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+          <span>Menus</span>
+        </a>
+        <a href="/campaigns" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          <span>Campaigns</span>
+        </a>
+        <a href="/settings" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>Settings</span>
+        </a>
+        <a href="/notifications" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span>Notifications</span>
+        </a>
+        <a href="/admin" class="nav-item admin-nav-link" style="display:none;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <span>Admin Dashboard</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <span class="user-email" id="user-email-sidebar"></span>
+        <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+      </div>
+    </aside>
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <div class="main-content">
+      <div class="top-bar">
+        <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()">&#9776;</button>
+        <span class="page-title">Venue</span>
+        <div></div>
+      </div>
+      <div class="dash-body">
+        <div id="msg" class="vf-msg"></div>
+
+        <div class="vb-tabs">
+          <button class="vb-tab active" data-tab="facts" onclick="switchTab('facts')">Venue Facts</button>
+          <button class="vb-tab" data-tab="spaces" onclick="switchTab('spaces')">Spaces</button>
+          <button class="vb-tab" data-tab="ai" onclick="switchTab('ai')">AI Settings</button>
+        </div>
+
+        <!-- ================= TAB: VENUE FACTS ================= -->
+        <div class="vb-panel active" id="panel-facts">
+          <div class="panel">
+            <h3>Private Dining Room</h3>
+            <div class="vf-field">
+              <label for="privacy_layouts">Privacy &amp; seated layouts</label>
+              <textarea id="privacy_layouts" placeholder="e.g. fully private with four walls and two double doors, no windows. Seats up to 28 guests with a four-round-table setup, or 24 with a two-long-table setup."></textarea>
+              <span class="hint">Written exactly as the assistant may say it to a guest.</span>
+            </div>
+            <div class="vf-grid2">
+              <div class="vf-field">
+                <label for="min_low">F&amp;B minimum — typical low ($)</label>
+                <input type="number" id="min_low" min="0" step="50" />
+              </div>
+              <div class="vf-field">
+                <label for="min_high">F&amp;B minimum — typical high ($)</label>
+                <input type="number" id="min_high" min="0" step="50" />
+              </div>
+            </div>
+            <span class="hint" style="font-size:11px;color:var(--text-muted);">The assistant says minimums "vary by date, typically in this range" and never promises an exact number.</span>
+          </div>
+
+          <div class="panel">
+            <h3>Spaces &amp; formats</h3>
+            <div class="vf-field">
+              <label for="semi_private">Semi-private spaces</label>
+              <input type="text" id="semi_private" placeholder="e.g. the communal tables and the South Bar area" />
+            </div>
+            <div class="vf-field">
+              <label for="standing_text">Standing / reception capacities</label>
+              <textarea id="standing_text" placeholder="e.g. South Bar area approximately 80 guests, communal tables area approximately 80"></textarea>
+            </div>
+            <div class="vf-grid2">
+              <div class="vf-field">
+                <label for="alacarte_max">A la carte allowed up to (guests)</label>
+                <input type="number" id="alacarte_max" min="1" step="1" />
+              </div>
+              <div class="vf-field">
+                <label for="happy_hour">Private happy-hour window</label>
+                <input type="text" id="happy_hour" placeholder="e.g. 5:00-7:00 PM" />
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h3>Bar, dietary &amp; extras</h3>
+            <div class="vf-field">
+              <label for="bar_formats">Bar formats offered</label>
+              <input type="text" id="bar_formats" placeholder="e.g. open bar, on-consumption, drink tickets, wine-and-beer-only, and champagne toasts" />
+            </div>
+            <div class="vf-grid2">
+              <div class="vf-field">
+                <label for="corkage">Corkage fee ($ per bottle)</label>
+                <input type="number" id="corkage" min="0" step="1" />
+              </div>
+              <div class="vf-field">
+                <label for="cake_fee">Cake-cutting fee ($ per person)</label>
+                <input type="number" id="cake_fee" min="0" step="1" />
+              </div>
+            </div>
+            <div class="vf-field">
+              <label for="dietary">Dietary accommodations</label>
+              <input type="text" id="dietary" placeholder="e.g. gluten-free, vegetarian, and vegan diners are readily accommodated on all menus" />
+            </div>
+            <div class="vf-grid2">
+              <div class="vf-field">
+                <label for="high_chairs">High chairs available (count)</label>
+                <input type="number" id="high_chairs" min="0" step="1" />
+              </div>
+              <div class="vf-field">
+                <label>&nbsp;</label>
+                <label class="vf-check"><input type="checkbox" id="step_free" /> Step-free access</label>
+                <label class="vf-check"><input type="checkbox" id="gift_cards" /> Gift cards</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h3>Set policies (not editable here)</h3>
+            <div class="vf-fixed">
+              These stay fixed so the assistant always hands the sensitive topics to your events manager:
+              <ul>
+                <li><strong>Full buyout pricing</strong> is never quoted; the assistant connects the guest with your events manager.</li>
+                <li><strong>Off-site catering</strong> and <strong>private brunch/lunch</strong> requests are acknowledged, then handed to your events manager.</li>
+                <li><strong>No room rental fee</strong> is stated; spaces book against F&amp;B minimums.</li>
+                <li><strong>Decor sourcing pricing</strong> is arranged by your events manager.</li>
+              </ul>
+              Need one of these changed? Contact EventFlow.
+            </div>
+          </div>
+
+          <div class="vb-actions">
+            <button class="btn-primary" id="saveFactsBtn" onclick="saveFacts()">Save venue facts</button>
+          </div>
+        </div>
+
+        <!-- ================= TAB: SPACES ================= -->
+        <div class="vb-panel" id="panel-spaces">
+          <div class="panel">
+            <h3>Your spaces <span class="vb-h-hint">what the AI can offer and recommend to guests</span></h3>
+            <div class="vb-space-list" id="spaceList"></div>
+            <div class="vb-actions">
+              <button class="btn-primary" onclick="openSpaceEditor(null)">+ Add a space</button>
+              <button class="btn-secondary" onclick="openSpaceEditor(null, true)">+ Add a combination</button>
+            </div>
+          </div>
+
+          <div class="panel vb-editor-card" id="spaceEditor" style="display:none;">
+            <h3 id="spaceEditorTitle">Add a space</h3>
+            <div class="vf-field">
+              <label for="sp_name">Space name</label>
+              <input type="text" id="sp_name" placeholder="e.g. Private Dining Room" maxlength="60" />
+            </div>
+            <div class="vf-field" id="comboPickerWrap" style="display:none;">
+              <label>Combination of</label>
+              <div class="vb-combo-picker" id="comboPicker"></div>
+              <span class="hint">Pick the spaces that are booked together as this combination. The AI only offers combinations you define here.</span>
+            </div>
+            <div class="vf-field">
+              <label for="sp_description">Description</label>
+              <textarea id="sp_description" placeholder="How the AI should describe this space to guests" maxlength="600"></textarea>
+            </div>
+            <div class="vf-grid2">
+              <div class="vf-field">
+                <label for="sp_capacity_seated">Seated capacity</label>
+                <input type="number" id="sp_capacity_seated" min="0" step="1" />
+              </div>
+              <div class="vf-field">
+                <label for="sp_capacity_standing">Standing / reception capacity</label>
+                <input type="number" id="sp_capacity_standing" min="0" step="1" />
+              </div>
+            </div>
+            <div class="vf-grid2">
+              <div class="vf-field">
+                <label for="sp_fb_min_weekday">F&amp;B minimum — Sun-Thu ($)</label>
+                <input type="number" id="sp_fb_min_weekday" min="0" step="50" />
+                <span class="hint">0 = no published minimum; the AI hands pricing for this space to your events manager.</span>
+              </div>
+              <div class="vf-field">
+                <label for="sp_fb_min_weekend">F&amp;B minimum — Fri-Sat ($)</label>
+                <input type="number" id="sp_fb_min_weekend" min="0" step="50" />
+              </div>
+            </div>
+            <div class="vf-field">
+              <label>&nbsp;</label>
+              <label class="vf-check"><input type="checkbox" id="sp_is_private" /> Fully private</label>
+              <label class="vf-check"><input type="checkbox" id="sp_buyout" /> This is a full venue buyout</label>
+            </div>
+            <div class="vf-field">
+              <label>Photos <span class="hint" style="display:inline;">(link + caption; guests receive these as clickable links)</span></label>
+              <div id="photoRows"></div>
+              <button class="vb-mini-btn" onclick="addPhotoRow('', '')">+ Add photo</button>
+            </div>
+            <div class="vb-actions">
+              <button class="btn-primary" id="saveSpaceBtn" onclick="saveSpace()">Save space</button>
+              <button class="btn-secondary" onclick="closeSpaceEditor()">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= TAB: AI SETTINGS ================= -->
+        <div class="vb-panel" id="panel-ai">
+          <div class="panel">
+            <h3>Voice</h3>
+            <div class="vf-field">
+              <label for="ai_tone">Tone</label>
+              <input type="text" id="ai_tone" maxlength="120" placeholder="e.g. warm, polished, friendly, conversational" />
+              <span class="hint">A short list of adjectives describing how the assistant should sound.</span>
+            </div>
+            <div class="vf-field">
+              <label for="brand_voice">Brand voice line</label>
+              <input type="text" id="brand_voice" maxlength="200" placeholder="One sentence describing the personality" />
+            </div>
+            <div class="vf-grid2">
+              <div class="vf-field">
+                <label for="sender_name">Signature name</label>
+                <input type="text" id="sender_name" maxlength="40" placeholder="e.g. Flow" />
+              </div>
+              <div class="vf-field">
+                <label for="sender_role">Signature role</label>
+                <input type="text" id="sender_role" maxlength="60" placeholder="e.g. Junior Sales Manager" />
+              </div>
+            </div>
+            <div class="vf-field">
+              <label for="sender_direct_line">Signature direct line (optional)</label>
+              <input type="text" id="sender_direct_line" maxlength="40" placeholder="e.g. 615-555-0100" />
+            </div>
+          </div>
+
+          <div class="panel">
+            <h3>Escalation <span class="vb-h-hint">when a human takes over</span></h3>
+            <div class="vf-grid2">
+              <div class="vf-field">
+                <label for="escalation_threshold">Escalate at group size</label>
+                <input type="number" id="escalation_threshold" min="1" max="500" step="1" />
+                <span class="hint">Groups this size or larger always go to your events manager.</span>
+              </div>
+              <div class="vf-field">
+                <label for="small_group_threshold">Small-group threshold</label>
+                <input type="number" id="small_group_threshold" min="0" max="100" step="1" />
+                <span class="hint">At or below this size the assistant treats it as a regular reservation.</span>
+              </div>
+            </div>
+            <div class="vf-grid2">
+              <div class="vf-field">
+                <label for="escalation_contact_name">Events manager name</label>
+                <input type="text" id="escalation_contact_name" maxlength="80" />
+              </div>
+              <div class="vf-field">
+                <label for="escalation_contact_email">Events manager email</label>
+                <input type="email" id="escalation_contact_email" />
+              </div>
+            </div>
+            <div class="vf-field">
+              <label for="supervision_cc_email">Supervision Cc (optional)</label>
+              <input type="email" id="supervision_cc_email" placeholder="Leave blank to turn supervision Cc off" />
+              <span class="hint">While set, this person is copied on every reply the assistant sends. Typically used during a supervised launch period.</span>
+            </div>
+          </div>
+
+          <div class="vb-actions">
+            <button class="btn-primary" id="saveAiBtn" onclick="saveAiSettings()">Save AI settings</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  var DATA_URL = 'https://script.google.com/macros/s/AKfycbxEpfGswzFnPTFLaKWlt332kv6Jy7vdagPcDEDMXbEDwrrFzpoPLc8wrmTW5UEB2xVj8w/exec';
+  var params = new URLSearchParams(location.search);
+  var SLUG = params.get('client') || '';
+  var TOKEN_KEY_PREFIX = 'ef_vf_token_';
+  var PROFILE = { facts: {}, spaces: [], ai: {} };
+  var editingOriginalName = null;
+
+  // A fresh magic link arrives as #st=<token> (slug from ?client=). Capture + scrub.
+  (function captureToken() {
+    var h = location.hash || '';
+    if (h.indexOf('#st=') === 0 && SLUG) {
+      localStorage.setItem(TOKEN_KEY_PREFIX + SLUG, h.slice(4));
+      history.replaceState(null, '', location.pathname + location.search);
+    }
+  })();
+
+  function getMagicToken() { return SLUG ? (localStorage.getItem(TOKEN_KEY_PREFIX + SLUG) || '') : ''; }
+  function getGoogleToken() {
+    try {
+      var t = sessionStorage.getItem('ef_id_token');
+      var exp = Number(sessionStorage.getItem('ef_id_token_exp') || 0);
+      if (t && exp && Date.now() < exp - 60000) return t;
+    } catch (e) {}
+    return '';
+  }
+  function authFields() {
+    var g = getGoogleToken();
+    if (g) return { id_token: g };
+    var m = getMagicToken();
+    if (m) return { session_token: m };
+    return null;
+  }
+  function doLogout() {
+    if (SLUG) localStorage.removeItem(TOKEN_KEY_PREFIX + SLUG);
+    try { sessionStorage.removeItem('ef_user_email'); sessionStorage.removeItem('ef_id_token'); sessionStorage.removeItem('ef_id_token_exp'); } catch (e) {}
+    location.reload();
+  }
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebar-overlay').classList.toggle('visible');
+  }
+
+  function api(payload) {
+    payload.client_slug = SLUG;
+    var auth = authFields();
+    if (auth) { for (var k in auth) payload[k] = auth[k]; }
+    return fetch(DATA_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    }).then(function (r) { return r.json(); });
+  }
+
+  function showMsg(text, kind, elId) {
+    var m = document.getElementById(elId || 'msg');
+    m.textContent = text; m.className = 'vf-msg ' + kind;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  function clearMsg() { document.getElementById('msg').className = 'vf-msg'; }
+
+  function switchTab(name) {
+    document.querySelectorAll('.vb-tab').forEach(function (t) { t.classList.toggle('active', t.dataset.tab === name); });
+    document.querySelectorAll('.vb-panel').forEach(function (p) { p.classList.toggle('active', p.id === 'panel-' + name); });
+    clearMsg();
+  }
+
+  function showSignin() {
+    document.getElementById('signin-screen').style.display = 'block';
+    document.getElementById('venue-app').style.display = 'none';
+  }
+  function showApp() {
+    document.getElementById('signin-screen').style.display = 'none';
+    document.getElementById('venue-app').style.display = 'block';
+  }
+
+  function requestLink() {
+    var email = (document.getElementById('loginEmail').value || '').trim();
+    if (!email || email.indexOf('@') === -1) { showMsg('Please enter your email address.', 'err', 'signin-msg'); return; }
+    if (!SLUG) { showMsg('Missing venue in the address. Use the link your team was given (it ends with ?client=your-venue).', 'err', 'signin-msg'); return; }
+    var btn = document.getElementById('sendLinkBtn');
+    btn.disabled = true; btn.textContent = 'Sending…';
+    api({ action: 'request_link', email: email }).then(function (res) {
+      btn.disabled = false; btn.textContent = 'Email me a sign-in link';
+      showMsg(res.message || 'If that address has access, a sign-in link is on its way.', 'ok', 'signin-msg');
+    }).catch(function () {
+      btn.disabled = false; btn.textContent = 'Email me a sign-in link';
+      showMsg('Something went wrong. Please try again.', 'err', 'signin-msg');
+    });
+  }
+
+  /* ---------- Venue Facts tab ---------- */
+  var FACT_FIELDS = ['privacy_layouts','semi_private','min_low','min_high','alacarte_max','standing_text',
+                     'happy_hour','bar_formats','corkage','cake_fee','dietary','high_chairs','step_free','gift_cards'];
+  function fillFacts(facts) {
+    FACT_FIELDS.forEach(function (f) {
+      var el = document.getElementById(f);
+      if (!el) return;
+      if (el.type === 'checkbox') el.checked = !!facts[f];
+      else if (facts[f] !== undefined && facts[f] !== null) el.value = facts[f];
+    });
+  }
+  function readFacts() {
+    var facts = {};
+    FACT_FIELDS.forEach(function (f) {
+      var el = document.getElementById(f);
+      facts[f] = el.type === 'checkbox' ? el.checked : el.value;
+    });
+    return facts;
+  }
+  function saveFacts() {
+    clearMsg();
+    var btn = document.getElementById('saveFactsBtn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    api({ action: 'save_venue_facts', facts: readFacts() }).then(function (res) {
+      btn.disabled = false; btn.textContent = 'Save venue facts';
+      if (res.error) { handleAuthError(res.error); return; }
+      showMsg('Saved. The assistant now uses the updated facts (live within a few minutes).', 'ok');
+    }).catch(function () {
+      btn.disabled = false; btn.textContent = 'Save venue facts';
+      showMsg('Save failed. Please try again.', 'err');
+    });
+  }
+
+  /* ---------- Spaces tab ---------- */
+  function money(n) { n = Number(n) || 0; return n ? '$' + n.toLocaleString() : 'no published minimum'; }
+  function renderSpaces() {
+    var list = document.getElementById('spaceList');
+    if (!PROFILE.spaces.length) {
+      list.innerHTML = '<div class="vb-space-meta">No spaces yet. Add your first bookable space below.</div>';
+      return;
+    }
+    list.innerHTML = '';
+    PROFILE.spaces.forEach(function (sp) {
+      var card = document.createElement('div');
+      card.className = 'vb-space';
+      var badges = '';
+      if (Array.isArray(sp.combo_of) && sp.combo_of.length) badges += '<span class="vb-badge combo">Combination</span>';
+      if (sp.buyout) badges += '<span class="vb-badge buyout">Buyout</span>';
+      badges += sp.is_private === false ? '<span class="vb-badge shared">Semi-private</span>' : '<span class="vb-badge private">Private</span>';
+      var meta = 'Seats ' + (sp.capacity_seated || 0) + ' · Standing ' + (sp.capacity_standing || 0)
+        + '<br>Minimums: ' + money(sp.fb_min_weekday) + ' Sun-Thu · ' + money(sp.fb_min_weekend) + ' Fri-Sat'
+        + '<br>' + ((sp.photos || []).length ? (sp.photos.length + ' photo' + (sp.photos.length > 1 ? 's' : '')) : 'No photos');
+      if (Array.isArray(sp.combo_of) && sp.combo_of.length) meta += '<br>Combines: ' + sp.combo_of.join(' + ');
+      var info = document.createElement('div');
+      info.className = 'vb-space-info';
+      var nameEl = document.createElement('div');
+      nameEl.className = 'vb-space-name';
+      nameEl.textContent = sp.name + ' ';
+      nameEl.insertAdjacentHTML('beforeend', badges);
+      var metaEl = document.createElement('div');
+      metaEl.className = 'vb-space-meta';
+      metaEl.innerHTML = meta;
+      info.appendChild(nameEl); info.appendChild(metaEl);
+      var actions = document.createElement('div');
+      actions.className = 'vb-space-actions';
+      var editBtn = document.createElement('button');
+      editBtn.className = 'vb-mini-btn'; editBtn.textContent = 'Edit';
+      editBtn.onclick = function () { openSpaceEditor(sp.name); };
+      var delBtn = document.createElement('button');
+      delBtn.className = 'vb-mini-btn danger'; delBtn.textContent = 'Delete';
+      delBtn.onclick = function () { deleteSpace(sp.name); };
+      actions.appendChild(editBtn); actions.appendChild(delBtn);
+      card.appendChild(info); card.appendChild(actions);
+      list.appendChild(card);
+    });
+  }
+
+  function addPhotoRow(url, caption) {
+    var row = document.createElement('div');
+    row.className = 'vb-photo-row';
+    var u = document.createElement('input');
+    u.type = 'text'; u.placeholder = 'https://… (photo link)'; u.value = url || ''; u.className = 'ph-url';
+    var c = document.createElement('input');
+    c.type = 'text'; c.placeholder = 'Caption, e.g. Seating for up to 28'; c.value = caption || ''; c.className = 'ph-cap'; c.maxLength = 120;
+    var x = document.createElement('button');
+    x.className = 'vb-mini-btn danger'; x.textContent = 'Remove';
+    x.onclick = function () { row.remove(); };
+    row.appendChild(u); row.appendChild(c); row.appendChild(x);
+    document.getElementById('photoRows').appendChild(row);
+  }
+
+  function renderComboPicker(selected, editingName) {
+    var wrap = document.getElementById('comboPicker');
+    wrap.innerHTML = '';
+    var eligible = PROFILE.spaces.filter(function (s) {
+      return !(Array.isArray(s.combo_of) && s.combo_of.length) &&
+             (!editingName || s.name.toLowerCase() !== editingName.toLowerCase());
+    });
+    if (!eligible.length) {
+      wrap.innerHTML = '<span class="vb-space-meta">Add at least two regular spaces first.</span>';
+      return;
+    }
+    eligible.forEach(function (s) {
+      var lab = document.createElement('label');
+      lab.className = 'vf-check';
+      var cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.value = s.name; cb.className = 'combo-member';
+      cb.checked = (selected || []).some(function (m) { return m.toLowerCase() === s.name.toLowerCase(); });
+      lab.appendChild(cb);
+      lab.appendChild(document.createTextNode(' ' + s.name + ' (seats ' + (s.capacity_seated || 0) + ')'));
+      wrap.appendChild(lab);
+    });
+  }
+
+  function openSpaceEditor(name, asCombo) {
+    editingOriginalName = name;
+    var sp = name ? PROFILE.spaces.find(function (s) { return s.name === name; }) : null;
+    var isCombo = asCombo || !!(sp && Array.isArray(sp.combo_of) && sp.combo_of.length);
+    document.getElementById('spaceEditorTitle').textContent = sp ? ('Edit: ' + sp.name) : (isCombo ? 'Add a combination' : 'Add a space');
+    document.getElementById('sp_name').value = sp ? sp.name : '';
+    document.getElementById('sp_description').value = sp ? (sp.description || '') : '';
+    document.getElementById('sp_capacity_seated').value = sp ? (sp.capacity_seated || 0) : '';
+    document.getElementById('sp_capacity_standing').value = sp ? (sp.capacity_standing || 0) : '';
+    document.getElementById('sp_fb_min_weekday').value = sp ? (sp.fb_min_weekday || 0) : '';
+    document.getElementById('sp_fb_min_weekend').value = sp ? (sp.fb_min_weekend || 0) : '';
+    document.getElementById('sp_is_private').checked = sp ? sp.is_private !== false : true;
+    document.getElementById('sp_buyout').checked = sp ? !!sp.buyout : false;
+    document.getElementById('photoRows').innerHTML = '';
+    (sp && sp.photos || []).forEach(function (p) { addPhotoRow(p.url || p, p.caption || ''); });
+    document.getElementById('comboPickerWrap').style.display = isCombo ? 'block' : 'none';
+    if (isCombo) renderComboPicker(sp ? sp.combo_of : [], name);
+    document.getElementById('spaceEditor').style.display = 'block';
+    document.getElementById('spaceEditor').scrollIntoView({ behavior: 'smooth' });
+  }
+  function closeSpaceEditor() {
+    editingOriginalName = null;
+    document.getElementById('spaceEditor').style.display = 'none';
+  }
+
+  function saveSpace() {
+    clearMsg();
+    var photos = [];
+    document.querySelectorAll('#photoRows .vb-photo-row').forEach(function (row) {
+      var url = row.querySelector('.ph-url').value.trim();
+      if (url) photos.push({ url: url, caption: row.querySelector('.ph-cap').value.trim() });
+    });
+    var comboMembers = [];
+    if (document.getElementById('comboPickerWrap').style.display !== 'none') {
+      document.querySelectorAll('.combo-member:checked').forEach(function (cb) { comboMembers.push(cb.value); });
+    }
+    var space = {
+      name: document.getElementById('sp_name').value,
+      description: document.getElementById('sp_description').value,
+      capacity_seated: document.getElementById('sp_capacity_seated').value,
+      capacity_standing: document.getElementById('sp_capacity_standing').value,
+      fb_min_weekday: document.getElementById('sp_fb_min_weekday').value,
+      fb_min_weekend: document.getElementById('sp_fb_min_weekend').value,
+      is_private: document.getElementById('sp_is_private').checked,
+      buyout: document.getElementById('sp_buyout').checked,
+      photos: photos
+    };
+    if (comboMembers.length) space.combo_of = comboMembers;
+    var btn = document.getElementById('saveSpaceBtn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    api({ action: 'save_space', space: space, original_name: editingOriginalName || '' }).then(function (res) {
+      btn.disabled = false; btn.textContent = 'Save space';
+      if (res.error) { handleAuthError(res.error); return; }
+      PROFILE.spaces = res.spaces || [];
+      renderSpaces(); closeSpaceEditor();
+      showMsg('Space saved. The assistant recommends from the updated list (live within a few minutes).', 'ok');
+    }).catch(function () {
+      btn.disabled = false; btn.textContent = 'Save space';
+      showMsg('Save failed. Please try again.', 'err');
+    });
+  }
+
+  function deleteSpace(name) {
+    if (!confirm('Delete "' + name + '"? The assistant will stop offering it immediately.')) return;
+    clearMsg();
+    api({ action: 'delete_space', name: name }).then(function (res) {
+      if (res.error) { handleAuthError(res.error); return; }
+      PROFILE.spaces = res.spaces || [];
+      renderSpaces();
+      showMsg('Deleted "' + name + '".', 'ok');
+    }).catch(function () { showMsg('Delete failed. Please try again.', 'err'); });
+  }
+
+  /* ---------- AI Settings tab ---------- */
+  var AI_FIELDS = ['ai_tone','brand_voice','escalation_threshold','escalation_contact_name','escalation_contact_email',
+                   'supervision_cc_email','small_group_threshold','sender_name','sender_role','sender_direct_line'];
+  function fillAi(ai) {
+    AI_FIELDS.forEach(function (f) {
+      var el = document.getElementById(f);
+      if (el && ai[f] !== undefined && ai[f] !== null) el.value = ai[f];
+    });
+  }
+  function saveAiSettings() {
+    clearMsg();
+    var settings = {};
+    AI_FIELDS.forEach(function (f) { settings[f] = document.getElementById(f).value; });
+    var btn = document.getElementById('saveAiBtn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    api({ action: 'save_ai_settings', settings: settings }).then(function (res) {
+      btn.disabled = false; btn.textContent = 'Save AI settings';
+      if (res.error) { handleAuthError(res.error); return; }
+      showMsg('AI settings saved (live within a few minutes).', 'ok');
+    }).catch(function () {
+      btn.disabled = false; btn.textContent = 'Save AI settings';
+      showMsg('Save failed. Please try again.', 'err');
+    });
+  }
+
+  /* ---------- boot ---------- */
+  function handleAuthError(error) {
+    if (/Unauthorized|Forbidden/i.test(error)) {
+      if (SLUG) localStorage.removeItem(TOKEN_KEY_PREFIX + SLUG);
+      showSignin();
+      showMsg(error, 'err', 'signin-msg');
+    } else {
+      showMsg(error, 'err');
+    }
+  }
+
+  function loadProfile() {
+    api({ action: 'get_venue_profile' }).then(function (res) {
+      if (res.error) { handleAuthError(res.error); return; }
+      PROFILE = { facts: res.facts || {}, spaces: res.spaces || [], ai: res.ai || {} };
+      document.getElementById('venue-name').textContent = res.venue_name || SLUG;
+      document.getElementById('user-email-sidebar').textContent = res.caller || '';
+      fillFacts(PROFILE.facts);
+      renderSpaces();
+      fillAi(PROFILE.ai);
+      showApp();
+      if (window.EF_ADMIN && EF_ADMIN.showAdminNav) { try { EF_ADMIN.showAdminNav(); } catch (e) {} }
+    }).catch(function () {
+      showSignin();
+      showMsg('Could not reach the server. Please refresh.', 'err', 'signin-msg');
+    });
+  }
+
+  (function init() {
+    // Resolve slug for Google-signed-in users arriving without ?client=
+    if (!SLUG && sessionStorage.getItem('ef_user_email')) {
+      var email = (sessionStorage.getItem('ef_user_email') || '').toLowerCase();
+      fetch(DATA_URL + '?type=client_list').then(function (r) { return r.json(); }).then(function (res) {
+        var clients = (res && res.clients) || [];
+        var mine = clients.find(function (c) { return (c.gmail || c.gmail_address || '').toLowerCase() === email; });
+        SLUG = mine ? (mine.slug || '') : (clients.length === 1 ? clients[0].slug : '');
+        if (!SLUG) SLUG = 'sunda-nashville';
+        loadProfile();
+      }).catch(function () { SLUG = 'sunda-nashville'; loadProfile(); });
+      return;
+    }
+    if (!SLUG) SLUG = 'sunda-nashville';
+    if (!authFields()) { showSignin(); return; }
+    loadProfile();
+  })();
+</script>
+</body>
+</html>
