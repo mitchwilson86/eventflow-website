@@ -40,6 +40,21 @@
       color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
     .vb-tab:hover { color: var(--text-primary); }
     .vb-tab.active { color: var(--teal); border-bottom-color: var(--teal); font-weight: 600; }
+    .kb-card { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px; }
+    .kb-card-main { flex: 1; min-width: 0; }
+    .kb-card-title { font-weight: 600; margin-bottom: 3px; }
+    .kb-card-preview { font-size: 13px; color: var(--text-secondary); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .kb-badge { display: inline-block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; padding: 2px 8px; border-radius: 999px; background: var(--bg-subtle, #f0f4f5); color: var(--text-secondary); margin-right: 6px; }
+    .kb-badge.locked { background: #fdf3e3; color: #9a6b1f; }
+    .kb-meter-wrap { margin: 6px 0 16px; }
+    .kb-meter { height: 8px; border-radius: 999px; background: var(--bg-subtle, #eef2f3); overflow: hidden; }
+    .kb-meter > div { height: 100%; border-radius: 999px; background: var(--teal); transition: width .3s; }
+    .kb-meter.warn > div { background: #d97706; }
+    .kb-meter-label { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+    .kb-pre { white-space: pre-wrap; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; line-height: 1.5; background: var(--bg-subtle, #f7f9fa); border: 1px solid var(--border); border-radius: 10px; padding: 14px; max-height: 420px; overflow: auto; }
+    .kb-faq-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; margin-bottom: 8px; }
+    .kb-version-row { display: flex; align-items: center; gap: 10px; padding: 8px 4px; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .kb-version-row:last-child { border-bottom: none; }
     .vb-panel { display: none; max-width: 860px; }
     .vb-panel.active { display: block; }
     .vb-space-list { display: grid; gap: 12px; margin-bottom: 18px; }
@@ -154,6 +169,7 @@
           <button class="vb-tab active" data-tab="facts" onclick="switchTab('facts')">Venue Facts</button>
           <button class="vb-tab" data-tab="spaces" onclick="switchTab('spaces')">Spaces</button>
           <button class="vb-tab" data-tab="ai" onclick="switchTab('ai')">AI Settings</button>
+          <button class="vb-tab" data-tab="kb" onclick="switchTab('kb')">Knowledge</button>
         </div>
 
         <!-- ================= TAB: VENUE FACTS ================= -->
@@ -378,6 +394,51 @@
 
           <div class="vb-actions">
             <button class="btn-primary" id="saveAiBtn" onclick="saveAiSettings()">Save AI settings</button>
+          </div>
+        </div>
+
+        <!-- ================= TAB: KNOWLEDGE ================= -->
+        <div class="vb-panel" id="panel-kb">
+          <div class="panel">
+            <h3>What your AI knows <span class="vb-h-hint">policies, FAQs, and venue info the assistant uses in every reply</span></h3>
+            <div class="kb-meter-wrap">
+              <div class="kb-meter" id="kbMeter"><div style="width:0%"></div></div>
+              <div class="kb-meter-label" id="kbMeterLabel"></div>
+            </div>
+            <div id="kbList"></div>
+            <div class="vb-actions">
+              <button class="btn-primary" onclick="openKbEditor(null, 'policy')">+ Add a policy</button>
+              <button class="btn-secondary" onclick="openKbEditor(null, 'faq')">+ Add FAQs</button>
+              <button class="btn-secondary" onclick="openKbEditor(null, 'about')">+ Add venue info</button>
+              <button class="btn-secondary" onclick="toggleKbPreview()">Show what the AI sees</button>
+            </div>
+            <pre class="kb-pre" id="kbPreview" style="display:none; margin-top:14px;"></pre>
+          </div>
+
+          <div class="panel vb-editor-card" id="kbEditor" style="display:none;">
+            <h3 id="kbEditorTitle">Add a section</h3>
+            <div class="vf-field">
+              <label for="kb_title">Section title</label>
+              <input type="text" id="kb_title" maxlength="80" placeholder="e.g. Coat Check Policy" />
+            </div>
+            <div class="vf-field" id="kbBodyWrap">
+              <label for="kb_body">Text <span class="hint" style="display:inline;">(written exactly as the AI should know it; it may quote this to guests)</span></label>
+              <textarea id="kb_body" rows="8" maxlength="4000"></textarea>
+            </div>
+            <div class="vf-field" id="kbFaqWrap" style="display:none;">
+              <label>Questions &amp; answers</label>
+              <div id="kbFaqRows"></div>
+              <button class="vb-mini-btn" onclick="addKbFaqRow('', '')">+ Add question</button>
+            </div>
+            <div class="vb-actions">
+              <button class="btn-primary" id="saveKbBtn" onclick="saveKbCard()">Save section</button>
+              <button class="btn-secondary" onclick="closeKbEditor()">Cancel</button>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h3>Version history <span class="vb-h-hint">every save is kept; restore any earlier version with one click</span></h3>
+            <div id="kbVersions"></div>
           </div>
         </div>
 
@@ -689,6 +750,174 @@
     });
   }
 
+  /* ---------- Knowledge tab (KB_KNOWLEDGE_V1) ---------- */
+  var KB = { cards: [], kb_len: 0, warn_at: 12000, versions: [], editingSlug: null, editingType: 'policy' };
+  var KB_TYPE_LABEL = { policy: 'Policy', faq: 'FAQ', about: 'Venue info', menus: 'Menus' };
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function loadKb() {
+    api({ action: 'get_kb' }).then(function (res) {
+      if (res.error) return; // knowledge tab stays empty; other tabs unaffected
+      KB.cards = res.cards || [];
+      KB.kb_len = res.kb_len || 0;
+      KB.warn_at = res.size_warn_at || 12000;
+      KB.versions = res.versions || [];
+      KB.kb_text = res.kb_text || '';
+      renderKb();
+    }).catch(function () {});
+  }
+
+  function cardPreviewText(c) {
+    if (c.type === 'faq') {
+      var n = (c.items || []).length;
+      return n + (n === 1 ? ' question' : ' questions') + ((c.items || [])[0] ? ' — e.g. "' + (c.items[0].q || '') + '"' : '');
+    }
+    return String(c.body || '').replace(/\s+/g, ' ');
+  }
+
+  function renderKb() {
+    var list = document.getElementById('kbList');
+    if (!KB.cards.length) {
+      list.innerHTML = '<div class="vf-fixed">This venue has not been switched to knowledge sections yet. Contact EventFlow.</div>';
+      return;
+    }
+    var html = '';
+    KB.cards.forEach(function (c) {
+      var locked = !!c.locked || c.slug === 'menu-excerpts';
+      html += '<div class="kb-card">' +
+        '<div class="kb-card-main">' +
+          '<div class="kb-card-title"><span class="kb-badge' + (locked ? ' locked' : '') + '">' +
+            (locked ? 'auto-generated' : esc(KB_TYPE_LABEL[c.type] || c.type)) + '</span>' + esc(c.title) + '</div>' +
+          '<div class="kb-card-preview">' + esc(cardPreviewText(c)) + '</div>' +
+        '</div>' +
+        (locked
+          ? ''
+          : '<button class="vb-mini-btn" onclick="openKbEditor(\'' + esc(c.slug) + '\')">Edit</button>' +
+            '<button class="vb-mini-btn" onclick="deleteKbCard(\'' + esc(c.slug) + '\')">Delete</button>') +
+        '</div>';
+    });
+    list.innerHTML = html;
+
+    var pct = Math.min(100, Math.round(100 * KB.kb_len / KB.warn_at));
+    var meter = document.getElementById('kbMeter');
+    meter.className = 'kb-meter' + (KB.kb_len > KB.warn_at ? ' warn' : '');
+    meter.firstElementChild.style.width = pct + '%';
+    document.getElementById('kbMeterLabel').textContent =
+      'Knowledge size: ' + KB.kb_len.toLocaleString() + ' characters' +
+      (KB.kb_len > KB.warn_at
+        ? ' — larger than recommended. Everything here rides on every guest email; consider trimming.'
+        : ' (comfortable)');
+
+    var vhtml = '';
+    (KB.versions || []).forEach(function (v) {
+      var when = new Date(v.saved_at);
+      vhtml += '<div class="kb-version-row">' +
+        '<span style="flex:1;">' + esc(when.toLocaleString()) + ' — ' + esc(v.note || 'save') +
+        (v.saved_by ? ' <span class="hint" style="display:inline;">(' + esc(v.saved_by) + ')</span>' : '') + '</span>' +
+        '<button class="vb-mini-btn" onclick="restoreKbVersion(\'' + esc(v.id) + '\')">Restore</button>' +
+        '</div>';
+    });
+    document.getElementById('kbVersions').innerHTML = vhtml || '<span class="hint">No saved versions yet.</span>';
+
+    var pre = document.getElementById('kbPreview');
+    if (pre.style.display !== 'none') pre.textContent = KB.kb_text || '';
+  }
+
+  function toggleKbPreview() {
+    var pre = document.getElementById('kbPreview');
+    var show = pre.style.display === 'none';
+    pre.style.display = show ? 'block' : 'none';
+    if (show) pre.textContent = KB.kb_text || '';
+  }
+
+  function addKbFaqRow(q, a) {
+    var row = document.createElement('div');
+    row.className = 'kb-faq-row';
+    row.innerHTML = '<input type="text" placeholder="Question a guest might ask" maxlength="300" class="kb-faq-q" />' +
+      '<input type="text" placeholder="The answer" maxlength="1000" class="kb-faq-a" />' +
+      '<button class="vb-mini-btn" onclick="this.parentNode.remove()">×</button>';
+    row.querySelector('.kb-faq-q').value = q || '';
+    row.querySelector('.kb-faq-a').value = a || '';
+    document.getElementById('kbFaqRows').appendChild(row);
+  }
+
+  function openKbEditor(slug, typeForNew) {
+    KB.editingSlug = slug;
+    var card = slug ? KB.cards.find(function (c) { return c.slug === slug; }) : null;
+    KB.editingType = card ? card.type : (typeForNew || 'policy');
+    document.getElementById('kbEditorTitle').textContent = card
+      ? 'Edit: ' + card.title
+      : (KB.editingType === 'faq' ? 'Add FAQs' : KB.editingType === 'about' ? 'Add venue info' : 'Add a policy');
+    document.getElementById('kb_title').value = card ? card.title : '';
+    var isFaq = KB.editingType === 'faq';
+    document.getElementById('kbBodyWrap').style.display = isFaq ? 'none' : 'block';
+    document.getElementById('kbFaqWrap').style.display = isFaq ? 'block' : 'none';
+    document.getElementById('kb_body').value = card && !isFaq ? (card.body || '') : '';
+    document.getElementById('kbFaqRows').innerHTML = '';
+    if (isFaq) {
+      var items = (card && card.items) || [];
+      if (!items.length) addKbFaqRow('', '');
+      items.forEach(function (it) { addKbFaqRow(it.q, it.a); });
+    }
+    document.getElementById('kbEditor').style.display = 'block';
+    document.getElementById('kbEditor').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function closeKbEditor() {
+    document.getElementById('kbEditor').style.display = 'none';
+    KB.editingSlug = null;
+  }
+
+  function saveKbCard() {
+    var card = { type: KB.editingType, title: document.getElementById('kb_title').value };
+    if (KB.editingType === 'faq') {
+      card.items = [];
+      document.querySelectorAll('#kbFaqRows .kb-faq-row').forEach(function (row) {
+        var q = row.querySelector('.kb-faq-q').value.trim();
+        var a = row.querySelector('.kb-faq-a').value.trim();
+        if (q || a) card.items.push({ q: q, a: a });
+      });
+    } else {
+      card.body = document.getElementById('kb_body').value;
+    }
+    var btn = document.getElementById('saveKbBtn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    api({ action: 'save_kb_card', card: card, original_slug: KB.editingSlug || '' }).then(function (res) {
+      btn.disabled = false; btn.textContent = 'Save section';
+      if (res.error) { showMsg(res.error, 'err'); return; }
+      closeKbEditor();
+      showMsg('Saved. The assistant now uses the updated knowledge (live within a few minutes).', 'ok');
+      loadKb();
+    }).catch(function () {
+      btn.disabled = false; btn.textContent = 'Save section';
+      showMsg('Save failed. Please try again.', 'err');
+    });
+  }
+
+  function deleteKbCard(slug) {
+    var card = KB.cards.find(function (c) { return c.slug === slug; });
+    if (!card) return;
+    if (!confirm('Delete "' + card.title + '"? The AI will no longer know this. You can restore it from version history.')) return;
+    api({ action: 'delete_kb_card', slug: slug }).then(function (res) {
+      if (res.error) { showMsg(res.error, 'err'); return; }
+      showMsg('Section deleted.', 'ok');
+      loadKb();
+    }).catch(function () { showMsg('Delete failed. Please try again.', 'err'); });
+  }
+
+  function restoreKbVersion(id) {
+    if (!confirm('Restore this version? The current knowledge is saved to history first, so nothing is lost.')) return;
+    api({ action: 'restore_kb_version', version_id: id }).then(function (res) {
+      if (res.error) { showMsg(res.error, 'err'); return; }
+      showMsg('Version restored.', 'ok');
+      loadKb();
+    }).catch(function () { showMsg('Restore failed. Please try again.', 'err'); });
+  }
+
   /* ---------- boot ---------- */
   function handleAuthError(error) {
     if (/Unauthorized|Forbidden/i.test(error)) {
@@ -709,6 +938,7 @@
       fillFacts(PROFILE.facts);
       renderSpaces();
       fillAi(PROFILE.ai);
+      loadKb();
       showApp();
       if (window.EF_ADMIN && EF_ADMIN.showAdminNav) { try { EF_ADMIN.showAdminNav(); } catch (e) {} }
     }).catch(function () {
