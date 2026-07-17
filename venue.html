@@ -386,6 +386,15 @@
                 <span class="hint">Used when the assistant hands a guest off, e.g. "our Senior Sales Manager, Kendall". Blank = Senior Sales Manager.</span>
               </div>
               <div class="vf-field">
+                <label for="escalation_contact_pronouns">Events manager pronouns</label>
+                <select id="escalation_contact_pronouns">
+                  <option value="she/her">she/her</option>
+                  <option value="he/him">he/him</option>
+                  <option value="they/them">they/them</option>
+                </select>
+                <span class="hint">Used in handoff emails, e.g. "She'll be in touch shortly".</span>
+              </div>
+              <div class="vf-field">
                 <label for="escalation_contact_email">Events manager email</label>
                 <input type="email" id="escalation_contact_email" />
               </div>
@@ -731,7 +740,7 @@
   }
 
   /* ---------- AI Settings tab ---------- */
-  var AI_FIELDS = ['ai_tone','brand_voice','escalation_threshold','escalation_contact_name','escalation_contact_title','escalation_contact_email',
+  var AI_FIELDS = ['ai_tone','brand_voice','escalation_threshold','escalation_contact_name','escalation_contact_title','escalation_contact_pronouns','escalation_contact_email',
                    'supervision_cc_email','small_group_threshold','sender_name','sender_role','sender_direct_line'];
   function fillAi(ai) {
     AI_FIELDS.forEach(function (f) {
