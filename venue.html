@@ -381,6 +381,11 @@
                 <input type="text" id="escalation_contact_name" maxlength="80" />
               </div>
               <div class="vf-field">
+                <label for="escalation_contact_title">Events manager title</label>
+                <input type="text" id="escalation_contact_title" maxlength="60" placeholder="e.g. Senior Sales Manager" />
+                <span class="hint">Used when the assistant hands a guest off, e.g. "our Senior Sales Manager, Kendall". Blank = Senior Sales Manager.</span>
+              </div>
+              <div class="vf-field">
                 <label for="escalation_contact_email">Events manager email</label>
                 <input type="email" id="escalation_contact_email" />
               </div>
@@ -726,7 +731,7 @@
   }
 
   /* ---------- AI Settings tab ---------- */
-  var AI_FIELDS = ['ai_tone','brand_voice','escalation_threshold','escalation_contact_name','escalation_contact_email',
+  var AI_FIELDS = ['ai_tone','brand_voice','escalation_threshold','escalation_contact_name','escalation_contact_title','escalation_contact_email',
                    'supervision_cc_email','small_group_threshold','sender_name','sender_role','sender_direct_line'];
   function fillAi(ai) {
     AI_FIELDS.forEach(function (f) {
