@@ -44,6 +44,11 @@
   status = 200
 
 [[redirects]]
+  from = "/unsubscribe"
+  to = "/unsubscribe.html"
+  status = 200
+
+[[redirects]]
   from = "/booking"
   to = "/booking.html"
   status = 200

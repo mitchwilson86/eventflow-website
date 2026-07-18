@@ -181,8 +181,10 @@
           </div>
           <div class="camp-actions">
             <button class="camp-btn approve" onclick="saveCampaign()" id="ed-save-btn">Save</button>
+            <button class="camp-btn" onclick="draftWithAI()" id="ed-draft-btn" title="The AI writes the subjects and body for the chosen type and audience. You review before anything sends.">&#10024; Draft with AI</button>
             <button class="camp-btn" onclick="closeEditor()">Cancel</button>
           </div>
+          <div class="muted-note" style="margin-top:8px;">Draft with AI uses the chosen type and audience (name and body are optional; body text becomes extra instructions for the AI). The draft lands in the queue as pending approval.</div>
         </div>
 
         <!-- Queue -->
@@ -460,6 +462,31 @@ function saveCampaign() {
     closeEditor();
     loadQueue();
   }).catch(function (e) { btn.disabled = false; showMsg('Save failed: ' + e.message, 'err'); });
+}
+
+function draftWithAI() {
+  if (editingId) { showMsg('Draft with AI creates a new campaign — close this edit first or start from “New campaign”.', 'err'); return; }
+  var saveBtn = document.getElementById('ed-save-btn');
+  var draftBtn = document.getElementById('ed-draft-btn');
+  var payload = {
+    action: 'draft_campaign',
+    campaign_type: document.getElementById('ed-type').value,
+    segment: document.getElementById('ed-segment').value,
+    name: document.getElementById('ed-name').value.trim(),
+    instructions: document.getElementById('ed-body').value.trim()
+  };
+  saveBtn.disabled = true; draftBtn.disabled = true;
+  draftBtn.textContent = 'Drafting (about 20 seconds)…';
+  api(payload).then(function (res) {
+    saveBtn.disabled = false; draftBtn.disabled = false; draftBtn.innerHTML = '&#10024; Draft with AI';
+    if (res.error) { showMsg(res.error, 'err'); return; }
+    showMsg('Draft created — review and approve it below.', 'ok');
+    closeEditor();
+    loadQueue();
+  }).catch(function (e) {
+    saveBtn.disabled = false; draftBtn.disabled = false; draftBtn.innerHTML = '&#10024; Draft with AI';
+    showMsg('Draft failed: ' + e.message, 'err');
+  });
 }
 
 function approveCampaign(id) {

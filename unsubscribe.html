@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unsubscribe</title>
+  <meta name="robots" content="noindex">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* CAMPAIGNS_V1 (2026-07-18): guest-facing unsubscribe page for outbound campaigns.
+       Deliberately standalone — no dashboard CSS, no sign-in, works from any email client. */
+    body { margin:0; font-family:'Inter',system-ui,sans-serif; background:#f6f7f9; color:#1a2233;
+           display:flex; align-items:center; justify-content:center; min-height:100vh; }
+    .card { background:#fff; border:1px solid #e3e6eb; border-radius:12px; padding:36px 32px;
+            max-width:420px; width:calc(100% - 48px); text-align:center; box-shadow:0 2px 12px rgba(20,30,60,.06); }
+    h1 { font-size:20px; margin:0 0 10px; }
+    p { font-size:14px; line-height:1.55; color:#4b5566; margin:0 0 8px; }
+    .spinner { font-size:14px; color:#6b7484; }
+    .ok { color:#0a7a4b; }
+    .err { color:#b42318; }
+    .email { font-weight:600; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1 id="title">One moment…</h1>
+    <p class="spinner" id="msg">Processing your request.</p>
+  </div>
+  <script>
+    var OPS_API = 'https://uzojlcwsrbsqckycjlgm.supabase.co/functions/v1/ops-api?action=unsubscribe';
+    var q = new URLSearchParams(location.search);
+    var client = q.get('c') || '';
+    var email = q.get('e') || '';
+    var token = q.get('t') || '';
+    var titleEl = document.getElementById('title');
+    var msgEl = document.getElementById('msg');
+
+    if (!client || !email || !token) {
+      titleEl.textContent = 'Invalid link';
+      msgEl.textContent = 'This unsubscribe link is missing information. Please use the link from the email you received.';
+      msgEl.className = 'err';
+    } else {
+      fetch(OPS_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client: client, email: email, token: token })
+      }).then(function (r) { return r.json(); }).then(function (res) {
+        if (res.ok) {
+          titleEl.textContent = "You're unsubscribed";
+          msgEl.innerHTML = '<span class="email"></span> will no longer receive event emails from us. Changed your mind? Just reply to any previous email.';
+          msgEl.querySelector('.email').textContent = email;
+          msgEl.className = 'ok';
+        } else {
+          titleEl.textContent = 'Something went wrong';
+          msgEl.textContent = 'We could not process this link (' + (res.error || 'unknown error') + '). Reply to the email you received and we will remove you manually.';
+          msgEl.className = 'err';
+        }
+      }).catch(function () {
+        titleEl.textContent = 'Something went wrong';
+        msgEl.textContent = 'We could not reach the server. Please try again in a minute.';
+        msgEl.className = 'err';
+      });
+    }
+  </script>
+</body>
+</html>
