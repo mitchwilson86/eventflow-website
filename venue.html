@@ -249,6 +249,22 @@
             </div>
           </div>
 
+          <!-- Hidden until the backend returns parking_info (Apps Script v13.6+),
+               so a save can never silently drop what the user typed here. -->
+          <div class="panel" id="parkingBillingPanel" style="display:none;">
+            <h3>Parking &amp; billing</h3>
+            <div class="vf-field">
+              <label for="parking_info">Parking info</label>
+              <textarea id="parking_info" placeholder="e.g. Valet parking is available across the street; a connected garage and street parking are also nearby (fees apply)."></textarea>
+              <span class="hint">Shared with guests whenever they ask about parking or valet.</span>
+            </div>
+            <div class="vf-field">
+              <label for="billing_policy_short">Billing policy (short)</label>
+              <textarea id="billing_policy_short" placeholder="e.g. Food and beverage only. No third-party vendor charges on invoices."></textarea>
+              <span class="hint">One or two sentences on what invoices cover.</span>
+            </div>
+          </div>
+
           <div class="panel">
             <h3>Set policies (not editable here)</h3>
             <div class="vf-fixed">
@@ -575,7 +591,15 @@
     clearMsg();
     var btn = document.getElementById('saveFactsBtn');
     btn.disabled = true; btn.textContent = 'Saving…';
-    api({ action: 'save_venue_facts', facts: readFacts() }).then(function (res) {
+    var payload = { action: 'save_venue_facts', facts: readFacts() };
+    // Only send parking/billing when the panel is live (backend v13.6+ returned
+    // them at load) — a page loaded against an older backend must never
+    // overwrite these fields with the empty hidden inputs.
+    if (document.getElementById('parkingBillingPanel').style.display !== 'none') {
+      payload.parking_info = document.getElementById('parking_info').value.trim();
+      payload.billing_policy_short = document.getElementById('billing_policy_short').value.trim();
+    }
+    api(payload).then(function (res) {
       btn.disabled = false; btn.textContent = 'Save venue facts';
       if (res.error) { handleAuthError(res.error); return; }
       showMsg('Saved. The assistant now uses the updated facts (live within a few minutes).', 'ok');
@@ -950,6 +974,11 @@
       document.getElementById('venue-name').textContent = res.venue_name || SLUG;
       document.getElementById('user-email-sidebar').textContent = res.caller || '';
       fillFacts(PROFILE.facts);
+      if (res.parking_info !== undefined) {
+        document.getElementById('parkingBillingPanel').style.display = '';
+        document.getElementById('parking_info').value = res.parking_info || '';
+        document.getElementById('billing_policy_short').value = res.billing_policy_short || '';
+      }
       renderSpaces();
       fillAi(PROFILE.ai);
       loadKb();

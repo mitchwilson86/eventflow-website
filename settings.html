@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EventFlow — Settings</title>
-  <meta name="description" content="EventFlow venue settings — configure AI tone, brand voice, escalation rules, and menu links for your restaurant.">
+  <meta name="description" content="EventFlow account settings — venue name, website, logo, social proof, team access, and menu links. AI behavior and venue info live on the Venue page.">
   <link rel="canonical" href="https://eventflowsales.com/settings">
   <meta name="robots" content="noindex">
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -21,32 +21,11 @@
       font-size: 12px; cursor: pointer; font-family: var(--font);
     }
     .add-menu-btn:hover { border-color: var(--teal); color: var(--teal); }
-    .space-row { border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    .space-row .full { grid-column: 1 / -1; }
-    .space-row label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
-    .space-row input[type=text], .space-row input[type=number], .space-row input[type=url], .space-row textarea {
-      width: 100%; padding: 10px 14px; background: var(--bg-input); border: 1px solid var(--border);
-      border-radius: 8px; color: var(--text-primary); font-family: var(--font); font-size: 14px;
-      transition: border-color .2s;
-    }
-    .space-row input:focus, .space-row textarea:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(21,97,109,.1); }
-    .space-row textarea { min-height: 60px; resize: vertical; }
-    .photo-rows { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
-    .photo-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: center; }
-    .photo-row input { width: 100%; padding: 8px 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary); font-family: var(--font); font-size: 13px; }
-    .photo-row input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(21,97,109,.1); }
-    .photo-row .photo-remove { background: none; border: 1px solid var(--border); color: var(--text-muted); padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; }
-    .photo-row .photo-remove:hover { border-color: var(--red); color: var(--red); }
-    .add-photo-btn { margin-top: 6px; background: none; border: 1px dashed var(--border); color: var(--text-secondary); padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: var(--font); }
-    .add-photo-btn:hover { border-style: solid; border-color: var(--teal); color: var(--teal); }
-    .photos-hint { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
-    .buyout-label {
-      display: inline-flex; align-items: center; gap: 10px; padding: 10px 14px;
+    .venue-pointer {
       background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px;
-      font-size: 14px; color: var(--text-primary); cursor: pointer; text-transform: none;
-      letter-spacing: normal; font-weight: 400; margin-bottom: 0;
+      padding: 14px 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;
     }
-    .buyout-label input[type=checkbox] { margin: 0; width: 16px; height: 16px; accent-color: var(--teal); }
+    .venue-pointer a { color: var(--teal); font-weight: 600; }
     .space-remove { background: none; border: none; color: var(--red); font-size: 12px; cursor: pointer; padding: 4px 8px; }
     .space-remove:hover { text-decoration: underline; }
     .auth-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
@@ -150,61 +129,22 @@
               <label>Website URL</label>
               <input type="url" id="set-website" placeholder="https://yourrestaurant.com" />
             </div>
-            <div class="settings-field full">
-              <label>AI Tone (how the AI sounds in emails)</label>
-              <textarea id="set-ai-tone" placeholder="e.g., warm, polished, friendly, conversational"></textarea>
-            </div>
-            <div class="settings-field full">
-              <label>Brand Voice (specific personality instructions)</label>
-              <textarea id="set-brand-voice" placeholder="e.g., You sound like a real person who genuinely wants to help guests plan a great event."></textarea>
-            </div>
-            <div class="settings-field">
-              <label>Sender Name (how the AI signs replies)</label>
-              <input type="text" id="set-sender-name" placeholder="Flow" />
-            </div>
-            <div class="settings-field">
-              <label>Sender Role</label>
-              <input type="text" id="set-sender-role" placeholder="Junior Sales Manager" />
-            </div>
-            <div class="settings-field">
-              <label>Direct Line (optional)</label>
-              <input type="text" id="set-sender-direct-line" placeholder="(615) 555-0123" />
-            </div>
             <div class="settings-field">
               <label>Logo URL (optional)</label>
               <input type="url" id="set-logo-url" placeholder="https://yourrestaurant.com/logo.png" />
-            </div>
-            <div class="settings-field full">
-              <label>Social Proof (optional, appears under signature)</label>
-              <textarea id="set-social-proof" placeholder="e.g., Recently hosted private dinners for Dollar General, Asurion, and the Bridgestone Arena team."></textarea>
-            </div>
-            <div class="settings-field">
-              <label>Escalation Guest Count (triggers manager handoff)</label>
-              <input type="number" id="set-escalation-threshold" min="1" max="500" />
-            </div>
-            <div class="settings-field">
-              <label>Escalation Contact Name</label>
-              <input type="text" id="set-escalation-name" placeholder="Manager name" />
-            </div>
-            <div class="settings-field">
-              <label>Escalation Contact Email</label>
-              <input type="email" id="set-escalation-email" placeholder="manager@restaurant.com" />
             </div>
             <div class="settings-field">
               <label>&nbsp;</label>
             </div>
             <div class="settings-field full">
-              <label>Parking Info</label>
-              <textarea id="set-parking-info" placeholder="e.g., Valet parking is available across the street at the JW Marriott."></textarea>
+              <label>Social Proof (optional, appears under signature)</label>
+              <textarea id="set-social-proof" placeholder="e.g., Recently hosted private dinners for Dollar General, Asurion, and the Bridgestone Arena team."></textarea>
             </div>
             <div class="settings-field full">
-              <label>Billing Policy (short)</label>
-              <textarea id="set-billing-policy-short" placeholder="e.g., Our invoices cover food, beverage, and service only. Outside vendors (DJs, photographers, decorators) must be billed separately."></textarea>
-            </div>
-            <div class="settings-field full">
-              <label>Event Spaces</label>
-              <div id="spaces-rows"></div>
-              <button class="add-menu-btn" onclick="addSpaceRow()">+ Add Space</button>
+              <div class="venue-pointer">
+                Looking for AI tone, signature, escalation, event spaces, parking, billing, or venue knowledge?
+                Those moved to the <a href="/venue">Venue page</a>, which validates every change and keeps the AI's knowledge in sync.
+              </div>
             </div>
             <div class="settings-field full">
               <label>Team Access (emails that can sign in and edit these settings)</label>
@@ -409,33 +349,15 @@ function fetchFullSettings(slug) {
     });
 }
 
+// SETTINGS_SLIM_V1 (2026-07-19): this page is account-level only. AI behavior,
+// event spaces, parking, billing, and venue knowledge are edited on /venue,
+// whose actions validate every field. The old spaces editor here re-serialized
+// spaces without combo_of and would have silently destroyed combinations.
 function hydrateFromRow(r) {
   document.getElementById('set-venue-name').value = r.venue_name || '';
   document.getElementById('set-website').value = r.website_url || '';
-  document.getElementById('set-ai-tone').value = r.ai_tone || '';
-  document.getElementById('set-brand-voice').value = r.brand_voice || '';
-  document.getElementById('set-escalation-threshold').value = r.escalation_threshold || 29;
-  document.getElementById('set-escalation-name').value = r.escalation_contact_name || '';
-  document.getElementById('set-escalation-email').value = r.escalation_contact_email || '';
-  document.getElementById('set-parking-info').value = r.parking_info || '';
-  document.getElementById('set-billing-policy-short').value = r.billing_policy_short || '';
-  document.getElementById('set-sender-name').value = r.sender_name || '';
-  document.getElementById('set-sender-role').value = r.sender_role || '';
-  document.getElementById('set-sender-direct-line').value = r.sender_direct_line || '';
   document.getElementById('set-social-proof').value = r.social_proof || '';
   document.getElementById('set-logo-url').value = r.logo_url || '';
-
-  // Spaces
-  var spacesContainer = document.getElementById('spaces-rows');
-  spacesContainer.innerHTML = '';
-  try {
-    var spaces = JSON.parse(r.spaces_json || '[]');
-    if (Array.isArray(spaces) && spaces.length) {
-      spaces.forEach(function(s) { addSpaceRow(s); });
-    } else {
-      addSpaceRow();
-    }
-  } catch(e) { addSpaceRow(); }
 
   // Team access
   var authContainer = document.getElementById('auth-rows');
@@ -467,53 +389,6 @@ function addMenuRow(name, url) {
   container.appendChild(row);
 }
 
-function addSpaceRow(s) {
-  s = s || {};
-  var container = document.getElementById('spaces-rows');
-  var row = document.createElement('div');
-  row.className = 'space-row';
-  row.innerHTML =
-    '<div><label>Name</label><input type="text" class="s-name" value="' + esc(s.name || '') + '" placeholder="Private Dining Room" /></div>' +
-    '<div><label>Seated capacity</label><input type="number" class="s-seated" value="' + esc(s.capacity_seated != null ? s.capacity_seated : '') + '" min="1" /></div>' +
-    '<div class="full"><label>Description</label><textarea class="s-desc" placeholder="Short description of the space">' + esc(s.description || '') + '</textarea></div>' +
-    '<div><label>Standing capacity</label><input type="number" class="s-standing" value="' + esc(s.capacity_standing != null ? s.capacity_standing : '') + '" min="1" /></div>' +
-    '<div><label>F&B minimum — weekday ($)</label><input type="number" class="s-fbwk" value="' + esc(s.fb_min_weekday != null ? s.fb_min_weekday : '') + '" min="0" /></div>' +
-    '<div><label>F&B minimum — weekend ($)</label><input type="number" class="s-fbwe" value="' + esc(s.fb_min_weekend != null ? s.fb_min_weekend : '') + '" min="0" /></div>' +
-    '<div class="full"><label class="buyout-label"><input type="checkbox" class="s-private" ' + ((s.is_private === false) ? '' : 'checked') + ' /> Private space (guests have the room to themselves — uncheck for shared or semi-private areas)</label></div>' +
-    '<div class="full"><label class="buyout-label"><input type="checkbox" class="s-buyout" ' + (s.buyout ? 'checked' : '') + ' /> This space is a full buyout of the venue</label></div>' +
-    '<div class="full">' +
-      '<label>Photos</label>' +
-      '<div class="photos-hint">Add a photo URL and an optional caption. Captions help the AI describe the space accurately in first-touch replies.</div>' +
-      '<div class="photo-rows"></div>' +
-      '<button type="button" class="add-photo-btn">+ Add photo</button>' +
-    '</div>' +
-    '<div class="full" style="text-align:right;"><button type="button" class="space-remove" onclick="this.closest(\'.space-row\').remove()">Remove this space</button></div>';
-  container.appendChild(row);
-
-  var photosContainer = row.querySelector('.photo-rows');
-  var existing = Array.isArray(s.photos) ? s.photos : [];
-  existing.forEach(function(p) {
-    if (typeof p === 'string') addPhotoRow(photosContainer, p, '');
-    else if (p && typeof p === 'object') addPhotoRow(photosContainer, p.url || '', p.caption || '');
-  });
-  if (existing.length === 0) addPhotoRow(photosContainer, '', '');
-
-  row.querySelector('.add-photo-btn').addEventListener('click', function() {
-    addPhotoRow(photosContainer, '', '');
-  });
-}
-
-function addPhotoRow(container, url, caption) {
-  var row = document.createElement('div');
-  row.className = 'photo-row';
-  row.innerHTML =
-    '<input type="url" class="p-url" placeholder="https://photos.example.com/space1.jpg" value="' + esc(url || '') + '" />' +
-    '<input type="text" class="p-caption" placeholder="Caption (optional) — e.g. Main dining room" value="' + esc(caption || '') + '" />' +
-    '<button type="button" class="photo-remove">Remove</button>';
-  row.querySelector('.photo-remove').addEventListener('click', function() { row.remove(); });
-  container.appendChild(row);
-}
-
 function addAuthRow(email) {
   var container = document.getElementById('auth-rows');
   var row = document.createElement('div');
@@ -522,35 +397,6 @@ function addAuthRow(email) {
     '<input type="email" placeholder="teammate@yourrestaurant.com" value="' + esc(email || '') + '" />' +
     '<button type="button" class="space-remove" onclick="this.closest(\'.auth-row\').remove()">Remove</button>';
   container.appendChild(row);
-}
-
-function collectSpaces() {
-  var rows = document.getElementById('spaces-rows').querySelectorAll('.space-row');
-  var out = [];
-  rows.forEach(function(row) {
-    var name = row.querySelector('.s-name').value.trim();
-    if (!name) return; // skip empty rows
-    var photoRows = row.querySelectorAll('.photo-row');
-    var photos = [];
-    photoRows.forEach(function(pr) {
-      var url = pr.querySelector('.p-url').value.trim();
-      if (!url) return; // skip rows without a URL
-      var caption = pr.querySelector('.p-caption').value.trim();
-      photos.push({ url: url, caption: caption });
-    });
-    out.push({
-      name: name,
-      description: row.querySelector('.s-desc').value.trim(),
-      capacity_seated: parseInt(row.querySelector('.s-seated').value, 10) || 0,
-      capacity_standing: parseInt(row.querySelector('.s-standing').value, 10) || 0,
-      is_private: row.querySelector('.s-private').checked,
-      buyout: row.querySelector('.s-buyout').checked,
-      fb_min_weekday: parseInt(row.querySelector('.s-fbwk').value, 10) || 0,
-      fb_min_weekend: parseInt(row.querySelector('.s-fbwe').value, 10) || 0,
-      photos: photos
-    });
-  });
-  return out;
 }
 
 function collectAuthEmails() {
@@ -602,19 +448,8 @@ function saveSettings() {
     client_slug: currentClient._slug,
     venue_name: document.getElementById('set-venue-name').value.trim(),
     website_url: document.getElementById('set-website').value.trim(),
-    ai_tone: document.getElementById('set-ai-tone').value.trim(),
-    brand_voice: document.getElementById('set-brand-voice').value.trim(),
-    escalation_threshold: parseInt(document.getElementById('set-escalation-threshold').value) || 29,
-    escalation_contact_name: document.getElementById('set-escalation-name').value.trim(),
-    escalation_contact_email: document.getElementById('set-escalation-email').value.trim(),
-    parking_info: document.getElementById('set-parking-info').value.trim(),
-    billing_policy_short: document.getElementById('set-billing-policy-short').value.trim(),
-    sender_name: document.getElementById('set-sender-name').value.trim(),
-    sender_role: document.getElementById('set-sender-role').value.trim(),
-    sender_direct_line: document.getElementById('set-sender-direct-line').value.trim(),
     social_proof: document.getElementById('set-social-proof').value.trim(),
     logo_url: document.getElementById('set-logo-url').value.trim(),
-    spaces_json: JSON.stringify(collectSpaces()),
     authorized_emails: JSON.stringify(collectAuthEmails()),
     menus_json: JSON.stringify(menus)
   };
