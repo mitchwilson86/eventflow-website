@@ -32,6 +32,7 @@
     var client = q.get('c') || '';
     var email = q.get('e') || '';
     var token = q.get('t') || '';
+    var cid = q.get('cid') || '';
     var titleEl = document.getElementById('title');
     var msgEl = document.getElementById('msg');
 
@@ -43,7 +44,7 @@
       fetch(OPS_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ client: client, email: email, token: token })
+        body: JSON.stringify({ client: client, email: email, token: token, cid: cid })
       }).then(function (r) { return r.json(); }).then(function (res) {
         if (res.ok) {
           titleEl.textContent = "You're unsubscribed";

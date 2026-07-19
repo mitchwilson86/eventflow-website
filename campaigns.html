@@ -143,6 +143,15 @@
           <div class="muted-note" id="aud-note" style="margin-top:10px;"></div>
         </div>
 
+        <!-- Recent performance (hidden until a campaign has sent) -->
+        <div class="panel" id="perf-panel" style="display:none;">
+          <h3>Recent campaign performance</h3>
+          <div class="muted-note" style="margin-bottom:10px;">Engagement is measured by replies (the goal of every campaign is a reply) and unsubscribes. Open tracking is off by design to protect deliverability.</div>
+          <div class="table-wrap"><table class="report-table"><thead>
+            <tr><th>Campaign</th><th>Status</th><th>Sent</th><th>Failed</th><th>Replies</th><th>Reply rate</th><th>Unsubscribes</th></tr>
+          </thead><tbody id="perf-tbody"></tbody></table></div>
+        </div>
+
         <!-- Campaign editor (hidden until New/Edit) -->
         <div class="panel" id="editor-panel" style="display:none;">
           <h3 id="editor-title">New campaign</h3>
@@ -194,6 +203,49 @@
             <button class="camp-btn" onclick="openEditor(null)">+ New campaign</button>
           </h3>
           <div id="camp-list"><span class="muted-note">Loading campaigns…</span></div>
+        </div>
+
+        <!-- Email design -->
+        <div class="panel">
+          <h3>Email design <span class="muted-note" style="font-weight:normal;font-size:12px;">how every campaign email looks for your venue</span></h3>
+          <div class="ed-two">
+            <div>
+              <div class="ed-two">
+                <div class="ed-field">
+                  <label>Accent color</label>
+                  <input type="color" id="dz-accent" value="#334155" style="height:42px;padding:4px;" />
+                </div>
+                <div class="ed-field">
+                  <label>Header</label>
+                  <select id="dz-header">
+                    <option value="banner">Color banner with venue name/logo</option>
+                    <option value="none">No header (plain)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="ed-field">
+                <label><input type="checkbox" id="dz-logo" checked style="width:auto;margin-right:6px;" />Show logo in the banner <span id="dz-logo-note" class="muted-note"></span></label>
+              </div>
+              <div class="ed-field">
+                <label><input type="checkbox" id="dz-button" checked style="width:auto;margin-right:6px;" />Show a reply button</label>
+              </div>
+              <div class="ed-field">
+                <label>Reply button label</label>
+                <input type="text" id="dz-button-label" maxlength="60" placeholder="Reply to start planning" />
+              </div>
+              <div class="ed-field">
+                <label>Footer note (optional)</label>
+                <input type="text" id="dz-footer" maxlength="200" placeholder="e.g. 592 12th Ave S, Nashville, TN" />
+              </div>
+              <div class="camp-actions">
+                <button class="camp-btn approve" id="dz-save" onclick="saveDesign()">Save design</button>
+              </div>
+            </div>
+            <div>
+              <label style="display:block;font-size:12px;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;">Live preview</label>
+              <div id="dz-preview" style="border:1px solid var(--border);border-radius:8px;overflow:hidden;background:#e9ebee;padding:12px;"></div>
+            </div>
+          </div>
         </div>
 
         <!-- Send report (hidden until requested) -->
@@ -350,6 +402,8 @@ function loadQueue() {
     QUEUE = res;
     renderAudience();
     renderQueue();
+    renderPerformance();
+    initDesignEditor();
   }).catch(function (e) { showMsg('Failed to load campaigns: ' + e.message, 'err'); });
 }
 
@@ -402,6 +456,8 @@ function renderQueue() {
     }
     if (c.body_template) html += '<div class="camp-body-preview">' + previewBody(c.body_template) + '</div>';
     if (countBits) html += '<div class="camp-counts">Sends: ' + esc(countBits) + '</div>';
+    if (c.metrics) html += '<div class="camp-counts">Engagement: ' + c.metrics.replies + ' repl' + (c.metrics.replies === 1 ? 'y' : 'ies') +
+      ' (' + c.metrics.reply_rate + '%) · ' + c.metrics.unsubscribes + ' unsubscribe' + (c.metrics.unsubscribes === 1 ? '' : 's') + '</div>';
     html += '<div class="camp-actions">';
     if (approvable) html += '<button class="camp-btn approve" onclick="approveCampaign(\'' + c.id + '\')">Approve &amp; queue</button>';
     if (editable) html += '<button class="camp-btn" onclick="openEditor(\'' + c.id + '\')">Edit</button>';
@@ -411,6 +467,93 @@ function renderQueue() {
     html += '</div></div>';
     return html;
   }).join('');
+}
+
+/* ═══ PERFORMANCE ═══ */
+function renderPerformance() {
+  var done = QUEUE.campaigns.filter(function (c) { return c.status === 'sent' || c.status === 'sending'; });
+  var panel = document.getElementById('perf-panel');
+  if (!done.length) { panel.style.display = 'none'; return; }
+  panel.style.display = 'block';
+  document.getElementById('perf-tbody').innerHTML = done.map(function (c) {
+    var m = c.metrics || { replies: 0, reply_rate: 0, unsubscribes: 0 };
+    var failed = (c.send_counts || {}).failed || 0;
+    var sent = c.status === 'sent' ? c.sent_count : ((c.send_counts || {}).sent || 0);
+    return '<tr><td>' + esc(c.name) + '</td><td>' + esc(c.status) + '</td><td>' + sent + '</td><td>' + failed +
+      '</td><td>' + m.replies + '</td><td>' + m.reply_rate + '%</td><td>' + m.unsubscribes + '</td></tr>';
+  }).join('');
+}
+
+/* ═══ EMAIL DESIGN ═══ */
+var DESIGN_DEFAULTS = { accent_color: '#334155', header_style: 'banner', show_logo: true, show_reply_button: true, button_label: 'Reply to start planning', footer_note: '' };
+var designReady = false;
+
+function initDesignEditor() {
+  var ed = QUEUE.email_design || {};
+  var s = Object.assign({}, DESIGN_DEFAULTS, ed.settings || {});
+  document.getElementById('dz-accent').value = s.accent_color;
+  document.getElementById('dz-header').value = s.header_style;
+  document.getElementById('dz-logo').checked = s.show_logo !== false;
+  document.getElementById('dz-button').checked = s.show_reply_button !== false;
+  document.getElementById('dz-button-label').value = s.button_label || '';
+  document.getElementById('dz-footer').value = s.footer_note || '';
+  document.getElementById('dz-logo-note').textContent = ed.logo_url ? '' : '(no logo uploaded yet — the venue name shows instead; add a logo URL in Settings)';
+  if (!designReady) {
+    ['dz-accent', 'dz-header', 'dz-logo', 'dz-button', 'dz-button-label', 'dz-footer'].forEach(function (id) {
+      document.getElementById(id).addEventListener('input', renderDesignPreview);
+      document.getElementById(id).addEventListener('change', renderDesignPreview);
+    });
+    designReady = true;
+  }
+  renderDesignPreview();
+}
+
+function currentDesign() {
+  return {
+    accent_color: document.getElementById('dz-accent').value,
+    header_style: document.getElementById('dz-header').value,
+    show_logo: document.getElementById('dz-logo').checked,
+    show_reply_button: document.getElementById('dz-button').checked,
+    button_label: document.getElementById('dz-button-label').value.trim(),
+    footer_note: document.getElementById('dz-footer').value.trim()
+  };
+}
+
+// Mirrors the sender workflow's template (SENDER_TEMPLATE_V1) so the preview is faithful.
+function renderDesignPreview() {
+  var ed = QUEUE.email_design || {};
+  var s = currentDesign();
+  var accent = /^#[0-9a-fA-F]{6}$/.test(s.accent_color) ? s.accent_color : DESIGN_DEFAULTS.accent_color;
+  var venueName = ed.venue_name || 'Your Venue';
+  var sampleBody = 'Hi Jordan,\n\nThis is a preview of how your campaign emails will look. The body text of each campaign appears here, personalized with every guest’s first name.\n\nIf you are thinking about an upcoming event, just reply to this email and we can start planning together.';
+  var paras = esc(sampleBody).split(/\n{2,}/).map(function (p) { return '<p style="margin:0 0 14px;line-height:1.55;">' + p.replace(/\n/g, '<br>') + '</p>'; }).join('');
+  var html = '<div style="max-width:600px;margin:0 auto;font-family:Arial,Helvetica,sans-serif;color:#1a2233;background:#fff;">';
+  if (s.header_style === 'banner') {
+    html += '<div style="background:' + accent + ';padding:20px 28px;">';
+    if (s.show_logo && ed.logo_url) html += '<img src="' + esc(ed.logo_url) + '" alt="' + esc(venueName) + '" style="max-height:44px;vertical-align:middle;">';
+    else html += '<span style="color:#ffffff;font-size:20px;font-weight:bold;">' + esc(venueName) + '</span>';
+    html += '</div>';
+  }
+  html += '<div style="padding:26px 28px 6px;font-size:14px;">' + paras + '</div>';
+  if (s.show_reply_button) {
+    html += '<div style="padding:4px 28px 26px;"><span style="background:' + accent + ';color:#ffffff;padding:12px 22px;border-radius:6px;display:inline-block;font-size:14px;">' + esc(s.button_label || DESIGN_DEFAULTS.button_label) + '</span></div>';
+  }
+  html += '<div style="padding:16px 28px;background:#f4f5f7;font-size:12px;color:#8a8f98;">';
+  if (s.footer_note) html += esc(s.footer_note) + '<br>';
+  html += 'Don’t want event emails from ' + esc(venueName) + '? <span style="text-decoration:underline;">Unsubscribe</span>.</div></div>';
+  document.getElementById('dz-preview').innerHTML = html;
+}
+
+function saveDesign() {
+  var btn = document.getElementById('dz-save');
+  btn.disabled = true;
+  api({ action: 'save_email_design', design: currentDesign() }).then(function (res) {
+    btn.disabled = false;
+    if (res.error) { showMsg(res.error, 'err'); return; }
+    showMsg('Email design saved. Every future campaign send uses it.', 'ok');
+    QUEUE.email_design = QUEUE.email_design || {};
+    QUEUE.email_design.settings = res.design;
+  }).catch(function (e) { btn.disabled = false; showMsg('Save failed: ' + e.message, 'err'); });
 }
 
 function previewBody(body) {
