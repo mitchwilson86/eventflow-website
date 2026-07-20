@@ -305,7 +305,7 @@ function loadDynamicClients() {
           }
         }
       }
-      if (window.EF_ADMIN && EF_ADMIN.isAdminCaller()) {
+      if (window.EF_ADMIN) {
         EF_ADMIN.setupVenuePicker(CLIENTS, function(slug) {
           const c = Object.values(CLIENTS).find(x => x.slug === slug);
           if (!c) return;

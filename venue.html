@@ -265,6 +265,14 @@
             </div>
           </div>
 
+          <!-- Hidden until the backend returns menus (Apps Script v13.7+),
+               so a save can never silently drop what the user typed here. -->
+          <div class="panel" id="menuLinksPanel" style="display:none;">
+            <h3>Menu links <span class="vb-h-hint">the group menus the assistant shares with guests</span></h3>
+            <div id="menuRows"></div>
+            <button class="vb-mini-btn" onclick="addMenuLinkRow('', '', '')">+ Add menu link</button>
+          </div>
+
           <div class="panel">
             <h3>Set policies (not editable here)</h3>
             <div class="vf-fixed">
@@ -374,6 +382,12 @@
             <div class="vf-field">
               <label for="sender_direct_line">Signature direct line (optional)</label>
               <input type="text" id="sender_direct_line" maxlength="40" placeholder="e.g. 615-555-0100" />
+            </div>
+            <!-- Hidden until the backend supports social_proof here (Apps Script v13.7+). -->
+            <div class="vf-field" id="socialProofField" style="display:none;">
+              <label for="social_proof">Social proof (optional)</label>
+              <textarea id="social_proof" maxlength="400" placeholder="e.g. Recently hosted private dinners for Dollar General, Asurion, and the Bridgestone Arena team."></textarea>
+              <span class="hint">Appears under the assistant's signature in emails.</span>
             </div>
           </div>
 
@@ -592,12 +606,15 @@
     var btn = document.getElementById('saveFactsBtn');
     btn.disabled = true; btn.textContent = 'Saving…';
     var payload = { action: 'save_venue_facts', facts: readFacts() };
-    // Only send parking/billing when the panel is live (backend v13.6+ returned
-    // them at load) — a page loaded against an older backend must never
-    // overwrite these fields with the empty hidden inputs.
+    // Only send parking/billing/menus when their panel is live (backend
+    // returned them at load) — a page loaded against an older backend must
+    // never overwrite these fields with the empty hidden inputs.
     if (document.getElementById('parkingBillingPanel').style.display !== 'none') {
       payload.parking_info = document.getElementById('parking_info').value.trim();
       payload.billing_policy_short = document.getElementById('billing_policy_short').value.trim();
+    }
+    if (document.getElementById('menuLinksPanel').style.display !== 'none') {
+      payload.menus = collectMenuLinks();
     }
     api(payload).then(function (res) {
       btn.disabled = false; btn.textContent = 'Save venue facts';
@@ -607,6 +624,32 @@
       btn.disabled = false; btn.textContent = 'Save venue facts';
       showMsg('Save failed. Please try again.', 'err');
     });
+  }
+
+  /* ---------- Menu links (Venue Facts tab, SETTINGS_SLIM_V2) ---------- */
+  function addMenuLinkRow(name, url, description) {
+    var row = document.createElement('div');
+    row.className = 'vb-photo-row';
+    row.dataset.desc = description || '';
+    var n = document.createElement('input');
+    n.type = 'text'; n.placeholder = 'Menu name, e.g. $65 Group Dinner'; n.value = name || ''; n.className = 'mn-name'; n.maxLength = 80;
+    var u = document.createElement('input');
+    u.type = 'text'; u.placeholder = 'https://… (menu link)'; u.value = url || ''; u.className = 'mn-url';
+    var x = document.createElement('button');
+    x.className = 'vb-mini-btn danger'; x.textContent = 'Remove';
+    x.onclick = function () { row.remove(); };
+    row.appendChild(n); row.appendChild(u); row.appendChild(x);
+    document.getElementById('menuRows').appendChild(row);
+  }
+  function collectMenuLinks() {
+    var out = [];
+    document.querySelectorAll('#menuRows .vb-photo-row').forEach(function (row) {
+      var name = row.querySelector('.mn-name').value.trim();
+      var url = row.querySelector('.mn-url').value.trim();
+      if (!name && !url) return;
+      out.push({ name: name, url: url, description: row.dataset.desc || '' });
+    });
+    return out;
   }
 
   /* ---------- Spaces tab ---------- */
@@ -771,11 +814,20 @@
       var el = document.getElementById(f);
       if (el && ai[f] !== undefined && ai[f] !== null) el.value = ai[f];
     });
+    // SETTINGS_SLIM_V2: shown only when the backend supports it, and only
+    // then included in the save — an older backend can never wipe it.
+    if (ai.social_proof !== undefined) {
+      document.getElementById('socialProofField').style.display = '';
+      document.getElementById('social_proof').value = ai.social_proof || '';
+    }
   }
   function saveAiSettings() {
     clearMsg();
     var settings = {};
     AI_FIELDS.forEach(function (f) { settings[f] = document.getElementById(f).value; });
+    if (document.getElementById('socialProofField').style.display !== 'none') {
+      settings.social_proof = document.getElementById('social_proof').value;
+    }
     var btn = document.getElementById('saveAiBtn');
     btn.disabled = true; btn.textContent = 'Saving…';
     api({ action: 'save_ai_settings', settings: settings }).then(function (res) {
@@ -979,15 +1031,44 @@
         document.getElementById('parking_info').value = res.parking_info || '';
         document.getElementById('billing_policy_short').value = res.billing_policy_short || '';
       }
+      if (res.menus !== undefined) {
+        document.getElementById('menuLinksPanel').style.display = '';
+        document.getElementById('menuRows').innerHTML = '';
+        (res.menus || []).forEach(function (m) { addMenuLinkRow(m.name, m.url, m.description); });
+        if (!(res.menus || []).length) addMenuLinkRow('', '', '');
+      }
       renderSpaces();
       fillAi(PROFILE.ai);
       loadKb();
       showApp();
       if (window.EF_ADMIN && EF_ADMIN.showAdminNav) { try { EF_ADMIN.showAdminNav(); } catch (e) {} }
+      setupVenuePickerOnce();
     }).catch(function () {
       showSignin();
       showMsg('Could not reach the server. Please refresh.', 'err', 'signin-msg');
     });
+  }
+
+  // Venue picker (Google sessions only — magic-link tokens are per-venue).
+  // Self-gates inside EF_ADMIN: admins see all venues, others only when
+  // their email has access to 2+ venues.
+  var pickerDone = false;
+  function setupVenuePickerOnce() {
+    if (pickerDone || !window.EF_ADMIN || !sessionStorage.getItem('ef_user_email')) return;
+    pickerDone = true;
+    fetch(DATA_URL + '?type=client_list').then(function (r) { return r.json(); }).then(function (res) {
+      var clients = {};
+      ((res && res.clients) || []).forEach(function (c) {
+        var auth = [];
+        try { auth = JSON.parse(c.authorized_emails || '[]') || []; } catch (e) { auth = []; }
+        clients[c.slug] = { slug: c.slug, gmail_address: c.gmail || '', venue: c.venue || c.slug, authorized_emails: auth };
+      });
+      EF_ADMIN.setupVenuePicker(clients, function (slug) {
+        if (!slug || slug === SLUG) return;
+        SLUG = slug;
+        loadProfile();
+      });
+    }).catch(function () {});
   }
 
   (function init() {

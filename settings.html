@@ -26,6 +26,16 @@
       padding: 14px 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;
     }
     .venue-pointer a { color: var(--teal); font-weight: 600; }
+    .acct-h { font-size: 15px; color: var(--text-primary); margin-bottom: 12px; }
+    .acct-hint { font-weight: 400; font-size: 12px; color: var(--text-muted); margin-left: 8px; }
+    .acct-rows { display: flex; flex-direction: column; gap: 8px; }
+    .acct-row { display: flex; justify-content: space-between; gap: 16px; padding: 10px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
+    .acct-row .k { color: var(--text-muted); }
+    .acct-row .v { color: var(--text-primary); text-align: right; word-break: break-word; }
+    .acct-row .v.ok { color: var(--green); font-weight: 600; }
+    .acct-row .v.off { color: var(--text-muted); }
+    .acct-note { margin-top: 10px; font-size: 12px; color: var(--text-muted); }
+    .acct-note a { color: var(--teal); font-weight: 600; }
     .space-remove { background: none; border: none; color: var(--red); font-size: 12px; cursor: pointer; padding: 4px 8px; }
     .space-remove:hover { text-decoration: underline; }
     .auth-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
@@ -137,13 +147,9 @@
               <label>&nbsp;</label>
             </div>
             <div class="settings-field full">
-              <label>Social Proof (optional, appears under signature)</label>
-              <textarea id="set-social-proof" placeholder="e.g., Recently hosted private dinners for Dollar General, Asurion, and the Bridgestone Arena team."></textarea>
-            </div>
-            <div class="settings-field full">
               <div class="venue-pointer">
-                Looking for AI tone, signature, escalation, event spaces, parking, billing, or venue knowledge?
-                Those moved to the <a href="/venue">Venue page</a>, which validates every change and keeps the AI's knowledge in sync.
+                Looking for AI tone, signature, social proof, escalation, event spaces, parking, billing, menu links, or venue knowledge?
+                Those live on the <a href="/venue">Venue page</a>, which validates every change and keeps the AI's knowledge in sync.
               </div>
             </div>
             <div class="settings-field full">
@@ -151,16 +157,22 @@
               <div id="auth-rows"></div>
               <button class="add-menu-btn" onclick="addAuthRow()">+ Add Teammate</button>
             </div>
-            <div class="settings-field full">
-              <label>Menu Links</label>
-              <div id="menu-rows"></div>
-              <button class="add-menu-btn" onclick="addMenuRow()">+ Add Menu</button>
-            </div>
           </div>
           <div class="settings-actions">
             <button class="settings-save" id="save-settings-btn" onclick="saveSettings()">Save Settings</button>
             <span class="settings-status" id="settings-status"></span>
           </div>
+        </div>
+
+        <!-- Read-only account overview, rendered from the same get_settings row -->
+        <div class="panel" style="margin-top:20px;">
+          <h3 class="acct-h">Connections <span class="acct-hint">what's wired up for this venue (read-only)</span></h3>
+          <div id="connections-rows" class="acct-rows"></div>
+        </div>
+        <div class="panel" style="margin-top:20px;">
+          <h3 class="acct-h">Notifications <span class="acct-hint">where the AI sends people and alerts (read-only)</span></h3>
+          <div id="notifications-rows" class="acct-rows"></div>
+          <div class="acct-note">Change these on the <a href="/venue">Venue page</a> under AI Settings.</div>
         </div>
 
       </div>
@@ -271,7 +283,9 @@ function loadDynamicClients() {
         }
       }
     }
-    if (window.EF_ADMIN && EF_ADMIN.isAdminCaller()) {
+    // Picker self-gates: admins see all venues; anyone else sees it only
+    // when their email has access to 2+ venues.
+    if (window.EF_ADMIN) {
       EF_ADMIN.setupVenuePicker(CLIENTS, function(slug) {
         var c2 = Object.values(CLIENTS).find(function(x){ return x.slug === slug; });
         if (!c2) return;
@@ -356,8 +370,8 @@ function fetchFullSettings(slug) {
 function hydrateFromRow(r) {
   document.getElementById('set-venue-name').value = r.venue_name || '';
   document.getElementById('set-website').value = r.website_url || '';
-  document.getElementById('set-social-proof').value = r.social_proof || '';
   document.getElementById('set-logo-url').value = r.logo_url || '';
+  renderAccountPanels(r);
 
   // Team access
   var authContainer = document.getElementById('auth-rows');
@@ -370,23 +384,32 @@ function hydrateFromRow(r) {
       addAuthRow();
     }
   } catch(e) { addAuthRow(); }
-
-  // Menus
-  var menuContainer = document.getElementById('menu-rows');
-  menuContainer.innerHTML = '';
-  try {
-    var menus = JSON.parse(r.menus_json || '[]');
-    menus.forEach(function(m) { addMenuRow(m.name, m.url); });
-  } catch(e) { /* fall through */ }
-  if (menuContainer.children.length === 0) addMenuRow('', '');
 }
 
-function addMenuRow(name, url) {
-  var container = document.getElementById('menu-rows');
-  var row = document.createElement('div');
-  row.className = 'menu-row';
-  row.innerHTML = '<input type="text" placeholder="Menu name" value="' + esc(name || '') + '" /><input type="url" placeholder="https://menu-link.com" value="' + esc(url || '') + '" />';
-  container.appendChild(row);
+// Read-only Connections + Notifications panels, from the get_settings row.
+function acctRow(k, v, cls) {
+  return '<div class="acct-row"><span class="k">' + esc(k) + '</span><span class="v' + (cls ? ' ' + cls : '') + '">' + esc(v) + '</span></div>';
+}
+function renderAccountPanels(r) {
+  var conn = '';
+  var status = (r.status || 'unknown').toString();
+  conn += acctRow('Venue status', status.charAt(0).toUpperCase() + status.slice(1), status === 'active' ? 'ok' : '');
+  var emailChannel = r.outlook_address ? 'Outlook — ' + r.outlook_address
+    : (r.gmail_address ? 'Gmail — ' + r.gmail_address : 'Not connected');
+  conn += acctRow('AI email channel', emailChannel, (r.outlook_address || r.gmail_address) ? 'ok' : 'off');
+  var sh = (r.soft_hold_enabled || '').toString();
+  conn += acctRow('Soft holds (tentative date holds)', sh === 'on' ? 'On' : (sh === 'replay' ? 'Testing' : 'Off'), sh === 'on' ? 'ok' : 'off');
+  conn += acctRow('Alerts channel', '#eventflow-ops (Slack)', 'ok');
+  document.getElementById('connections-rows').innerHTML = conn;
+
+  var noti = '';
+  var escTo = r.escalation_contact_name
+    ? r.escalation_contact_name + (r.escalation_contact_email ? ' (' + r.escalation_contact_email + ')' : '')
+    : (r.escalation_contact_email || 'Not set');
+  noti += acctRow('Escalations go to', escTo, r.escalation_contact_email ? '' : 'off');
+  noti += acctRow('Copied on every AI reply (supervision)', r.supervision_cc_email || 'Off', r.supervision_cc_email ? '' : 'off');
+  noti += acctRow('Escalates at group size', (r.escalation_threshold || '29') + '+ guests', '');
+  document.getElementById('notifications-rows').innerHTML = noti;
 }
 
 function addAuthRow(email) {
@@ -420,15 +443,6 @@ function saveSettings() {
   status.textContent = 'Saving...';
   status.style.color = 'var(--text-muted)';
 
-  var menuRows = document.getElementById('menu-rows').querySelectorAll('.menu-row');
-  var menus = [];
-  menuRows.forEach(function(row) {
-    var inputs = row.querySelectorAll('input');
-    var name = inputs[0].value.trim();
-    var url = inputs[1].value.trim();
-    if (name || url) menus.push({ name: name, url: url, description: '' });
-  });
-
   // Require a fresh Google ID token (Apps Script verifies it server-side).
   // Tokens expire after 1 hour, so prompt re-sign-in if stale.
   var idToken = sessionStorage.getItem('ef_id_token');
@@ -448,10 +462,8 @@ function saveSettings() {
     client_slug: currentClient._slug,
     venue_name: document.getElementById('set-venue-name').value.trim(),
     website_url: document.getElementById('set-website').value.trim(),
-    social_proof: document.getElementById('set-social-proof').value.trim(),
     logo_url: document.getElementById('set-logo-url').value.trim(),
-    authorized_emails: JSON.stringify(collectAuthEmails()),
-    menus_json: JSON.stringify(menus)
+    authorized_emails: JSON.stringify(collectAuthEmails())
   };
 
   // Use text/plain Content-Type to avoid CORS preflight. Apps Script Web Apps

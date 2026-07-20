@@ -50,11 +50,30 @@ window.EF_ADMIN = (function () {
   }
 
   /**
+   * Venues the signed-in email can access: all of them for admins, otherwise
+   * every venue where the email is the owner (gmail_address) or on the
+   * authorized_emails list.
+   */
+  function accessibleVenues(clients, email) {
+    email = normalize(email);
+    var all = Object.values(clients || {}).filter(function (c) { return c.slug; });
+    if (isAdmin(email)) return all;
+    return all.filter(function (c) {
+      if (normalize(c.gmail_address) === email) return true;
+      return (c.authorized_emails || []).some(function (e) { return normalize(e) === email; });
+    });
+  }
+
+  /**
    * Create (if needed) and populate a venue picker at the top of .dash-body.
-   * Only renders for admin users. Calls onChange(slug) when the user picks.
+   * Renders for admins (all venues) and for any user with access to 2+
+   * venues (their venues only). Calls onChange(slug) when the user picks.
    */
   function setupVenuePicker(clients, onChange) {
-    if (!isAdminCaller()) return;
+    var email = sessionStorage.getItem('ef_user_email');
+    var admin = isAdminCaller();
+    var venues = accessibleVenues(clients, email);
+    if (!admin && venues.length < 2) return;
     var host = document.querySelector('.dash-body');
     if (!host) return;
 
@@ -64,14 +83,13 @@ window.EF_ADMIN = (function () {
       row.id = 'ef-venue-picker-row';
       row.className = 'venue-picker-row';
       row.innerHTML =
-        '<span class="admin-badge">Admin</span>' +
-        '<label for="ef-venue-picker">Viewing venue:</label>' +
+        (admin ? '<span class="admin-badge">Admin</span>' : '') +
+        '<label for="ef-venue-picker">' + (admin ? 'Viewing venue:' : 'Your venues:') + '</label>' +
         '<select id="ef-venue-picker"></select>';
       host.insertBefore(row, host.firstChild);
     }
 
     var sel = document.getElementById('ef-venue-picker');
-    var venues = Object.values(clients || {}).filter(function (c) { return c.slug; });
     if (!venues.length) { row.style.display = 'none'; return; }
     row.style.display = 'flex';
 
@@ -104,6 +122,7 @@ window.EF_ADMIN = (function () {
     isAdmin: isAdmin,
     isAdminCaller: isAdminCaller,
     resolveClient: resolveClient,
+    accessibleVenues: accessibleVenues,
     setupVenuePicker: setupVenuePicker,
     showAdminNav: showAdminNav
   };
