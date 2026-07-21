@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stay in touch</title>
+  <meta name="robots" content="noindex">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* REPERMISSION_V1 (2026-07-20): guest-facing opt-in confirm page for the one-time
+       re-permission campaign. Deliberately standalone like unsubscribe.html.
+       IMPORTANT: confirmation fires ONLY on the button click, never on page load —
+       email security scanners prefetch links, and a load-time confirm would falsely
+       opt guests in. The click is the consent. */
+    body { margin:0; font-family:'Inter',system-ui,sans-serif; background:#f6f7f9; color:#1a2233;
+           display:flex; align-items:center; justify-content:center; min-height:100vh; }
+    .card { background:#fff; border:1px solid #e3e6eb; border-radius:12px; padding:36px 32px;
+            max-width:420px; width:calc(100% - 48px); text-align:center; box-shadow:0 2px 12px rgba(20,30,60,.06); }
+    h1 { font-size:20px; margin:0 0 10px; }
+    p { font-size:14px; line-height:1.55; color:#4b5566; margin:0 0 16px; }
+    .ok { color:#0a7a4b; }
+    .err { color:#b42318; }
+    .email { font-weight:600; }
+    button { background:#334155; color:#fff; border:0; border-radius:8px; padding:12px 26px;
+             font-family:inherit; font-size:15px; font-weight:600; cursor:pointer; }
+    button:hover { background:#243244; }
+    button:disabled { background:#9aa3b2; cursor:default; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1 id="title">Stay in the loop?</h1>
+    <p id="msg">Click below to keep receiving occasional event emails from us. One click and you're on the list.</p>
+    <button id="btn" type="button">Yes, keep me posted</button>
+  </div>
+  <script>
+    var OPS_API = 'https://uzojlcwsrbsqckycjlgm.supabase.co/functions/v1/ops-api?action=confirm_optin';
+    var q = new URLSearchParams(location.search);
+    var client = q.get('c') || '';
+    var email = q.get('e') || '';
+    var token = q.get('t') || '';
+    var cid = q.get('cid') || '';
+    var titleEl = document.getElementById('title');
+    var msgEl = document.getElementById('msg');
+    var btn = document.getElementById('btn');
+
+    if (!client || !email || !token) {
+      titleEl.textContent = 'Invalid link';
+      msgEl.textContent = 'This link is missing information. Please use the link from the email you received.';
+      msgEl.className = 'err';
+      btn.style.display = 'none';
+    } else {
+      btn.addEventListener('click', function () {
+        btn.disabled = true;
+        btn.textContent = 'One moment…';
+        fetch(OPS_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ client: client, email: email, token: token, cid: cid })
+        }).then(function (r) { return r.json(); }).then(function (res) {
+          if (res.ok) {
+            titleEl.textContent = "You're on the list";
+            msgEl.innerHTML = 'Thanks! <span class="email"></span> will hear from us occasionally with event date openings, seasonal menus, and holiday booking priority. You can unsubscribe any time from any email.';
+            msgEl.querySelector('.email').textContent = email;
+            msgEl.className = 'ok';
+            btn.style.display = 'none';
+          } else {
+            titleEl.textContent = 'Something went wrong';
+            msgEl.textContent = 'We could not process this link (' + (res.error || 'unknown error') + '). Reply to the email you received and we will add you manually.';
+            msgEl.className = 'err';
+            btn.style.display = 'none';
+          }
+        }).catch(function () {
+          titleEl.textContent = 'Something went wrong';
+          msgEl.textContent = 'We could not reach the server. Please try again in a minute.';
+          msgEl.className = 'err';
+          btn.disabled = false;
+          btn.textContent = 'Yes, keep me posted';
+        });
+      });
+    }
+  </script>
+</body>
+</html>

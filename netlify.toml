@@ -49,6 +49,11 @@
   status = 200
 
 [[redirects]]
+  from = "/stay-in-touch"
+  to = "/stay-in-touch.html"
+  status = 200
+
+[[redirects]]
   from = "/booking"
   to = "/booking.html"
   status = 200

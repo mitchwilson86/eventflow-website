@@ -167,6 +167,7 @@
                 <option value="winback">Lapsed guest winback</option>
                 <option value="corporate_nudge">Corporate nudge</option>
                 <option value="custom">Custom</option>
+                <option value="repermission">Re-permission (one-time opt-in ask)</option>
               </select>
             </div>
           </div>
@@ -278,7 +279,7 @@ const SEGMENT_LABELS = {
   holiday_host: 'Holiday hosts', lapsed_regular: 'Lapsed guests',
   corporate_booker: 'Corporate bookers', pdr_host: 'PDR hosts', all_guests: 'All guests'
 };
-const TYPE_LABELS = { holiday_push: 'Holiday push', winback: 'Winback', corporate_nudge: 'Corporate nudge', custom: 'Custom' };
+const TYPE_LABELS = { holiday_push: 'Holiday push', winback: 'Winback', corporate_nudge: 'Corporate nudge', custom: 'Custom', repermission: 'Re-permission' };
 
 /* ═══ SIDEBAR TOGGLE ═══ */
 function toggleSidebar() {
@@ -456,8 +457,12 @@ function renderQueue() {
     }
     if (c.body_template) html += '<div class="camp-body-preview">' + previewBody(c.body_template) + '</div>';
     if (countBits) html += '<div class="camp-counts">Sends: ' + esc(countBits) + '</div>';
-    if (c.metrics) html += '<div class="camp-counts">Engagement: ' + c.metrics.replies + ' repl' + (c.metrics.replies === 1 ? 'y' : 'ies') +
-      ' (' + c.metrics.reply_rate + '%) · ' + c.metrics.unsubscribes + ' unsubscribe' + (c.metrics.unsubscribes === 1 ? '' : 's') + '</div>';
+    if (c.metrics) {
+      html += '<div class="camp-counts">Engagement: ' + c.metrics.replies + ' repl' + (c.metrics.replies === 1 ? 'y' : 'ies') +
+        ' (' + c.metrics.reply_rate + '%) · ' + c.metrics.unsubscribes + ' unsubscribe' + (c.metrics.unsubscribes === 1 ? '' : 's');
+      if (c.campaign_type === 'repermission') html += ' · ' + (c.metrics.confirms || 0) + ' confirmed opt-in' + (c.metrics.confirms === 1 ? '' : 's');
+      html += '</div>';
+    }
     html += '<div class="camp-actions">';
     if (approvable) html += '<button class="camp-btn approve" onclick="approveCampaign(\'' + c.id + '\')">Approve &amp; queue</button>';
     if (editable) html += '<button class="camp-btn" onclick="openEditor(\'' + c.id + '\')">Edit</button>';
