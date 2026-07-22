@@ -165,6 +165,13 @@
       <div class="dash-body">
         <div id="msg" class="vf-msg"></div>
 
+        <!-- ADD_VENUE_V1: setup checklist — shown until the venue is fully configured + active -->
+        <div id="setup-checklist" class="panel" style="display:none;margin-bottom:14px;">
+          <h3 style="margin-bottom:6px;">Setup checklist <span id="sc-progress" style="font-weight:400;font-size:13px;color:#8a8f98;"></span></h3>
+          <ul id="sc-items" style="list-style:none;margin:0;padding:0;font-size:13.5px;line-height:2;"></ul>
+          <div id="sc-note" style="font-size:12px;color:#8a8f98;margin-top:4px;"></div>
+        </div>
+
         <div class="vb-tabs">
           <button class="vb-tab active" data-tab="facts" onclick="switchTab('facts')">Venue Facts</button>
           <button class="vb-tab" data-tab="spaces" onclick="switchTab('spaces')">Spaces</button>
@@ -1019,6 +1026,35 @@
     }
   }
 
+  // ADD_VENUE_V1: setup checklist card. Renders only while something is incomplete or the
+  // venue is not active yet; fully configured active venues (like a live client) never see it.
+  // Guarded on res.setup so an older backend can never break the page.
+  function renderSetupChecklist(setup) {
+    var card = document.getElementById('setup-checklist');
+    if (!card) return;
+    if (!setup || typeof setup !== 'object') { card.style.display = 'none'; return; }
+    var items = [
+      { ok: !!setup.has_venue_facts, label: 'Venue facts filled in (Venue Facts tab)' },
+      { ok: (setup.spaces_count || 0) > 0, label: 'At least one event space added (Spaces tab)' },
+      { ok: (setup.spaces_count || 0) > 0 && (setup.private_spaces_missing_min || 0) === 0,
+        label: 'Private spaces have F&B minimums' + ((setup.private_spaces_missing_min || 0) > 0 ? ' (' + setup.private_spaces_missing_min + ' missing)' : '') },
+      { ok: !!setup.has_escalation_contact, label: 'Escalation contact set (AI Settings tab)' },
+      { ok: !!setup.has_kb, label: 'Knowledge added (Knowledge tab)' },
+      { ok: !!setup.has_email_channel, label: 'Email account connected (done with the EventFlow team)' },
+      { ok: setup.status === 'active', label: 'Venue activated (done by the EventFlow team at go-live)' }
+    ];
+    var doneCount = items.filter(function (i) { return i.ok; }).length;
+    if (doneCount === items.length) { card.style.display = 'none'; return; }
+    document.getElementById('sc-progress').textContent = doneCount + ' of ' + items.length + ' complete';
+    document.getElementById('sc-items').innerHTML = items.map(function (i) {
+      return '<li style="color:' + (i.ok ? '#0a7a4b' : '#4b5566') + ';">' +
+        (i.ok ? '&#10003;' : '&#9711;') + ' ' + i.label + '</li>';
+    }).join('');
+    document.getElementById('sc-note').textContent =
+      'Your AI sales assistant goes live once every item is complete.';
+    card.style.display = '';
+  }
+
   function loadProfile() {
     api({ action: 'get_venue_profile' }).then(function (res) {
       if (res.error) { handleAuthError(res.error); return; }
@@ -1039,6 +1075,7 @@
       }
       renderSpaces();
       fillAi(PROFILE.ai);
+      renderSetupChecklist(res.setup);
       loadKb();
       showApp();
       if (window.EF_ADMIN && EF_ADMIN.showAdminNav) { try { EF_ADMIN.showAdminNav(); } catch (e) {} }

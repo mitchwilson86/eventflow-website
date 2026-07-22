@@ -167,6 +167,27 @@
           </div>
 
           <!-- Pending Signups — only rendered when there are any -->
+          <!-- ADD_VENUE_V1 (2026-07-22): replaces the retired onboard.html intake -->
+          <div class="panel" id="add-venue-panel">
+            <h3>Add venue</h3>
+            <div style="font-size:13px;color:var(--text-muted);margin-bottom:10px;">
+              Creates the venue and emails the operator a sign-in link for the /venue setup pages.
+              Fill the details together during the onboarding interview.
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;">
+              <label style="display:flex;flex-direction:column;font-size:12px;gap:4px;">Venue name *
+                <input id="av-name" maxlength="80" style="padding:8px;min-width:200px;"></label>
+              <label style="display:flex;flex-direction:column;font-size:12px;gap:4px;">City
+                <input id="av-city" maxlength="60" style="padding:8px;min-width:140px;" placeholder="Nashville"></label>
+              <label style="display:flex;flex-direction:column;font-size:12px;gap:4px;">Operator name
+                <input id="av-contact" maxlength="80" style="padding:8px;min-width:160px;"></label>
+              <label style="display:flex;flex-direction:column;font-size:12px;gap:4px;">Operator email *
+                <input id="av-email" type="email" maxlength="120" style="padding:8px;min-width:220px;"></label>
+              <button id="av-btn" onclick="addVenue()">Create + invite</button>
+            </div>
+            <div id="av-result" style="margin-top:10px;font-size:13px;"></div>
+          </div>
+
           <div class="panel" id="pending-panel" style="display:none;">
             <h3>Pending Signups <span id="pending-count" style="color:var(--text-muted);font-weight:400;font-size:14px;"></span></h3>
             <div class="table-wrap">
@@ -528,6 +549,54 @@ async function deleteVenue(slug, btn) {
     btn.disabled = false;
     btn.textContent = 'Delete';
   }
+}
+
+// ADD_VENUE_V1: admin-only venue creation + operator invite (replaces onboard.html).
+async function addVenue() {
+  const resultEl = document.getElementById('av-result');
+  const btn = document.getElementById('av-btn');
+  const idToken = sessionStorage.getItem('ef_id_token');
+  const exp = parseInt(sessionStorage.getItem('ef_id_token_exp') || '0', 10);
+  if (!idToken || !exp || Date.now() > exp) {
+    resultEl.innerHTML = '<span style="color:var(--red);">Session expired. Please sign in again.</span>';
+    return;
+  }
+  const name = document.getElementById('av-name').value.trim();
+  const email = document.getElementById('av-email').value.trim();
+  if (!name || !email || email.indexOf('@') === -1) {
+    resultEl.innerHTML = '<span style="color:var(--red);">Venue name and a valid operator email are required.</span>';
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = 'Creating...';
+  resultEl.textContent = '';
+  try {
+    const res = await fetch(DATA_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        action: 'add_venue', id_token: idToken,
+        venue_name: name, city: document.getElementById('av-city').value.trim(),
+        contact_name: document.getElementById('av-contact').value.trim(), contact_email: email
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      resultEl.innerHTML = '<span style="color:var(--green);">&#10003; ' + esc(data.venue_name) +
+        ' created as <code>' + esc(data.client_slug) + '</code> — sign-in link emailed to ' + esc(data.invited) +
+        '.</span> <a href="/venue?client=' + encodeURIComponent(data.client_slug) + '" style="font-size:12px;">Open its /venue setup</a>';
+      document.getElementById('av-name').value = '';
+      document.getElementById('av-city').value = '';
+      document.getElementById('av-contact').value = '';
+      document.getElementById('av-email').value = '';
+    } else {
+      resultEl.innerHTML = '<span style="color:var(--red);">Error: ' + esc(data.error || 'unknown') + '</span>';
+    }
+  } catch (err) {
+    resultEl.innerHTML = '<span style="color:var(--red);">Request failed: ' + esc(err.message) + '</span>';
+  }
+  btn.disabled = false;
+  btn.textContent = 'Create + invite';
 }
 
 async function approveVenue(slug, btn) {
