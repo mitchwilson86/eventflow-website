@@ -136,6 +136,10 @@
         <label for="contact-name">Primary events contact *</label>
         <input id="contact-name" name="contact_name" required>
 
+        <label for="contact-email">Events contact email *</label>
+        <input id="contact-email" name="contact_email" type="email" required
+               placeholder="Used for escalations and your venue dashboard sign-in">
+
         <label for="venue-description">Describe your venue (tone, cuisine, setting)</label>
         <textarea id="venue-description" name="venue_description" rows="3"></textarea>
 
@@ -584,6 +588,7 @@
         address: v('venue-address'),
         website: v('venue-website'),
         contact_name: v('contact-name'),
+        contact_email: v('contact-email'),
         description: v('venue-description'),
         typical_experience: v('typical-experience'),
         unique_angle: v('unique-angle'),
