@@ -157,7 +157,23 @@
                 <tbody id="beo-tbody"></tbody>
               </table>
               <button class="beo-add" onclick="addBeoItem()">+ Add line item</button>
+              <button class="beo-add" onclick="openMenuPicker()" title="Pick from the venue's group menus (sections and prices come live from /menus, so menu updates apply automatically)">+ Add from menu</button>
               <button class="beo-add" id="beo-ai-btn" onclick="draftBeoWithAI()" title="Compiles everything known about this booking (details, email thread, menu picks) into draft line items you can edit">&#10024; Draft BEO with AI</button>
+
+              <!-- Menu picker (live from menu_catalog / menu_section / menu_section_option) -->
+              <div id="menu-picker" style="display:none;margin-top:14px;border:1px solid var(--border,#E2E8F0);border-radius:8px;padding:14px">
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                  <label style="font-weight:600">Menu:</label>
+                  <select id="mp-menu" onchange="renderMenuPicker()" style="min-width:220px"></select>
+                  <span id="mp-price" style="color:var(--text-secondary)"></span>
+                </div>
+                <div id="mp-sections" style="margin-top:10px"></div>
+                <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
+                  <button class="btn primary sm" onclick="addMenuSelectionsToBeo()">Add to BEO line items</button>
+                  <button class="btn ghost sm" onclick="document.getElementById('menu-picker').style.display='none'">Cancel</button>
+                  <span id="mp-hint" style="font-size:12px;color:var(--text-muted)"></span>
+                </div>
+              </div>
             </div>
 
             <!-- Notes -->
@@ -416,6 +432,141 @@ function syncFormToState() {
   checkConflicts();
 }
 function numOrNull(v) { if (v === '' || v == null) return null; const n = Number(v); return isNaN(n) ? null : n; }
+
+/* ═══ Menu picker — BEO line items from the live menu catalog ══════════
+   Reads menu_catalog -> menu_section -> menu_section_option directly, so
+   adding/updating a menu on /menus automatically updates the options and
+   pricing offered here. Sections enforce their "pick N" rules; picking
+   beyond the included count prices extras from the section's
+   "Additional selections +$X per person" note; premium options carry
+   their own +$ per-person upcharge. Saved BEO rows are a snapshot of the
+   agreed prices — menu edits change future picks, not saved BEOs. */
+const menuPicker = { menus: null, picks: {} };  // picks[sectionId] = [optionId in click order]
+
+async function openMenuPicker() {
+  const panel = document.getElementById('menu-picker');
+  if (panel.style.display !== 'none') { panel.style.display = 'none'; return; }
+  try {
+    if (!menuPicker.menus) {
+      const sb = await getSupabase();
+      const { data, error } = await sb.from('menu_catalog')
+        .select('id,name,price_per_person,sort_order, menu_section(id,name,position,min_choices,max_choices,all_included,notes, menu_section_option(id,name,description,position,dietary_tags,upcharge_per_person,is_active))')
+        .eq('venue_id', state.activeVenue.id).eq('is_active', true);
+      if (error) throw error;
+      // client-side sort (nested ordering is unreliable through PostgREST)
+      menuPicker.menus = (data || [])
+        .filter(m => (m.menu_section || []).length)
+        .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+      for (const m of menuPicker.menus) {
+        m.menu_section.sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+        for (const s of m.menu_section) {
+          s.menu_section_option = (s.menu_section_option || []).filter(o => o.is_active !== false);
+          s.menu_section_option.sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+        }
+      }
+    }
+    if (!menuPicker.menus.length) { toast('No structured menus found. Add one on /menus first.', 'info'); return; }
+    const sel = document.getElementById('mp-menu');
+    sel.innerHTML = menuPicker.menus.map(m => `<option value="${m.id}">${esc(m.name)}${Number(m.price_per_person) > 0 ? ' — $' + Number(m.price_per_person) + ' pp' : ''}</option>`).join('');
+    panel.style.display = 'block';
+    renderMenuPicker();
+  } catch (e) {
+    toast('Could not load menus: ' + e.message, 'error');
+  }
+}
+
+function mpCurrentMenu() {
+  const id = document.getElementById('mp-menu').value;
+  return (menuPicker.menus || []).find(m => m.id === id);
+}
+// "Additional selections +$6 per person" -> 6 (null when the section has no priced extras)
+function mpAddlPrice(section) {
+  const m = String(section.notes || '').match(/additional[^+]*\+\$(\d+(?:\.\d+)?)/i);
+  return m ? Number(m[1]) : null;
+}
+
+function renderMenuPicker() {
+  const menu = mpCurrentMenu();
+  if (!menu) return;
+  menuPicker.picks = {};
+  document.getElementById('mp-price').textContent = Number(menu.price_per_person) > 0 ? '$' + Number(menu.price_per_person) + ' per person' : '';
+  document.getElementById('mp-hint').textContent = '';
+  document.getElementById('mp-sections').innerHTML = menu.menu_section.map(s => {
+    const addl = mpAddlPrice(s);
+    if (s.all_included) {
+      return `<div style="margin-top:10px"><strong>${esc(s.name)}</strong> <span style="color:var(--text-secondary);font-size:12px">included for all</span>
+        <div style="font-size:13px;color:var(--text-secondary)">${s.menu_section_option.map(o => esc(o.name)).join(' · ')}</div></div>`;
+    }
+    const pickLabel = s.min_choices === s.max_choices ? 'pick ' + s.max_choices : 'pick ' + s.min_choices + '-' + s.max_choices;
+    return `<div style="margin-top:10px">
+      <strong>${esc(s.name)}</strong>
+      <span style="color:var(--text-secondary);font-size:12px"> — ${pickLabel} included${addl != null ? ', extras +$' + addl + ' pp' : ''}</span>
+      <span id="mp-count-${s.id}" style="font-size:12px;color:var(--text-muted)"></span>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:2px 14px;margin-top:4px">
+        ${s.menu_section_option.map(o => `
+          <label style="font-size:13px;display:flex;gap:6px;align-items:baseline;cursor:pointer">
+            <input type="checkbox" onchange="mpToggle('${s.id}','${o.id}',this.checked)" />
+            <span>${esc(o.name)}${Number(o.upcharge_per_person) > 0 ? ' <span style="color:var(--text-secondary)">+$' + Number(o.upcharge_per_person) + ' pp</span>' : ''}${(o.dietary_tags || []).length ? ' <span style="color:var(--text-muted);font-size:11px">' + esc(o.dietary_tags.join('·')) + '</span>' : ''}</span>
+          </label>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function mpToggle(sectionId, optionId, on) {
+  const arr = (menuPicker.picks[sectionId] = menuPicker.picks[sectionId] || []);
+  const i = arr.indexOf(optionId);
+  if (on && i === -1) arr.push(optionId);
+  if (!on && i !== -1) arr.splice(i, 1);
+  const menu = mpCurrentMenu();
+  const s = menu.menu_section.find(x => x.id === sectionId);
+  const el = document.getElementById('mp-count-' + sectionId);
+  if (el && s) {
+    const extra = Math.max(0, arr.length - s.max_choices);
+    el.textContent = ' · ' + arr.length + ' selected' + (extra ? ' (' + extra + ' extra)' : '');
+  }
+}
+
+function addMenuSelectionsToBeo() {
+  const menu = mpCurrentMenu();
+  if (!menu) return;
+  const gc = Number(state.booking.guest_count) || 1;
+  const problems = [];
+  const newItems = [];
+  // package line
+  if (Number(menu.price_per_person) > 0) {
+    newItems.push({ category: 'food', name: menu.name, description: '[menu] package price', quantity: gc, unit: 'pp', unit_price: Number(menu.price_per_person), taxable: true, service_chargeable: true });
+  }
+  for (const s of menu.menu_section) {
+    if (s.all_included) {
+      for (const o of s.menu_section_option) {
+        newItems.push({ category: 'food', name: s.name + ': ' + o.name, description: '[menu] included for all', quantity: gc, unit: 'pp', unit_price: 0, taxable: true, service_chargeable: true });
+      }
+      continue;
+    }
+    const picked = (menuPicker.picks[s.id] || []).map(id => s.menu_section_option.find(o => o.id === id)).filter(Boolean);
+    const addl = mpAddlPrice(s);
+    if (picked.length < s.min_choices) problems.push(s.name + ': picked ' + picked.length + ' of ' + s.min_choices);
+    if (picked.length > s.max_choices && addl == null) {
+      toast(s.name + ': this menu has no price for extra selections — keep it to ' + s.max_choices + ' or add extras as manual line items.', 'error');
+      return;
+    }
+    picked.forEach((o, i) => {
+      const isExtra = i >= s.max_choices;
+      const upcharge = Number(o.upcharge_per_person) || 0;
+      const price = upcharge + (isExtra ? (addl || 0) : 0);
+      const bits = [];
+      if (isExtra) bits.push('additional selection +$' + addl + ' pp');
+      if (upcharge > 0) bits.push('premium +$' + upcharge + ' pp');
+      newItems.push({ category: 'food', name: s.name + ': ' + o.name, description: ('[menu] ' + (bits.join(', ') || 'included choice')), quantity: gc, unit: 'pp', unit_price: price, taxable: true, service_chargeable: true });
+    });
+  }
+  if (problems.length && !confirm('Some sections have fewer picks than the menu includes:\n- ' + problems.join('\n- ') + '\n\nAdd anyway?')) return;
+  for (const it of newItems) { it.sort_order = state.items.length; state.items.push(it); }
+  renderBeoItems(); renderTotals();
+  document.getElementById('menu-picker').style.display = 'none';
+  toast('Added ' + newItems.length + ' menu line item' + (newItems.length === 1 ? '' : 's') + '. Adjust quantities if needed, then Save.', 'success');
+}
 
 /* ═══ AI BEO draft (beo-draft edge function -> shared drafter core) ═══ */
 async function draftBeoWithAI() {
