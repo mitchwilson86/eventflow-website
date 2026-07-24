@@ -106,7 +106,8 @@
           <span class="cal-legend-item"><span class="cal-legend-swatch" style="background:#22C55E"></span>Definite</span>
           <span class="cal-legend-item"><span class="cal-legend-swatch" style="background:#15616D"></span>Completed</span>
           <span class="cal-legend-item"><span class="cal-legend-swatch" style="background:#EF4444"></span>Cancelled</span>
-          <span class="cal-legend-item"><span class="cal-legend-swatch cal-legend-ext"></span>External (Tripleseat / Toast)</span>
+          <span class="cal-legend-item"><span class="cal-legend-swatch cal-legend-ext"></span>Dashed border = Tripleseat (read-only)</span>
+          <span class="cal-legend-item" id="cal-sync-note" style="margin-left:auto;color:var(--text-muted)"></span>
         </div>
 
         <!-- List view -->
@@ -254,14 +255,15 @@ async function loadBookings() {
   if (error) throw error;
   state.bookings = data || [];
 
-  // External events (iCal-synced, read-only) for the same window
+  // External events (Tripleseat-synced, read-only) for the same window
   const { data: ext, error: extErr } = await sb
     .from('external_events')
-    .select('id, summary, starts_at, ends_at, space_id')
+    .select('id, summary, description, starts_at, ends_at, space_id, status, room_name, guest_count, source, synced_at')
     .eq('venue_id', state.activeVenue.id)
     .gte('starts_at', startStr)
     .lte('starts_at', endStr);
   if (!extErr) state.externalEvents = ext || [];
+  renderSyncNote();
 }
 
 function renderSpaceFilter() {
@@ -288,10 +290,40 @@ function filteredBookings() {
 }
 function filteredExternal() {
   return state.externalEvents.filter(e => {
+    // Tripleseat rooms are not linked to EventFlow space records — hide under a space filter
     if (state.filters.space_id && e.space_id !== state.filters.space_id) return false;
-    if (state.filters.status) return false;  // external events have no status
+    if (state.filters.status && extStatusKey(e) !== state.filters.status) return false;
     return true;
   });
+}
+
+/* ═══ External (Tripleseat) helpers ════════════════════════════ */
+// Tripleseat statuses -> the calendar's status keys (colors match Tripleseat's own view)
+const EXT_STATUS_MAP = { DEFINITE: 'definite', TENTATIVE: 'tentative', PROSPECT: 'lead', CLOSED: 'completed', LOST: 'cancelled' };
+function extStatusKey(e) { return EXT_STATUS_MAP[String(e.status || '').toUpperCase()] || 'lead'; }
+// Local calendar day for a timestamp (evening events are next-day in UTC — never use toISOString here)
+function localDayIso(d) {
+  const x = new Date(d);
+  return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0');
+}
+function localHHMM(d) {
+  const x = new Date(d);
+  return String(x.getHours()).padStart(2, '0') + ':' + String(x.getMinutes()).padStart(2, '0');
+}
+function extTooltip(e) {
+  const c = STATUS_COLORS[extStatusKey(e)] || STATUS_COLORS.lead;
+  const bits = ['Tripleseat · ' + c.label];
+  if (e.room_name) bits.push(e.room_name);
+  if (e.guest_count) bits.push(e.guest_count + ' guests');
+  return bits.join(' · ');
+}
+function renderSyncNote() {
+  const host = document.getElementById('cal-sync-note');
+  if (!host) return;
+  const stamps = state.externalEvents.map(e => e.synced_at).filter(Boolean).sort();
+  if (!stamps.length) { host.textContent = ''; return; }
+  const mins = Math.max(0, Math.round((Date.now() - new Date(stamps[stamps.length - 1]).getTime()) / 60000));
+  host.textContent = 'Tripleseat: synced ' + (mins < 60 ? mins + ' min ago' : Math.round(mins / 60) + ' h ago');
 }
 
 /* ═══ View control ═════════════════════════════════════════════ */
@@ -333,15 +365,16 @@ function renderMonth() {
   const bookings = filteredBookings();
   const external = filteredExternal();
 
-  // Group by date string
+  // Group by date string (external uses the LOCAL day — evening events are next-day in UTC)
   const byDate = {};
   for (const b of bookings) {
-    (byDate[b.event_date] ||= []).push({ kind: 'booking', ref: b });
+    (byDate[b.event_date] ||= []).push({ kind: 'booking', ref: b, t: b.start_time || '' });
   }
   for (const e of external) {
-    const d = isoDate(new Date(e.starts_at));
-    (byDate[d] ||= []).push({ kind: 'external', ref: e });
+    const d = localDayIso(e.starts_at);
+    (byDate[d] ||= []).push({ kind: 'external', ref: e, t: localHHMM(e.starts_at) });
   }
+  for (const d of Object.keys(byDate)) byDate[d].sort((a, b) => a.t.localeCompare(b.t));
 
   const cells = [];
   for (let i = 0; i < 42; i++) {
@@ -361,11 +394,10 @@ function renderMonth() {
                 </a>`;
       } else {
         const e = ev.ref;
-        const t = new Date(e.starts_at);
-        const hhmm = t.toTimeString().slice(0,5);
-        return `<div class="cal-event external" style="background:#CBD5E1;color:#334155"
-                     title="External (read-only)">
-                  ${esc(fmtTime(hhmm))} · ${esc(e.summary || 'External')}
+        const c = STATUS_COLORS[extStatusKey(e)] || STATUS_COLORS.lead;
+        return `<div class="cal-event external" style="background:${c.bg};color:${c.fg}"
+                     title="${esc(extTooltip(e))}">
+                  ${esc(fmtTime(localHHMM(e.starts_at)))} · ${esc(e.summary || 'Tripleseat event')}
                 </div>`;
       }
     }).join('');
@@ -385,18 +417,29 @@ function renderMonth() {
 
 function renderList() {
   const body = document.getElementById('list-body');
-  const rows = filteredBookings()
-    .filter(b => {
-      // Only bookings within the current month for the list view
-      const d = new Date(b.event_date + 'T00:00:00');
-      return d >= monthStart(state.viewDate) && d <= monthEnd(state.viewDate);
-    })
-    .sort((a, b) => (a.event_date + a.start_time).localeCompare(b.event_date + b.start_time));
+  const mStart = monthStart(state.viewDate), mEnd = monthEnd(state.viewDate);
+  const rows = [
+    ...filteredBookings()
+      .filter(b => {
+        const d = new Date(b.event_date + 'T00:00:00');
+        return d >= mStart && d <= mEnd;
+      })
+      .map(b => ({ kind: 'b', date: b.event_date, time: b.start_time || '', ref: b })),
+    ...filteredExternal()
+      .filter(e => {
+        const d = new Date(e.starts_at);
+        return d >= mStart && d <= mEnd;
+      })
+      .map(e => ({ kind: 'e', date: localDayIso(e.starts_at), time: localHHMM(e.starts_at), ref: e })),
+  ].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
   if (!rows.length) {
     body.innerHTML = `<tr><td colspan="7" class="empty">No bookings this month. <a href="/booking?new=1">Create the first one →</a></td></tr>`;
     return;
   }
-  body.innerHTML = rows.map(b => `
+  body.innerHTML = rows.map(r => {
+    if (r.kind === 'b') {
+      const b = r.ref;
+      return `
     <tr onclick="location.href='/booking?id=${b.id}'">
       <td>${esc(fmtDateShort(b.event_date))}</td>
       <td>
@@ -408,8 +451,24 @@ function renderList() {
       <td>${b.guest_count || '—'}</td>
       <td>${statusBadge(b.status)}</td>
       <td style="text-align:right">${fmtMoney(b.total)}</td>
-    </tr>
-  `).join('');
+    </tr>`;
+    }
+    const e = r.ref;
+    const endT = e.ends_at ? '–' + esc(fmtTime(localHHMM(e.ends_at))) : '';
+    return `
+    <tr title="${esc(extTooltip(e))}" style="cursor:default">
+      <td>${esc(fmtDateShort(localDayIso(e.starts_at)))}</td>
+      <td>
+        <strong>${esc(e.summary || 'Tripleseat event')}</strong>
+        <br><span style="color:var(--text-secondary);font-size:12px">Tripleseat${e.description ? ' · ' + esc(e.description) : ''}</span>
+      </td>
+      <td>${esc(e.room_name || '')}</td>
+      <td>${esc(fmtTime(r.time))}${endT}</td>
+      <td>${e.guest_count || '—'}</td>
+      <td>${statusBadge(extStatusKey(e))}</td>
+      <td style="text-align:right">—</td>
+    </tr>`;
+  }).join('');
 }
 
 function newBookingOnDate(iso) {
