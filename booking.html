@@ -157,6 +157,7 @@
                 <tbody id="beo-tbody"></tbody>
               </table>
               <button class="beo-add" onclick="addBeoItem()">+ Add line item</button>
+              <button class="beo-add" id="beo-ai-btn" onclick="draftBeoWithAI()" title="Compiles everything known about this booking (details, email thread, menu picks) into draft line items you can edit">&#10024; Draft BEO with AI</button>
             </div>
 
             <!-- Notes -->
@@ -415,6 +416,32 @@ function syncFormToState() {
   checkConflicts();
 }
 function numOrNull(v) { if (v === '' || v == null) return null; const n = Number(v); return isNaN(n) ? null : n; }
+
+/* ═══ AI BEO draft (beo-draft edge function -> shared drafter core) ═══ */
+async function draftBeoWithAI() {
+  if (!state.booking || !state.booking.id) { toast('Save the booking first, then draft the BEO.', 'error'); return; }
+  const hasAi = state.items.some(it => (it.description || '').startsWith('[AI draft]'));
+  if (hasAi && !confirm('Re-draft with AI? Previous AI-draft rows are replaced. Rows you added or edited without the [AI draft] tag are kept.')) return;
+  const btn = document.getElementById('beo-ai-btn');
+  const old = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Drafting… (about 30 seconds)';
+  try {
+    const sb = await getSupabase();
+    const { data, error } = await sb.functions.invoke('beo-draft', { body: { booking_id: state.booking.id } });
+    if (error) throw new Error(error.message || 'request failed');
+    if (!data || data.ok !== true) throw new Error((data && data.error) || 'draft failed');
+    const { data: items } = await sb.from('beo_items').select('*').eq('booking_id', state.booking.id).order('sort_order');
+    state.items = items || [];
+    renderBeoItems(); renderTotals();
+    toast('AI draft added ' + data.items_inserted + ' line item' + (data.items_inserted === 1 ? '' : 's') + '. Review and edit before saving.', 'success');
+    const qs = (data.draft && data.draft.open_questions) || [];
+    if (qs.length) alert('The AI flagged open questions to resolve:\n\n- ' + qs.join('\n- '));
+  } catch (e) {
+    toast('AI draft failed: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = old;
+  }
+}
 
 /* ═══ BEO items ════════════════════════════════════════════════ */
 function renderBeoItems() {
