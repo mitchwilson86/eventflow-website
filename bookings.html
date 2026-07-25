@@ -203,11 +203,9 @@ async function boot() {
 
 /* ═══ Venue switcher ═══════════════════════════════════════════ */
 function renderVenueSwitcher() {
+  // Always render the dropdown (even with one venue) so Bookings matches the
+  // Dashboard/Venue/Menus tabs; new venues appear here automatically.
   const host = document.getElementById('venue-switcher-host');
-  if (state.venues.length <= 1) {
-    host.innerHTML = `<span>${esc(state.activeVenue.name)}</span>`;
-    return;
-  }
   host.innerHTML = `
     <span>Venue:</span>
     <select onchange="switchVenue(this.value)">
