@@ -195,6 +195,10 @@
             </div>
           </div>
           <div class="ed-field">
+            <label>Preview text (preheader, optional; 40-90 characters shown after the subject in the inbox list)</label>
+            <input type="text" id="ed-preheader" maxlength="90" placeholder="Extends the subject with new information instead of repeating it" />
+          </div>
+          <div class="ed-field">
             <label>Email body &nbsp;<span style="text-transform:none;letter-spacing:0;">use {{first_name}} to personalize</span></label>
             <textarea id="ed-body" rows="10" maxlength="8000" placeholder="Hi {{first_name}},&#10;&#10;..."></textarea>
           </div>
@@ -467,6 +471,7 @@ function renderQueue() {
       html += '<div class="camp-subjects">';
       if (c.subject_a) html += '<div><span class="var-tag">A</span>' + esc(c.subject_a) + '</div>';
       if (c.subject_b) html += '<div><span class="var-tag">B</span>' + esc(c.subject_b) + '</div>';
+      if (c.preheader) html += '<div class="muted-note">Preview text: ' + esc(c.preheader) + '</div>';
       html += '</div>';
     }
     if (c.body_template) html += '<div class="camp-body-preview">' + previewBody(c.body_template) + '</div>';
@@ -476,6 +481,15 @@ function renderQueue() {
         ' (' + c.metrics.reply_rate + '%) · ' + c.metrics.unsubscribes + ' unsubscribe' + (c.metrics.unsubscribes === 1 ? '' : 's');
       if (c.campaign_type === 'repermission') html += ' · ' + (c.metrics.confirms || 0) + ' confirmed opt-in' + (c.metrics.confirms === 1 ? '' : 's');
       html += '</div>';
+      // AB_VARIANT_METRICS_V1: raw per-variant counts when the campaign ran an A/B subject.
+      // Directional only — a few hundred recipients cannot support significance claims.
+      if (c.metrics.variants) {
+        var vA = c.metrics.variants.A || {}, vB = c.metrics.variants.B || {};
+        html += '<div class="camp-counts">A/B split: A ' + (vA.replies || 0) + '/' + (vA.sent || 0) + ' replies · B ' +
+          (vB.replies || 0) + '/' + (vB.sent || 0) + ' replies';
+        if ((vA.unsubscribes || 0) + (vB.unsubscribes || 0) > 0) html += ' · unsubscribes A ' + (vA.unsubscribes || 0) + ' / B ' + (vB.unsubscribes || 0);
+        html += ' <span class="muted-note">(directional, small sample)</span></div>';
+      }
     }
     html += '<div class="camp-actions">';
     if (approvable) html += '<button class="camp-btn approve" onclick="approveCampaign(\'' + c.id + '\')">Approve &amp; queue</button>';
@@ -594,6 +608,7 @@ function openEditor(id) {
   document.getElementById('ed-segment').value = c ? (c.segment || 'holiday_host') : 'holiday_host';
   document.getElementById('ed-subject-a').value = c ? (c.subject_a || '') : '';
   document.getElementById('ed-subject-b').value = c ? (c.subject_b || '') : '';
+  document.getElementById('ed-preheader').value = c ? (c.preheader || '') : '';
   document.getElementById('ed-body').value = c ? (c.body_template || '') : '';
   document.getElementById('editor-panel').style.display = 'block';
   document.getElementById('editor-panel').scrollIntoView({ behavior: 'smooth' });
@@ -613,6 +628,7 @@ function saveCampaign() {
     segment: document.getElementById('ed-segment').value,
     subject_a: document.getElementById('ed-subject-a').value.trim(),
     subject_b: document.getElementById('ed-subject-b').value.trim(),
+    preheader: document.getElementById('ed-preheader').value.trim(),
     body_template: document.getElementById('ed-body').value.trim()
   };
   if (!campaign.name) { showMsg('Campaign name is required.', 'err'); return; }
@@ -684,6 +700,10 @@ function loadReport(id) {
       var counts = {};
       rows.forEach(function (r) { counts[r.status] = (counts[r.status] || 0) + 1; });
       var summary = Object.keys(counts).map(function (k) { return counts[k] + ' ' + k.replace(/_/g, ' '); }).join(' · ');
+      // AB_VARIANT_METRICS_V1: per-variant sent rollup from the raw rows (directional only).
+      var vSent = { A: 0, B: 0 };
+      rows.forEach(function (r) { if (r.status === 'sent') vSent[r.subject_variant === 'B' ? 'B' : 'A']++; });
+      if (vSent.B > 0) summary += ' · sent by variant: A ' + vSent.A + ' / B ' + vSent.B;
       document.getElementById('report-body').innerHTML =
         '<div class="camp-counts" style="margin-bottom:10px;">' + esc(summary) + '</div>' +
         '<div class="table-wrap"><table class="report-table"><thead><tr><th>Email</th><th>Status</th><th>Variant</th><th>Sent</th><th>Error</th></tr></thead><tbody>' +
