@@ -280,7 +280,7 @@ async function boot() {
 
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
-    document.getElementById('sidebar-host').innerHTML = renderSidebar('bookings', state.activeVenue.name, session.user.email);
+    document.getElementById('sidebar-host').innerHTML = renderSidebar('beo', state.activeVenue.name, session.user.email);
     renderAll();
     wireFormListeners();
   } catch (err) {
