@@ -12,6 +12,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/eventflow-shared.css" />
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="/eventflow-admin.js" defer></script>
+  <script src="/ef-venue-picker.js" defer></script>
 </head>
 <body>
 <script>
@@ -75,6 +77,10 @@
         <a href="/notifications" class="nav-item active">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
           <span>Notifications</span>
+        </a>
+        <a href="/admin" class="nav-item admin-nav-link" style="display:none;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <span>Admin Dashboard</span>
         </a>
       </nav>
       <div class="sidebar-footer">
@@ -176,9 +182,9 @@
 
 <script>
 /* ═══ CLIENT DATA ═══ */
-// Authorization is by Google account email only.
+// Authorization via EF_ADMIN (owner gmail, authorized_emails, or admin).
 var CLIENTS = {
-  sunda: { gmail_address: 'sales@eventflowsales.com', venue: 'Sunda Nashville', data: {} }
+  sunda: { slug: 'sunda-nashville', gmail_address: 'sales@eventflowsales.com', venue: 'Sunda Nashville', authorized_emails: [], data: {} }
 };
 
 var SMS_URL = 'https://script.google.com/macros/s/AKfycbwKAV1Yb8Ye32G2rJpZC4QndqU3LinVj4Efa2COsnvyuRqxFlbJOwWobAfhV9lS5Y9Z/exec';
@@ -199,15 +205,23 @@ function initGoogleSignIn() {
   google.accounts.id.renderButton(document.getElementById('google-signin-btn'), { theme: 'outline', size: 'large', width: 340, text: 'signin_with', shape: 'rectangular' });
   var savedEmail = sessionStorage.getItem('ef_user_email');
   if (savedEmail) {
-    var client = Object.values(CLIENTS).find(function(c) { return c.gmail_address === savedEmail; });
+    var client = resolveClientForEmail(savedEmail);
     if (client) {
       document.getElementById('session-msg').style.display = 'block';
       currentClient = client;
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('dashboard').style.display = 'block';
       renderPage(client);
+      if (window.EF_ADMIN) EF_ADMIN.showAdminNav();
     }
   }
+}
+
+// Owner gmail, authorized_emails teammate, or admin (globally selected venue
+// wins when accessible) — with the old gmail-exact match as a last resort.
+function resolveClientForEmail(email) {
+  return (window.EF_ADMIN && EF_ADMIN.resolveActiveClient(CLIENTS, email))
+    || Object.values(CLIENTS).find(function(c) { return c.gmail_address === email; });
 }
 
 function handleGoogleSignIn(response) {
@@ -215,7 +229,7 @@ function handleGoogleSignIn(response) {
   var payload = JSON.parse(atob(idToken.split('.')[1]));
   var email = payload.email;
   var errEl = document.getElementById('login-error');
-  var client = Object.values(CLIENTS).find(function(c) { return c.gmail_address === email; });
+  var client = resolveClientForEmail(email);
   if (!client) { errEl.textContent = 'Access denied. ' + email + ' is not authorized.'; errEl.style.display = 'block'; return; }
   errEl.style.display = 'none';
   sessionStorage.setItem('ef_user_email', email);
@@ -225,6 +239,7 @@ function handleGoogleSignIn(response) {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
   renderPage(client);
+  if (window.EF_ADMIN) EF_ADMIN.showAdminNav();
 }
 
 window.addEventListener('load', function() { initGoogleSignIn(); loadDynamicClients(); });
@@ -234,12 +249,34 @@ function loadDynamicClients() {
     if (!data.clients || !data.clients.length) return;
     for (var i = 0; i < data.clients.length; i++) {
       var c = data.clients[i];
+      var authList = [];
+      try { authList = JSON.parse(c.authorized_emails || '[]') || []; } catch(e) { authList = []; }
       var existing = Object.values(CLIENTS).find(function(cl) { return cl.gmail_address === c.gmail || cl.venue === c.venue; });
-      if (existing) continue;
-      if (c.status !== 'active') continue;
-      var slug = c.slug.replace(/[^a-z0-9]/g, '');
-      if (!c.gmail) continue;
-      CLIENTS[slug] = { gmail_address: c.gmail, venue: c.venue || c.slug, data: {} };
+      if (existing) { existing.slug = c.slug; existing.authorized_emails = authList; continue; }
+      var key = c.slug.replace(/[^a-z0-9]/g, '');
+      CLIENTS[key] = { slug: c.slug, gmail_address: c.gmail || '', venue: c.venue || c.slug, authorized_emails: authList, data: {} };
+    }
+    // Re-resolve now that authorized_emails/admin data is in (the exact-gmail
+    // pre-check above may have denied an admin or teammate) + global picker.
+    var savedEmail = sessionStorage.getItem('ef_user_email');
+    if (savedEmail) {
+      var c3 = resolveClientForEmail(savedEmail);
+      if (c3 && !currentClient) {
+        currentClient = c3;
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        renderPage(c3);
+        if (window.EF_ADMIN) EF_ADMIN.showAdminNav();
+      } else if (c3 && currentClient && c3.slug !== currentClient.slug) {
+        currentClient = c3;
+        renderPage(c3);
+      }
+      if (currentClient && window.EF_ADMIN && window.EF_VENUE_PICKER) {
+        EF_VENUE_PICKER.render({
+          venues: EF_ADMIN.accessibleVenues(CLIENTS, savedEmail).map(function(c){ return { slug: c.slug, name: c.venue || c.slug }; }),
+          activeSlug: currentClient.slug
+        });
+      }
     }
   }).catch(function() {});
 }

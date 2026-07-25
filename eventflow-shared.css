@@ -144,6 +144,14 @@ a:hover { color: var(--teal-light); }
 .sidebar-brand .venue-name {
   font-size: 13px; color: var(--text-muted); margin-top: 2px; display: block;
 }
+/* Global venue picker (ef-venue-picker.js) — replaces the venue-name label */
+.sidebar-brand .brand-venue-select {
+  display: block; width: 100%; margin-top: 6px; padding: 5px 8px;
+  font-family: var(--font); font-size: 13px; color: var(--text-secondary);
+  background: var(--bg-input); border: 1px solid var(--border);
+  border-radius: 6px; cursor: pointer;
+}
+.sidebar-brand .brand-venue-select:focus { outline: 2px solid var(--teal); outline-offset: 1px; }
 .sidebar-brand .admin-badge {
   display: inline-block; font-size: 10px; font-weight: 600; color: var(--orange);
   background: var(--orange-bg); padding: 2px 10px; border-radius: 50px;
@@ -400,19 +408,6 @@ thead th.sorted .sort-arrow { opacity: 1; color: var(--orange); }
 .menu-row input:first-child { flex: 1; }
 .menu-row input:last-child { flex: 2; }
 
-/* ── Admin venue picker (shown on dashboard/campaigns/settings when admin is signed in) ─ */
-.venue-picker-row {
-  display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
-  padding: 12px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px;
-}
-.venue-picker-row label {
-  margin: 0; font-size: 12px; font-weight: 500; color: var(--text-muted);
-  text-transform: uppercase; letter-spacing: .5px;
-}
-.venue-picker-row select {
-  flex: 1; padding: 8px 12px; background: var(--bg); border: 1px solid var(--border);
-  border-radius: 6px; color: var(--text-primary); font-family: var(--font); font-size: 14px;
-}
 .admin-badge {
   font-size: 11px; color: var(--teal); background: rgba(21,97,109,.1);
   padding: 3px 8px; border-radius: 4px; font-weight: 600;

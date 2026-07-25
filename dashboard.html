@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="/eventflow-shared.css" />
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="/eventflow-admin.js" defer></script>
+  <script src="/ef-venue-picker.js" defer></script>
 </head>
 <body>
 <script>
@@ -224,7 +225,7 @@ function initGoogleSignIn() {
   );
   const savedEmail = sessionStorage.getItem('ef_user_email');
   if (savedEmail) {
-    const client = (window.EF_ADMIN && EF_ADMIN.resolveClient(CLIENTS, savedEmail))
+    const client = (window.EF_ADMIN && EF_ADMIN.resolveActiveClient(CLIENTS, savedEmail))
       || Object.values(CLIENTS).find(c => c.gmail_address === savedEmail);
     if (client) {
       document.getElementById('session-msg').style.display = 'block';
@@ -242,7 +243,7 @@ function handleGoogleSignIn(response) {
   const payload = JSON.parse(atob(idToken.split('.')[1]));
   const email = payload.email;
   const errEl = document.getElementById('login-error');
-  const client = (window.EF_ADMIN && EF_ADMIN.resolveClient(CLIENTS, email))
+  const client = (window.EF_ADMIN && EF_ADMIN.resolveActiveClient(CLIENTS, email))
     || Object.values(CLIENTS).find(c => c.gmail_address === email);
   if (!client) {
     errEl.textContent = 'Access denied. ' + email + ' is not authorized for any venue.';
@@ -298,7 +299,7 @@ function loadDynamicClients() {
       if (!currentClient) {
         const savedEmail = sessionStorage.getItem('ef_user_email');
         if (savedEmail) {
-          const c3 = (window.EF_ADMIN && EF_ADMIN.resolveClient(CLIENTS, savedEmail))
+          const c3 = (window.EF_ADMIN && EF_ADMIN.resolveActiveClient(CLIENTS, savedEmail))
             || Object.values(CLIENTS).find(cl => (cl.gmail_address || '').toLowerCase() === savedEmail.toLowerCase());
           if (c3) {
             currentClient = c3;
@@ -309,12 +310,18 @@ function loadDynamicClients() {
           }
         }
       }
-      if (window.EF_ADMIN) {
-        EF_ADMIN.setupVenuePicker(CLIENTS, function(slug) {
-          const c = Object.values(CLIENTS).find(x => x.slug === slug);
-          if (!c) return;
-          currentClient = c;
-          renderDashboard(c);
+      // Global venue picker (sidebar). client_list may reveal the stored slug's
+      // venue only now — re-resolve so the global selection wins, then render.
+      const gvEmail = sessionStorage.getItem('ef_user_email');
+      if (gvEmail && window.EF_ADMIN && window.EF_VENUE_PICKER && currentClient) {
+        const gvActive = EF_ADMIN.resolveActiveClient(CLIENTS, gvEmail);
+        if (gvActive && gvActive.slug !== currentClient.slug) {
+          currentClient = gvActive;
+          renderDashboard(gvActive);
+        }
+        EF_VENUE_PICKER.render({
+          venues: EF_ADMIN.accessibleVenues(CLIENTS, gvEmail).map(c => ({ slug: c.slug, name: c.venue || c.slug })),
+          activeSlug: currentClient.slug
         });
       }
     })

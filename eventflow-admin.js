@@ -1,20 +1,11 @@
 /**
- * EventFlow admin helpers — shared across dashboard/campaigns/bookings/settings.
+ * EventFlow admin helpers — shared across the dashboard-cluster pages.
  *
- * When signed in as an ADMIN_EMAILS user, pages get:
- *   1. A venue picker (dropdown) at the top of the main content
- *   2. An "Admin Dashboard" nav link in the sidebar
- *
- * Usage in each page (inline script, AFTER CLIENTS is defined):
- *   EF_ADMIN.setupVenuePicker(CLIENTS, function(slug){
- *     // Your page's re-render function given the new slug
- *     currentClient = Object.values(CLIENTS).find(c => c.slug === slug);
- *     renderDashboard(currentClient);
- *   });
- *   EF_ADMIN.showAdminNav();
- *
- * The page's own resolveClient-for-email should use EF_ADMIN.resolveClient()
- * so admin users fall back to the first venue instead of "access denied".
+ * Venue selection is GLOBAL since 2026-07-25: the sidebar picker lives in
+ * ef-venue-picker.js (localStorage 'ef_active_venue'), and pages resolve
+ * their venue with EF_ADMIN.resolveActiveClient(CLIENTS, email) so the
+ * stored choice wins whenever it is accessible. showAdminNav() unhides the
+ * Admin Dashboard nav link for ADMIN_EMAILS users.
  */
 window.EF_ADMIN = (function () {
   var ADMIN_EMAILS = ['mitchwilson@eventflowsales.com'];
@@ -65,44 +56,19 @@ window.EF_ADMIN = (function () {
   }
 
   /**
-   * Create (if needed) and populate a venue picker at the top of .dash-body.
-   * Renders for admins (all venues) and for any user with access to 2+
-   * venues (their venues only). Calls onChange(slug) when the user picks.
+   * Resolve the venue a page should display: the globally selected slug
+   * (localStorage 'ef_active_venue' via EF_VENUE_PICKER) when the signed-in
+   * email can access it, else the classic resolveClient() fallback — and in
+   * that case the stored key is repaired so every tab agrees again.
    */
-  function setupVenuePicker(clients, onChange) {
-    var email = sessionStorage.getItem('ef_user_email');
-    var admin = isAdminCaller();
+  function resolveActiveClient(clients, email) {
     var venues = accessibleVenues(clients, email);
-    if (!admin && venues.length < 2) return;
-    var host = document.querySelector('.dash-body');
-    if (!host) return;
-
-    var row = document.getElementById('ef-venue-picker-row');
-    if (!row) {
-      row = document.createElement('div');
-      row.id = 'ef-venue-picker-row';
-      row.className = 'venue-picker-row';
-      row.innerHTML =
-        (admin ? '<span class="admin-badge">Admin</span>' : '') +
-        '<label for="ef-venue-picker">' + (admin ? 'Viewing venue:' : 'Your venues:') + '</label>' +
-        '<select id="ef-venue-picker"></select>';
-      host.insertBefore(row, host.firstChild);
-    }
-
-    var sel = document.getElementById('ef-venue-picker');
-    if (!venues.length) { row.style.display = 'none'; return; }
-    row.style.display = 'flex';
-
-    var currentSlug = sel.value;
-    sel.innerHTML = '';
-    venues.forEach(function (c) {
-      var opt = document.createElement('option');
-      opt.value = c.slug;
-      opt.textContent = c.venue + ' (' + c.slug + ')';
-      if (c.slug === currentSlug) opt.selected = true;
-      sel.appendChild(opt);
-    });
-    sel.onchange = function () { onChange(sel.value); };
+    var stored = (window.EF_VENUE_PICKER && window.EF_VENUE_PICKER.getActive()) || '';
+    var hit = venues.find(function (c) { return c.slug === stored; });
+    if (hit) return hit;
+    var fb = resolveClient(clients, email);
+    if (fb && fb.slug && window.EF_VENUE_PICKER) window.EF_VENUE_PICKER.setActive(fb.slug);
+    return fb;
   }
 
   /**
@@ -122,8 +88,8 @@ window.EF_ADMIN = (function () {
     isAdmin: isAdmin,
     isAdminCaller: isAdminCaller,
     resolveClient: resolveClient,
+    resolveActiveClient: resolveActiveClient,
     accessibleVenues: accessibleVenues,
-    setupVenuePicker: setupVenuePicker,
     showAdminNav: showAdminNav
   };
 })();

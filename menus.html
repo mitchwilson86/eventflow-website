@@ -14,6 +14,7 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js" defer></script>
   <script src="/eventflow-admin.js" defer></script>
+  <script src="/ef-venue-picker.js" defer></script>
   <style>
     .menus-layout { display: grid; grid-template-columns: 280px 1fr; gap: 0; min-height: calc(100vh - 56px); }
     @media (max-width: 900px) { .menus-layout { grid-template-columns: 1fr; } }
@@ -295,7 +296,7 @@ function afterAuth(email) {
   document.getElementById('user-email-sidebar').textContent = email;
   // Wait for clients to load
   loadClients().then(() => {
-    const client = (window.EF_ADMIN && EF_ADMIN.resolveClient(CLIENTS, email))
+    const client = (window.EF_ADMIN && EF_ADMIN.resolveActiveClient(CLIENTS, email))
       || Object.values(CLIENTS).find(c => c.gmail_address === email);
     if (!client) {
       document.getElementById('login-error').textContent = 'Access denied. ' + email + ' is not authorized for any venue.';
@@ -308,11 +309,14 @@ function afterAuth(email) {
     document.getElementById('app').style.display = 'block';
     if (window.EF_ADMIN) {
       EF_ADMIN.showAdminNav();
-      EF_ADMIN.setupVenuePicker(CLIENTS, function(slug){
-        currentClient = Object.values(CLIENTS).find(c => c.slug === slug);
-        document.getElementById('venue-name').textContent = currentClient.venue;
-        loadMenus();
-      });
+      // Global venue picker (sidebar) — resolveActiveClient above already
+      // honored the stored slug, so just render.
+      if (window.EF_VENUE_PICKER) {
+        EF_VENUE_PICKER.render({
+          venues: EF_ADMIN.accessibleVenues(CLIENTS, email).map(c => ({ slug: c.slug, name: c.venue || c.slug })),
+          activeSlug: client.slug
+        });
+      }
     }
     loadMenus();
   });

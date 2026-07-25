@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="/eventflow-shared.css" />
   <link rel="stylesheet" href="/bookings.css" />
   <script src="/bookings-shared.js"></script>
+  <script src="/ef-venue-picker.js"></script>
 </head>
 <body>
 <script>
@@ -253,6 +254,9 @@ function toast(msg, kind = 'info') {
 window.addEventListener('load', boot);
 
 async function boot() {
+  // Reuse a dashboard-cluster Google session if present (same as /bookings) —
+  // arriving via the BEO tab shouldn't hit a second login wall.
+  await bootstrapSupabaseFromGSI();
   const sb = await getSupabase();
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { document.getElementById('login-screen').style.display = 'flex'; return; }
@@ -281,6 +285,17 @@ async function boot() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     document.getElementById('sidebar-host').innerHTML = renderSidebar('beo', state.activeVenue.name, session.user.email);
+    // Global venue picker. A booking belongs to ONE venue: switching while
+    // editing an existing booking goes to the new venue's calendar; on the
+    // new-booking form it restarts the form under the new venue.
+    EF_VENUE_PICKER.render({
+      venues: state.venues.map(v => ({ slug: v.slug, name: v.name })),
+      activeSlug: state.activeVenue.slug,
+      onChange: slug => {
+        if (!state.isNew) { window.location.href = '/bookings?venue=' + encodeURIComponent(slug); return; }
+        window.location.href = '/booking?new=1&venue=' + encodeURIComponent(slug);
+      }
+    });
     renderAll();
     wireFormListeners();
   } catch (err) {
@@ -340,6 +355,16 @@ async function loadBooking(id) {
   if (be) throw be;
   if (ie) throw ie;
   if (!booking) throw new Error('Booking not found');
+  // A deep link can open a booking from a different venue than the globally
+  // selected one — follow the BOOKING's venue for this view (never writes the
+  // global key) and reload spaces so the Space dropdown matches.
+  if (state.activeVenue && booking.venue_id !== state.activeVenue.id) {
+    const owner = state.venues.find(v => v.id === booking.venue_id);
+    if (owner) {
+      state.activeVenue = owner;
+      await loadSpaces();
+    }
+  }
   state.booking = booking;
   state.contact = booking.contact || { first_name: '', last_name: '', email: '', phone: '', company: '' };
   state.items = items || [];

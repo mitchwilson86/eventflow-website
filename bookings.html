@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="/eventflow-shared.css" />
   <link rel="stylesheet" href="/bookings.css" />
   <script src="/bookings-shared.js"></script>
+  <script src="/ef-venue-picker.js"></script>
 </head>
 <body>
 <script>
@@ -53,7 +54,6 @@
         <button class="sidebar-toggle" onclick="toggleSidebar()">&#9776;</button>
         <span class="page-title">Bookings</span>
         <div class="page-actions">
-          <div class="venue-switcher" id="venue-switcher-host"></div>
           <a class="btn primary" href="/booking?new=1">+ New Booking</a>
         </div>
       </div>
@@ -190,7 +190,14 @@ async function boot() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     document.getElementById('sidebar-host').innerHTML = renderSidebar('bookings', activeVenue.name, session.user.email);
-    renderVenueSwitcher();
+    // Global venue picker (sidebar). The explicit ?venue= rewrite matters:
+    // loadUserVenues gives the URL param precedence over the stored key, so a
+    // plain reload on a stale ?venue= URL would override the new choice.
+    EF_VENUE_PICKER.render({
+      venues: state.venues.map(v => ({ slug: v.slug, name: v.name })),
+      activeSlug: state.activeVenue.slug,
+      onChange: slug => { window.location.href = '/bookings?venue=' + encodeURIComponent(slug); }
+    });
     await loadSpaces();
     renderSpaceFilter();
     await loadBookings();
@@ -199,23 +206,6 @@ async function boot() {
     console.error(err);
     toast('Failed to load: ' + err.message, 'error');
   }
-}
-
-/* ═══ Venue switcher ═══════════════════════════════════════════ */
-function renderVenueSwitcher() {
-  // Always render the dropdown (even with one venue) so Bookings matches the
-  // Dashboard/Venue/Menus tabs; new venues appear here automatically.
-  const host = document.getElementById('venue-switcher-host');
-  host.innerHTML = `
-    <span>Venue:</span>
-    <select onchange="switchVenue(this.value)">
-      ${state.venues.map(v => `<option value="${esc(v.slug)}" ${v.slug === state.activeVenue.slug ? 'selected' : ''}>${esc(v.name)}</option>`).join('')}
-    </select>
-  `;
-}
-async function switchVenue(slug) {
-  localStorage.setItem('ef_active_venue', slug);
-  window.location.search = '?venue=' + encodeURIComponent(slug);
 }
 
 /* ═══ Data loaders ═════════════════════════════════════════════ */

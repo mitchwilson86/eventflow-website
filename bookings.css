@@ -23,18 +23,6 @@
 .btn.sm { padding: 4px 10px; font-size: 13px; }
 .btn[disabled] { opacity: .5; cursor: not-allowed; }
 
-/* ── Venue switcher in top bar ─────────────────────────────── */
-.venue-switcher {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 6px 12px; border-radius: var(--radius);
-  background: var(--bg-inset); border: 1px solid var(--border);
-  font-size: 13px; color: var(--text-secondary);
-}
-.venue-switcher select {
-  border: none; background: transparent; font: inherit; color: var(--text-primary);
-  font-weight: 600; cursor: pointer; outline: none;
-}
-
 /* ── Status badges ─────────────────────────────────────────── */
 .status-badge {
   display: inline-block; padding: 3px 10px; border-radius: 999px;

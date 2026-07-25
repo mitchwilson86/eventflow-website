@@ -12,6 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/eventflow-shared.css" />
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="/ef-venue-picker.js" defer></script>
   <style>
     /* Admin-specific: 3-col KPI grid */
     .kpi-grid { grid-template-columns: repeat(3, 1fr); }
@@ -475,6 +476,12 @@ async function loadPendingSignups() {
     const data = await res.json();
     const pending = (data.clients || []).filter(c => (c.status || '').toString().toLowerCase() === 'pending');
     renderPending(pending);
+    // Global venue picker: admin content stays cross-venue; the selection made
+    // here simply persists for every other tab (reload is a harmless no-op).
+    if (window.EF_VENUE_PICKER) {
+      const gvVenues = (data.clients || []).filter(c => c.slug).map(c => ({ slug: c.slug, name: c.venue || c.slug }));
+      EF_VENUE_PICKER.render({ venues: gvVenues, activeSlug: EF_VENUE_PICKER.getActive() });
+    }
   } catch (err) {
     console.warn('Pending signups load failed:', err);
   }

@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="/eventflow-shared.css" />
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="/eventflow-admin.js" defer></script>
+  <script src="/ef-venue-picker.js" defer></script>
   <style>
     /* Settings-specific: add menu button styling */
     .add-menu-btn {
@@ -44,7 +45,7 @@
       border-radius: 8px; color: var(--text-primary); font-family: var(--font); font-size: 14px;
     }
     .auth-row input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(21,97,109,.1); }
-    /* venue-picker-row + admin-badge styles are in eventflow-shared.css */
+    /* admin-badge styles are in eventflow-shared.css; the global venue picker lives in the sidebar (ef-venue-picker.js) */
   </style>
 </head>
 <body>
@@ -197,7 +198,7 @@ var GOOGLE_CLIENT_ID = '551797277858-ne7qntlo2jgmdp36o2lpcnv8qr6u7ofv.apps.googl
 var currentClient = null;
 
 function resolveClientForEmail(email) {
-  return (window.EF_ADMIN && EF_ADMIN.resolveClient(CLIENTS, email))
+  return (window.EF_ADMIN && EF_ADMIN.resolveActiveClient(CLIENTS, email))
     || Object.values(CLIENTS).find(function(c){ return (c.gmail_address || '').toLowerCase() === (email || '').toLowerCase(); })
     || null;
 }
@@ -287,14 +288,17 @@ function loadDynamicClients() {
         }
       }
     }
-    // Picker self-gates: admins see all venues; anyone else sees it only
-    // when their email has access to 2+ venues.
-    if (window.EF_ADMIN) {
-      EF_ADMIN.setupVenuePicker(CLIENTS, function(slug) {
-        var c2 = Object.values(CLIENTS).find(function(x){ return x.slug === slug; });
-        if (!c2) return;
-        currentClient = c2;
-        renderPage(c2);
+    // Global venue picker (sidebar): stored slug wins now that client_list is in.
+    var gvEmail = sessionStorage.getItem('ef_user_email');
+    if (gvEmail && window.EF_ADMIN && window.EF_VENUE_PICKER && currentClient) {
+      var gvActive = EF_ADMIN.resolveActiveClient(CLIENTS, gvEmail);
+      if (gvActive && gvActive.slug !== currentClient.slug) {
+        currentClient = gvActive;
+        renderPage(gvActive);
+      }
+      EF_VENUE_PICKER.render({
+        venues: EF_ADMIN.accessibleVenues(CLIENTS, gvEmail).map(function(c){ return { slug: c.slug, name: c.venue || c.slug }; }),
+        activeSlug: currentClient.slug
       });
     }
   }).catch(function() {});
