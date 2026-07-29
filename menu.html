@@ -185,6 +185,7 @@ const token = new URLSearchParams(window.location.search).get('token') || '';
 let ctx = null;
 let selectedMenuId = null;
 let selectedUpsells = {};        // { upsell_id: qty }
+let upsellInputs = {};           // { upsell_id: guest-typed text, e.g. a logo file link }
 // section_id -> { option_id: qty }   (qty=1 for family-style; per-guest = entered count)
 let sectionPicks = {};
 
@@ -443,6 +444,8 @@ function renderUpsells() {
   host.querySelectorAll('.upsell-option').forEach(el => {
     const cb = el.querySelector('input[type="checkbox"]');
     const qtyInput = el.querySelector('input[type="number"]');
+    const guestInputWrap = el.querySelector('.upsell-guest-input');
+    const guestInput = el.querySelector('input.guest-input');
     cb.addEventListener('change', () => {
       el.classList.toggle('checked', cb.checked);
       const id = el.dataset.id;
@@ -450,9 +453,19 @@ function renderUpsells() {
         selectedUpsells[id] = parseInt(qtyInput?.value || '1', 10);
       } else {
         delete selectedUpsells[id];
+        delete upsellInputs[id];
+        if (guestInput) guestInput.value = '';
       }
+      if (guestInputWrap) guestInputWrap.classList.toggle('hidden', !cb.checked);
       updateTotalAndButton();
     });
+    if (guestInput) {
+      guestInput.addEventListener('input', () => {
+        const id = el.dataset.id;
+        const val = guestInput.value.trim();
+        if (val) upsellInputs[id] = val; else delete upsellInputs[id];
+      });
+    }
     if (qtyInput) {
       qtyInput.addEventListener('input', () => {
         const id = el.dataset.id;
@@ -474,6 +487,16 @@ function upsellHtml(u) {
   } else {
     priceLabel = `${fmtMoney(u.price)} flat`;
   }
+  // Optional per-add-on question (e.g. the logo link for custom menu cards).
+  // Shown only once the add-on is checked; the click guard stops it toggling the checkbox.
+  const inputHtml = u.guest_input_label ? `
+        <div class="upsell-guest-input hidden" style="margin-top:8px">
+          <label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:4px">${esc(u.guest_input_label)}</label>
+          <input type="text" class="guest-input" maxlength="500"
+                 placeholder="${esc(u.guest_input_placeholder || '')}"
+                 onclick="event.stopPropagation()"
+                 style="width:100%;padding:8px;border:1px solid #CBD5E1;border-radius:6px;font-family:inherit;font-size:13px" />
+        </div>` : '';
   return `
     <label class="upsell-option" data-id="${u.id}" data-price="${u.price}" data-unit="${u.price_unit}">
       <input type="checkbox" />
@@ -484,6 +507,7 @@ function upsellHtml(u) {
         </div>
         <div class="upsell-option-meta">${esc(u.description || '')}</div>
         ${qtyHtml}
+        ${inputHtml}
       </div>
     </label>`;
 }
@@ -565,7 +589,11 @@ async function submitSelection() {
   if (!selectedMenuId) return;
 
   const m = currentMenu();
-  const upsellArr = Object.entries(selectedUpsells).map(([upsell_id, qty]) => ({ upsell_id, qty }));
+  const upsellArr = Object.entries(selectedUpsells).map(([upsell_id, qty]) => {
+    const row = { upsell_id, qty };
+    if (upsellInputs[upsell_id]) row.guest_input = upsellInputs[upsell_id];
+    return row;
+  });
   const sectionArr = (m.sections || [])
     .filter(s => !s.all_included)
     .map(s => ({
