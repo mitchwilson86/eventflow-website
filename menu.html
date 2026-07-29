@@ -164,7 +164,7 @@
 
       <div class="total-bar">
         <div>
-          <div class="label">Estimated total</div>
+          <div class="label">Estimated total before tax and service fees</div>
           <div class="amount" id="total-amount">$0</div>
           <div id="extras-note" class="hidden" style="color:var(--text-secondary);font-size:12px;margin-top:2px"></div>
         </div>
@@ -464,6 +464,7 @@ function renderUpsells() {
         const id = el.dataset.id;
         const val = guestInput.value.trim();
         if (val) upsellInputs[id] = val; else delete upsellInputs[id];
+        updateTotalAndButton();
       });
     }
     if (qtyInput) {
@@ -489,13 +490,15 @@ function upsellHtml(u) {
   }
   // Optional per-add-on question (e.g. the logo link for custom menu cards).
   // Shown only once the add-on is checked; the click guard stops it toggling the checkbox.
+  const req = !!u.guest_input_required;
   const inputHtml = u.guest_input_label ? `
         <div class="upsell-guest-input hidden" style="margin-top:8px">
-          <label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:4px">${esc(u.guest_input_label)}</label>
-          <input type="text" class="guest-input" maxlength="500"
+          <label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:4px">${esc(u.guest_input_label)}${req ? ' <span style="color:var(--red)">*</span>' : ''}</label>
+          <input type="text" class="guest-input" maxlength="500" data-required="${req ? '1' : '0'}"
                  placeholder="${esc(u.guest_input_placeholder || '')}"
                  onclick="event.stopPropagation()"
                  style="width:100%;padding:8px;border:1px solid #CBD5E1;border-radius:6px;font-family:inherit;font-size:13px" />
+          ${req ? `<div class="guest-input-hint hidden" style="color:var(--red);font-size:12px;margin-top:4px">Required before you can confirm your selection.</div>` : ''}
         </div>` : '';
   return `
     <label class="upsell-option" data-id="${u.id}" data-price="${u.price}" data-unit="${u.price_unit}">
@@ -579,7 +582,27 @@ function updateTotalAndButton() {
   }
 
   document.getElementById('total-amount').textContent = fmtMoney(total);
-  document.getElementById('submit-btn').disabled = !selectedMenuId || !isAllSectionsValid(m);
+  const missingRequired = updateRequiredUpsellHints();
+  document.getElementById('submit-btn').disabled =
+    !selectedMenuId || !isAllSectionsValid(m) || missingRequired > 0;
+}
+
+// Add-ons whose guest question is mandatory (e.g. the logo file for menu cards)
+// block submission until answered. Returns how many are still missing.
+function updateRequiredUpsellHints() {
+  let missing = 0;
+  for (const el of document.querySelectorAll('.upsell-option')) {
+    const input = el.querySelector('input.guest-input');
+    if (!input || input.dataset.required !== '1') continue;
+    const checked = el.querySelector('input[type="checkbox"]').checked;
+    const empty = !input.value.trim();
+    const bad = checked && empty;
+    if (bad) missing++;
+    const hint = el.querySelector('.guest-input-hint');
+    if (hint) hint.classList.toggle('hidden', !bad);
+    input.style.borderColor = bad ? 'var(--red)' : '#CBD5E1';
+  }
+  return missing;
 }
 
 async function submitSelection() {
