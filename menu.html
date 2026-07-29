@@ -160,6 +160,7 @@
         <div>
           <div class="label">Estimated total</div>
           <div class="amount" id="total-amount">$0</div>
+          <div id="extras-note" class="hidden" style="color:var(--text-secondary);font-size:12px;margin-top:2px"></div>
         </div>
         <button class="btn primary" id="submit-btn" onclick="submitSelection()" disabled>
           Confirm selection
@@ -335,13 +336,22 @@ function sectionHtml(s, style, guests) {
   `;
 }
 
+// Per-person rate for selections beyond the included count (server-resolved:
+// menu_section.additional_price_per_person, with notes-text fallback). Null = extras not allowed.
+function addlRate(s) {
+  const r = Number(s.additional_price_per_person);
+  return (s.additional_price_per_person != null && isFinite(r) && r > 0) ? r : null;
+}
+
 function ruleText(s, style, guests) {
   if (s.all_included) return 'All included';
   if (style === 'per_guest') {
     return `Pick ${s.max_choices} per guest · totals must = ${guests * s.max_choices}`;
   }
-  if (s.min_choices === s.max_choices) return `Pick ${s.max_choices}`;
-  return `Pick ${s.min_choices}–${s.max_choices}`;
+  const rate = addlRate(s);
+  const extras = rate ? ` · extras +${fmtMoney(rate)} pp` : '';
+  if (s.min_choices === s.max_choices) return `Pick ${s.max_choices}${extras}`;
+  return `Pick ${s.min_choices}–${s.max_choices}${extras}`;
 }
 
 function wireSection(s, style, guests) {
@@ -367,9 +377,10 @@ function wireSection(s, style, guests) {
         const optId = cb.dataset.option;
         sectionPicks[s.id] = sectionPicks[s.id] || {};
         if (cb.checked) {
-          // Enforce max
+          // Enforce max only when the section has no priced extras;
+          // sections with an additional-selection rate accept over-max picks (charged per person).
           const picked = Object.keys(sectionPicks[s.id]).length;
-          if (picked >= s.max_choices) {
+          if (picked >= s.max_choices && addlRate(s) == null) {
             cb.checked = false;
             return;
           }
@@ -398,7 +409,9 @@ function updateAllRules(menu) {
     let target;
     if (menu.service_style === 'per_guest') target = guests * s.max_choices;
     else target = s.max_choices; // family-style: pick exactly max_choices
-    if (total === target && total > 0) { ruleEl.textContent = `${total} / ${target} ✓`; ruleEl.className = 'section-rule ok'; }
+    const rate = menu.service_style === 'per_guest' ? null : addlRate(s);
+    if (rate && total > target) { ruleEl.textContent = `${total} / ${target} · ${total - target} extra ✓`; ruleEl.className = 'section-rule ok'; }
+    else if (total === target && total > 0) { ruleEl.textContent = `${total} / ${target} ✓`; ruleEl.className = 'section-rule ok'; }
     else if (total === 0) { ruleEl.textContent = ruleText(s, menu.service_style, guests); ruleEl.className = 'section-rule'; }
     else { ruleEl.textContent = `${total} / ${target}`; ruleEl.className = 'section-rule warn'; }
   }
@@ -483,7 +496,10 @@ function isAllSectionsValid(menu) {
     const picks = sectionPicks[s.id] || {};
     const total = Object.values(picks).reduce((a,b) => a+b, 0);
     const target = menu.service_style === 'per_guest' ? guests * s.max_choices : s.max_choices;
-    if (total !== target) return false;
+    if (menu.service_style !== 'per_guest' && addlRate(s) != null) {
+      // Sections with priced extras: at least the included count (extras allowed)
+      if (total < target) return false;
+    } else if (total !== target) return false;
   }
   return true;
 }
@@ -494,17 +510,35 @@ function updateTotalAndButton() {
   let total = 0;
 
   const m = currentMenu();
+  let extraSelections = 0;
   if (m) {
     total += Number(m.price_per_person) * guests;
-    // Add per-option upcharges
+    // Add per-option upcharges + per-section additional-selection charges
     for (const s of m.sections || []) {
       const picks = sectionPicks[s.id] || {};
+      let sectionQty = 0;
       for (const [optId, qty] of Object.entries(picks)) {
         const opt = s.options.find(o => o.id === optId);
         if (!opt) continue;
+        sectionQty += qty;
         total += Number(opt.upcharge_per_person || 0) * guests * qty;
       }
+      // Picks beyond the included count, priced at the section's per-person rate.
+      // Count-based: the rate is per section, so which picks are "extra" doesn't affect the math.
+      const rate = m.service_style === 'per_guest' ? null : addlRate(s);
+      if (rate && !s.all_included && sectionQty > s.max_choices) {
+        const extra = sectionQty - s.max_choices;
+        extraSelections += extra;
+        total += rate * extra * guests;
+      }
     }
+  }
+  const extrasNote = document.getElementById('extras-note');
+  if (extrasNote) {
+    extrasNote.classList.toggle('hidden', extraSelections === 0);
+    extrasNote.textContent = extraSelections > 0
+      ? `Includes ${extraSelections} additional selection${extraSelections === 1 ? '' : 's'}`
+      : '';
   }
 
   for (const [id, qty] of Object.entries(selectedUpsells)) {

@@ -479,7 +479,7 @@ async function openMenuPicker() {
     if (!menuPicker.menus) {
       const sb = await getSupabase();
       const { data, error } = await sb.from('menu_catalog')
-        .select('id,name,price_per_person,sort_order, menu_section(id,name,position,min_choices,max_choices,all_included,notes, menu_section_option(id,name,description,position,dietary_tags,upcharge_per_person,is_active))')
+        .select('id,name,price_per_person,sort_order, menu_section(id,name,position,min_choices,max_choices,all_included,notes,additional_price_per_person, menu_section_option(id,name,description,position,dietary_tags,upcharge_per_person,is_active))')
         .eq('venue_id', state.activeVenue.id).eq('is_active', true);
       if (error) throw error;
       // client-side sort (nested ordering is unreliable through PostgREST)
@@ -508,8 +508,11 @@ function mpCurrentMenu() {
   const id = document.getElementById('mp-menu').value;
   return (menuPicker.menus || []).find(m => m.id === id);
 }
-// "Additional selections +$6 per person" -> 6 (null when the section has no priced extras)
+// Per-person rate for extra selections: menu_section.additional_price_per_person when set,
+// else parsed from notes ("Additional selections +$6 per person" -> 6). Null = no priced extras.
 function mpAddlPrice(section) {
+  const col = Number(section.additional_price_per_person);
+  if (section.additional_price_per_person != null && isFinite(col) && col > 0) return col;
   const m = String(section.notes || '').match(/additional[^+]*\+\$(\d+(?:\.\d+)?)/i);
   return m ? Number(m[1]) : null;
 }
