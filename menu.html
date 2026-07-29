@@ -149,8 +149,14 @@
     </div>
 
     <div class="menu-card">
-      <h2 style="font-family:var(--serif);font-size:22px;margin-bottom:6px">4. Anything else?</h2>
-      <p style="color:var(--text-secondary);font-size:13px;margin-bottom:10px">Special requests, dietary notes, or anything our team should know.</p>
+      <h2 style="font-family:var(--serif);font-size:22px;margin-bottom:6px">4. Allergies and dietary restrictions</h2>
+      <p style="color:var(--text-secondary);font-size:13px;margin-bottom:10px">Please list any allergies or dietary needs in your group, and who they apply to. Our kitchen will plan around them. Leave blank if there are none.</p>
+      <textarea id="dietary-notes" rows="3" placeholder="For example: 1 guest with a severe peanut allergy, 2 vegetarians, 1 gluten free" style="width:100%;padding:10px;border:1px solid #CBD5E1;border-radius:8px;font-family:inherit;font-size:14px"></textarea>
+    </div>
+
+    <div class="menu-card">
+      <h2 style="font-family:var(--serif);font-size:22px;margin-bottom:6px">5. Anything else?</h2>
+      <p style="color:var(--text-secondary);font-size:13px;margin-bottom:10px">Special requests, timing notes, or anything our team should know.</p>
       <textarea id="additional-notes" rows="4" style="width:100%;padding:10px;border:1px solid #CBD5E1;border-radius:8px;font-family:inherit;font-size:14px"></textarea>
       <div id="flag-notice" class="flag-notice hidden">
         <strong>Heads up:</strong> Wine pairings, tasting menus, custom menus, and chef's table experiences are handled directly by our event team. We'll route this note to them — no need to do anything else.
@@ -567,6 +573,7 @@ async function submitSelection() {
       options: Object.entries(sectionPicks[s.id] || {}).map(([option_id, qty]) => ({ option_id, qty }))
     }));
   const notes = document.getElementById('additional-notes').value.trim() || null;
+  const dietary = document.getElementById('dietary-notes').value.trim() || null;
 
   btn.disabled = true; btn.textContent = 'Submitting…';
   try {
@@ -576,7 +583,8 @@ async function submitSelection() {
       p_menu_catalog_id: selectedMenuId,
       p_selected_upsells: upsellArr,
       p_additional_notes: notes,
-      p_section_selections: sectionArr
+      p_section_selections: sectionArr,
+      p_dietary_notes: dietary
     });
     if (error) throw error;
     if (!data || data.ok !== true) throw new Error('Unexpected response');
