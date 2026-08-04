@@ -164,6 +164,7 @@
               <button class="beo-add" onclick="addBeoItem()">+ Add line item</button>
               <button class="beo-add" onclick="openMenuPicker()" title="Pick from the venue's group menus (sections and prices come live from /menus, so menu updates apply automatically)">+ Add from menu</button>
               <button class="beo-add" id="beo-ai-btn" onclick="draftBeoWithAI()" title="Compiles everything known about this booking (details, email thread, menu picks) into draft line items you can edit">&#10024; Draft BEO with AI</button>
+              <button class="beo-add" id="menu-link-btn" onclick="sendMenuLink()" title="Creates this guest's menu selection link. They are emailed automatically within the hour, and you can also paste the link into a reply yourself.">&#127860; Send menu link</button>
 
               <!-- Menu picker (live from menu_catalog / menu_section / menu_section_option) -->
               <div id="menu-picker" style="display:none;margin-top:14px;border:1px solid var(--border,#E2E8F0);border-radius:8px;padding:14px">
@@ -621,6 +622,58 @@ async function draftBeoWithAI() {
     if (qs.length) alert('The AI flagged open questions to resolve:\n\n- ' + qs.join('\n- '));
   } catch (e) {
     toast('AI draft failed: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = old;
+  }
+}
+
+/* MANUAL_BUILD_V1 (2026-08-03): "Send menu link" — the operator-driven path to the guest menu
+   builder, and the escape hatch when the AI misses a cue.
+   It calls the start-build edge function, NOT ops-api: ops-api needs the fleet-wide ops secret
+   in a header its CORS policy does not even allow, and a static page must never hold that.
+   start-build authorises the operator against venue_users and makes that call server-side.
+   Every decided outcome comes back as HTTP 200 with {ok, reason}, so refusals are explained
+   rather than surfacing as "non-2xx status code". */
+async function sendMenuLink() {
+  if (!state.booking || !state.booking.id) { toast('Save the booking first, then send the menu link.', 'error'); return; }
+  if (!state.contact || !state.contact.email) { toast('This booking has no contact email, so there is nobody to send the menu to.', 'error'); return; }
+  const btn = document.getElementById('menu-link-btn');
+  const old = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Creating link…';
+  try {
+    const sb = await getSupabase();
+    const { data, error } = await sb.functions.invoke('start-build', { body: { booking_id: state.booking.id } });
+    if (error) throw new Error(error.message || 'request failed');
+
+    if (data && data.ok === true) {
+      const url = data.menu_url || '';
+      // Copy is deliberately "within the hour": WF M polls every 30 minutes AND only picks up
+      // shells older than 30 minutes, so the real range is 30-60. Promising 30 generates
+      // "it never sent" reports.
+      const already = data.deduped ? 'This event already had a menu link. ' : '';
+      const sent = data.menu_link_sent_at ? ' It was already emailed to the guest.' : ' The guest is emailed automatically within the hour.';
+      toast(already + 'Menu link ready.' + sent, 'success');
+      if (url && confirm(already + 'Menu link:\n\n' + url + '\n\n' + 'The guest is emailed automatically within the hour. Copy the link to your clipboard so you can paste it into a reply now?')) {
+        try { await navigator.clipboard.writeText(url); toast('Link copied.', 'success'); }
+        catch (_) { /* clipboard blocked: the link is on screen in the dialog anyway */ }
+      }
+      return;
+    }
+
+    // Decided refusals, phrased for a non-technical operator.
+    const reason = (data && data.reason) || (data && data.error) || 'unknown';
+    const MSG = {
+      not_entitled: 'Guest menu selection is not switched on for this venue yet.',
+      not_entitled_autopilot: 'This venue’s plan does not include the automatic menu builder.',
+      human_handling: 'Someone on the team has personally taken over this guest, so automated emails to them are paused. Remove them from the human-handling list to re-enable it.',
+      booking_not_found: 'That booking could not be found for this venue.',
+      venue_not_registered: 'This venue is not set up in the registry yet.',
+      venue_not_provisioned: 'This venue is missing its Supabase setup. Ask Mitchell to provision it.',
+      event_date_required: 'Add an event date to this booking first.',
+    };
+    toast(MSG[reason] || ('Could not create the menu link (' + reason + ').'), 'error');
+  } catch (e) {
+    toast('Could not create the menu link: ' + e.message, 'error');
   } finally {
     btn.disabled = false; btn.textContent = old;
   }
