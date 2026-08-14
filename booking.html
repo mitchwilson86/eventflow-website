@@ -166,6 +166,19 @@
               <button class="beo-add" id="beo-ai-btn" onclick="draftBeoWithAI()" title="Compiles everything known about this booking (details, email thread, menu picks) into draft line items you can edit">&#10024; Draft BEO with AI</button>
               <button class="beo-add" id="menu-link-btn" onclick="sendMenuLink()" title="Creates this guest's menu selection link. They are emailed automatically within the hour, and you can also paste the link into a reply yourself.">&#127860; Send menu link</button>
 
+              <!-- BEO_MENU_LOCK_V1 (2026-08-08): the drafter has always written dietary_notes and
+                   billing_notes, and they went into beo_drafts and were never shown to anyone, so a
+                   real catch (e.g. "the event says 22% but venue policy is 20% + 4%") reached
+                   nobody. Open questions were an alert() that vanished on OK. This panel shows all
+                   of it, plus any line items the menu lock deliberately held back. -->
+              <div id="beo-ai-notes" style="display:none;margin-top:14px;border:1px solid var(--border,#E2E8F0);border-left:3px solid var(--accent,#6366F1);border-radius:8px;padding:14px;background:var(--bg-subtle,#F8FAFC)">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+                  <strong style="font-size:14px">&#10024; What the AI draft found</strong>
+                  <button type="button" class="beo-add" style="margin:0;padding:2px 10px;font-size:12px" onclick="document.getElementById('beo-ai-notes').style.display='none'">Dismiss</button>
+                </div>
+                <div id="beo-ai-notes-body" style="margin-top:10px;font-size:13px;line-height:1.55"></div>
+              </div>
+
               <!-- Menu picker (live from menu_catalog / menu_section / menu_section_option) -->
               <div id="menu-picker" style="display:none;margin-top:14px;border:1px solid var(--border,#E2E8F0);border-radius:8px;padding:14px">
                 <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
@@ -617,14 +630,61 @@ async function draftBeoWithAI() {
     const { data: items } = await sb.from('beo_items').select('*').eq('booking_id', state.booking.id).order('sort_order');
     state.items = items || [];
     renderBeoItems(); renderTotals();
-    toast('AI draft added ' + data.items_inserted + ' line item' + (data.items_inserted === 1 ? '' : 's') + '. Review and edit before saving.', 'success');
-    const qs = (data.draft && data.draft.open_questions) || [];
-    if (qs.length) alert('The AI flagged open questions to resolve:\n\n- ' + qs.join('\n- '));
+    toast(data.menu_locked
+      ? 'Draft refreshed. The line items already come from what the guest chose, so none were added or changed.'
+      : 'AI draft added ' + data.items_inserted + ' line item' + (data.items_inserted === 1 ? '' : 's') + '. Review and edit before saving.',
+      'success');
+    renderAiDraftNotes(data);
   } catch (e) {
     toast('AI draft failed: ' + e.message, 'error');
   } finally {
     btn.disabled = false; btn.textContent = old;
   }
+}
+
+/* BEO_MENU_LOCK_V1 (2026-08-08) — everything the draft says that is NOT a line item.
+   Two things used to be thrown away on every single draft:
+     - dietary_notes and billing_notes were written to beo_drafts and displayed nowhere;
+     - open_questions were an alert() the operator dismissed and could never get back.
+   And with the menu lock in place the drafter's proposed items are deliberately not inserted,
+   so listing them here means a genuinely new AV or staffing suggestion stays visible instead of
+   being dropped in silence. Panel is inert (display:none) until a draft actually returns. */
+function renderAiDraftNotes(data) {
+  const d = (data && data.draft) || {};
+  const panel = document.getElementById('beo-ai-notes');
+  const body = document.getElementById('beo-ai-notes-body');
+  if (!panel || !body) return;
+  const parts = [];
+
+  if (data.menu_locked) {
+    parts.push('<p style="margin:0 0 10px"><strong>Line items were left alone.</strong> This guest has already chosen their menu, so the priced lines below come straight from what they picked. The AI does not rewrite them: those figures are worked out exactly, and its own versions would land next to them as duplicates rather than replacing them.</p>');
+  }
+
+  const sup = (data.suppressed_items || []).filter((it) => it && it.name);
+  if (sup.length) {
+    parts.push('<p style="margin:0 0 4px"><strong>It suggested ' + sup.length + ' line item' + (sup.length === 1 ? '' : 's') + ' that ' + (sup.length === 1 ? 'was' : 'were') + ' not added:</strong></p>'
+      + '<ul style="margin:0 0 6px 18px;padding:0">'
+      + sup.map((it) => '<li>' + esc(it.name)
+          + (it.unit_price ? ' <span style="color:var(--text-secondary)">(' + fmtMoney(it.unit_price)
+              + (it.unit ? ' per ' + esc(it.unit) : '') + ')</span>' : '')
+        + '</li>').join('')
+      + '</ul>'
+      + '<p style="margin:0 0 10px;color:var(--text-secondary)">Most of these will be copies of the menu the guest already chose. If one is genuinely new, add it with <em>+ Add line item</em>.</p>');
+  }
+
+  if (d.dietary_notes) parts.push('<p style="margin:0 0 10px"><strong>Dietary:</strong> ' + esc(d.dietary_notes) + '</p>');
+  if (d.billing_notes) parts.push('<p style="margin:0 0 10px"><strong>Billing:</strong> ' + esc(d.billing_notes) + '</p>');
+
+  const qs = (d.open_questions || []).filter(Boolean);
+  if (qs.length) {
+    parts.push('<p style="margin:0 0 4px"><strong>Open questions to resolve:</strong></p><ul style="margin:0;padding:0 0 0 18px">'
+      + qs.map((q) => '<li style="margin-bottom:4px">' + esc(q) + '</li>').join('') + '</ul>');
+  }
+
+  if (!parts.length) { panel.style.display = 'none'; body.innerHTML = ''; return; }
+  body.innerHTML = parts.join('');
+  panel.style.display = '';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 /* MANUAL_BUILD_V1 (2026-08-03): "Send menu link" — the operator-driven path to the guest menu
