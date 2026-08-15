@@ -660,6 +660,10 @@ function humanizeError(msg) {
   if (!msg) return 'Unknown error.';
   if (/token not found|invalid token/i.test(msg)) return 'This menu link is no longer valid. Please contact the venue.';
   if (/not in selectable status/i.test(msg)) return 'This event is no longer accepting menu changes. Please contact the venue.';
+  // Both guest RPCs raise this when the venue's menu-selection switch is not 'on'. That is
+  // exactly what the go-live rollback does, so without this branch a guest holding a live
+  // link would be shown raw Postgres exception text the moment we roll back.
+  if (/not enabled for this venue/i.test(msg)) return 'This menu link is not active right now. Please contact the venue.';
   if (/qty mismatch/i.test(msg)) return msg;
   return msg;
 }
