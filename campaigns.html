@@ -476,6 +476,11 @@ function renderQueue() {
     html += '<div class="camp-meta">' + esc(TYPE_LABELS[c.campaign_type] || c.campaign_type) + ' · audience: ' + esc(SEGMENT_LABELS[c.segment] || c.segment) + ' (' + esc(audience.label) + ')';
     if (c.approved_by) html += ' · approved by ' + esc(c.approved_by) + (c.approved_at ? ' on ' + fmtDate(c.approved_at) : '');
     html += ' · created ' + fmtDate(c.created_at) + '</div>';
+    // CAMPAIGN_UNHELD_EVENT_WARN_V1: visible on the card, not only behind the approve dialog.
+    if (audience.warnCount) {
+      html += '<div class="camp-meta" style="color:#b45309">&#9888; ' +
+        esc(audience.warnText.split('\n')[0]) + ' Check the wording before approving.</div>';
+    }
     if (c.subject_a || c.subject_b) {
       html += '<div class="camp-subjects">';
       if (c.subject_a) html += '<div><span class="var-tag">A</span>' + esc(c.subject_a) + '</div>';
@@ -707,11 +712,34 @@ function audienceOf(c) {
   if (a.skipped_muted) bits.push(a.skipped_muted + ' handled by a human');
   if (a.skipped_test_guard) bits.push(a.skipped_test_guard + ' test address' + (a.skipped_test_guard === 1 ? '' : 'es'));
   if (a.already_in_ledger) bits.push(a.already_in_ledger + ' already queued or sent');
+
+  /* CAMPAIGN_UNHELD_EVENT_WARN_V1: guests who WILL be emailed but whose event has not
+     happened yet. Advisory: these people are still in the send. It is here because copy that
+     thanks somebody for a past event is false for them, and a permission request landing days
+     before their event is badly timed either way. */
+  var w = a.warn || {};
+  var warnLines = [];
+  if (w.never_hosted) {
+    warnLines.push(w.never_hosted + (w.never_hosted === 1 ? ' guest has' : ' guests have') +
+      ' NOT yet held their event, so any copy thanking them for a past event is untrue for them.');
+  }
+  if (w.upcoming_event) {
+    warnLines.push(w.upcoming_event + (w.upcoming_event === 1 ? ' guest has' : ' guests have') +
+      ' an event still to come.');
+  }
+  if (warnLines.length && (w.sample || []).length) {
+    warnLines.push('For example: ' + w.sample.slice(0, 3).map(function (s) {
+      return s.name + ' (' + (s.event_date || 'no date') + ')';
+    }).join(', ') + '.');
+  }
+
   return {
     known: true,
     queued: a.queued,
     label: a.queued + (a.queued === 1 ? ' guest' : ' guests'),
-    detail: bits.length ? 'Excluded: ' + bits.join(', ') + '.' : 'Nothing is being excluded.'
+    detail: bits.length ? 'Excluded: ' + bits.join(', ') + '.' : 'Nothing is being excluded.',
+    warnCount: (w.never_hosted || 0) + (w.upcoming_event || 0),
+    warnText: warnLines.join('\n')
   };
 }
 
@@ -725,6 +753,8 @@ function approveCampaign(id) {
       msg += '\n\nThis is a re-permission campaign, so it goes ONLY to guests whose consent\n'
            + 'was never confirmed. That is why the number is smaller than the segment.';
     }
+    // These guests are still IN the send. The warning does not remove anybody.
+    if (a.warnText) msg += '\n\n⚠ CHECK THE WORDING BEFORE YOU SEND:\n' + a.warnText;
     msg += '\n\nSending starts on the next cycle and cannot be undone for anyone already emailed.';
   } else {
     msg += a.detail;
