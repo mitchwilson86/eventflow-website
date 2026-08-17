@@ -466,14 +466,14 @@ function renderQueue() {
   list.innerHTML = QUEUE.campaigns.map(function (c) {
     var counts = c.send_counts || {};
     var countBits = Object.keys(counts).map(function (k) { return counts[k] + ' ' + k.replace(/_/g, ' '); }).join(' · ');
-    var audience = (c.segment === 'all_guests' ? QUEUE.guest_total : (QUEUE.segment_counts[c.segment] || 0));
+    var audience = audienceOf(c);
     var editable = c.status === 'draft' || c.status === 'pending_approval' || c.status === 'approved' || c.status === 'cancelled';
     var approvable = QUEUE.is_admin && (c.status === 'draft' || c.status === 'pending_approval');
     var skippable = c.status !== 'sending' && c.status !== 'sent' && c.status !== 'cancelled';
     var html = '<div class="camp-card">';
     html += '<div class="camp-head"><span class="camp-name">' + esc(c.name) + '</span>';
     html += '<span class="status-pill st-' + esc(c.status) + '">' + esc(c.status.replace(/_/g, ' ')) + '</span></div>';
-    html += '<div class="camp-meta">' + esc(TYPE_LABELS[c.campaign_type] || c.campaign_type) + ' · audience: ' + esc(SEGMENT_LABELS[c.segment] || c.segment) + ' (' + audience + ' guests)';
+    html += '<div class="camp-meta">' + esc(TYPE_LABELS[c.campaign_type] || c.campaign_type) + ' · audience: ' + esc(SEGMENT_LABELS[c.segment] || c.segment) + ' (' + esc(audience.label) + ')';
     if (c.approved_by) html += ' · approved by ' + esc(c.approved_by) + (c.approved_at ? ' on ' + fmtDate(c.approved_at) : '');
     html += ' · created ' + fmtDate(c.created_at) + '</div>';
     if (c.subject_a || c.subject_b) {
@@ -684,10 +684,52 @@ function draftWithAI() {
   });
 }
 
+/* CAMPAIGN_AUDIENCE_PREVIEW_V1 (2026-08-17). This used to be
+     segment === 'all_guests' ? guest_total : segment_counts[segment]
+   which is a RAW SEGMENT COUNT, not the audience. It ignored suppressions, muted guests,
+   the test-address guard, and the fact that a re-permission campaign INVERTS its audience
+   to only those guests whose consent was never really given. On 2026-08-15 that made the
+   approval dialog offer "up to 16719 guests" for a send whose real audience is 423.
+   The backend now resolves it properly (Code.js _resolveCampaignAudience_, guarded by
+   patches/sunda/verify_campaign_audience_parity.js). We only render what it tells us.
+   Falls back to the honest "unknown" rather than the old wrong number if an older backend
+   is still deployed, because a confident wrong number is what caused the bug. */
+function audienceOf(c) {
+  var a = c && c.audience_preview;
+  if (!a || typeof a.queued !== 'number') {
+    return { known: false, queued: null, label: 'audience not available', detail:
+      'This dashboard could not work out the real audience (the backend did not report one).\n' +
+      'Do not assume it is the whole segment: a re-permission campaign goes only to guests\n' +
+      'whose consent is unconfirmed, which is a much smaller group.' };
+  }
+  var bits = [];
+  if (a.skipped_suppressed) bits.push(a.skipped_suppressed + ' unsubscribed');
+  if (a.skipped_muted) bits.push(a.skipped_muted + ' handled by a human');
+  if (a.skipped_test_guard) bits.push(a.skipped_test_guard + ' test address' + (a.skipped_test_guard === 1 ? '' : 'es'));
+  if (a.already_in_ledger) bits.push(a.already_in_ledger + ' already queued or sent');
+  return {
+    known: true,
+    queued: a.queued,
+    label: a.queued + (a.queued === 1 ? ' guest' : ' guests'),
+    detail: bits.length ? 'Excluded: ' + bits.join(', ') + '.' : 'Nothing is being excluded.'
+  };
+}
+
 function approveCampaign(id) {
   var c = QUEUE.campaigns.find(function (x) { return x.id === id; });
-  var audience = c ? (c.segment === 'all_guests' ? QUEUE.guest_total : (QUEUE.segment_counts[c.segment] || 0)) : 0;
-  if (!confirm('Approve "' + (c ? c.name : id) + '"?\n\nThe sender workflow will email up to ' + audience + ' guests (suppressions and already-sent guests are always skipped).')) return;
+  var a = audienceOf(c);
+  var msg = 'Approve "' + (c ? c.name : id) + '"?\n\n';
+  if (a.known) {
+    msg += 'This will email ' + a.queued + (a.queued === 1 ? ' guest' : ' guests') + '.\n' + a.detail;
+    if (c && c.campaign_type === 'repermission') {
+      msg += '\n\nThis is a re-permission campaign, so it goes ONLY to guests whose consent\n'
+           + 'was never confirmed. That is why the number is smaller than the segment.';
+    }
+    msg += '\n\nSending starts on the next cycle and cannot be undone for anyone already emailed.';
+  } else {
+    msg += a.detail;
+  }
+  if (!confirm(msg)) return;
   api({ action: 'approve_campaign', id: id }).then(function (res) {
     if (res.error) { showMsg(res.error, 'err'); return; }
     showMsg('Approved. The sender workflow will pick it up.', 'ok');
