@@ -51,6 +51,21 @@
     .kb-card-preview { font-size: 13px; color: var(--text-secondary); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
     .kb-badge { display: inline-block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; padding: 2px 8px; border-radius: 999px; background: var(--bg-subtle, #f0f4f5); color: var(--text-secondary); margin-right: 6px; }
     .kb-badge.locked { background: #fdf3e3; color: #9a6b1f; }
+    /* PHASE_C_ANSWER_LINK_V1 */
+    .gap-sug { border: 1px solid var(--border, #E2E8F0); border-left: 3px solid var(--orange, #FF7D00);
+      border-radius: 8px; padding: 14px; margin-bottom: 12px; background: #fff; }
+    .gap-sug .gap-asked { font-size: 12px; color: var(--text-secondary, #64748B); margin-bottom: 8px; }
+    .gap-sug .gap-said { background: #F1F5F9; border-radius: 6px; padding: 9px 11px;
+      font-size: 13px; color: #1E293B; margin-bottom: 12px; white-space: pre-wrap; }
+    .gap-sug label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.05em; color: #64748B; margin: 0 0 4px; }
+    .gap-sug input, .gap-sug textarea { width: 100%; box-sizing: border-box; padding: 8px 10px;
+      border: 1px solid #CBD5E1; border-radius: 6px; font: inherit; font-size: 14px; margin-bottom: 10px; }
+    .gap-sug textarea { min-height: 84px; resize: vertical; }
+    .gap-flag { font-size: 12px; padding: 7px 10px; border-radius: 6px; margin-bottom: 10px; }
+    .gap-flag.warn { background: #FEF3C7; color: #78350F; }
+    .gap-flag.test { background: #E0E7FF; color: #3730A3; }
+    .gap-sug-actions { display: flex; gap: 8px; align-items: center; }
     .kb-meter-wrap { margin: 6px 0 16px; }
     .kb-meter { height: 8px; border-radius: 999px; background: var(--bg-subtle, #eef2f3); overflow: hidden; }
     .kb-meter > div { height: 100%; border-radius: 999px; background: var(--teal); transition: width .3s; }
@@ -459,6 +474,15 @@
 
         <!-- ================= TAB: KNOWLEDGE ================= -->
         <div class="vb-panel" id="panel-kb">
+
+          <!-- PHASE_C_ANSWER_LINK_V1: answers the venue sent back, waiting for approval.
+               Hidden entirely when there is nothing waiting, so it is a signal rather than
+               furniture. Nothing here is in the knowledge base yet. -->
+          <div class="panel" id="gapSuggestPanel" style="display:none;">
+            <h3>Waiting for your review <span class="vb-h-hint">answers sent back for questions the assistant could not handle. Nothing here is live until you approve it.</span></h3>
+            <div id="gapSuggestList"></div>
+          </div>
+
           <div class="panel">
             <h3>What your AI knows <span class="vb-h-hint">policies, FAQs, and venue info the assistant uses in every reply</span></h3>
             <div class="kb-meter-wrap">
@@ -866,7 +890,106 @@
     });
   }
 
+  /* ---------- PHASE_C_ANSWER_LINK_V1: answers waiting for approval ---------- */
+  var GAPS = [];
+
+  function loadGapSuggestions() {
+    api({ action: 'get_gap_suggestions' }).then(function (res) {
+      // An older backend that does not know this action returns an error. Treat that, and a
+      // Supabase outage, the same way: show nothing rather than an alarming empty panel.
+      // No suggestions key at all means the backend does not know this action yet. Same
+      // handling as an outage: show nothing rather than an empty panel that implies "all clear".
+      if (!res || res.error || res.unavailable || !Array.isArray(res.suggestions)) {
+        GAPS = []; renderGapSuggestions(); return;
+      }
+      GAPS = res.suggestions || [];
+      renderGapSuggestions();
+    }).catch(function () { GAPS = []; renderGapSuggestions(); });
+  }
+
+  function renderGapSuggestions() {
+    var panel = document.getElementById('gapSuggestPanel');
+    var list = document.getElementById('gapSuggestList');
+    if (!GAPS.length) { panel.style.display = 'none'; list.innerHTML = ''; return; }
+    panel.style.display = 'block';
+
+    var html = '';
+    GAPS.forEach(function (g) {
+      html += '<div class="gap-sug" id="gap-sug-' + g.gap_id + '">';
+      if (g.is_test) html += '<div class="gap-flag test">Test entry, not a real guest.</div>';
+      html += '<div class="gap-asked">A guest asked: <strong>' + esc(g.asked) + '</strong></div>';
+      html += '<div class="gap-said">' + esc(g.venue_answer || '') + '</div>';
+
+      if (g.duplicate_of) {
+        html += '<div class="gap-flag warn"><strong>Your knowledge may already cover this:</strong> ' +
+          esc(g.duplicate_of) + '</div>';
+      }
+      if (g.ambiguity) {
+        html += '<div class="gap-flag warn"><strong>Still unclear:</strong> ' + esc(g.ambiguity) + '</div>';
+      }
+      if (!g.confident) {
+        html += '<div class="gap-flag warn">This was a stretch from what they wrote. Read it closely before approving.</div>';
+      }
+
+      html += '<label for="gapq-' + g.gap_id + '">Question, as a future guest might ask it</label>';
+      html += '<input type="text" id="gapq-' + g.gap_id + '" maxlength="300" value="' + esc(g.question) + '" />';
+      html += '<label for="gapa-' + g.gap_id + '">Answer the assistant will give</label>';
+      html += '<textarea id="gapa-' + g.gap_id + '" maxlength="1000">' + esc(g.answer) + '</textarea>';
+      html += '<div class="gap-sug-actions">' +
+        '<button class="btn-primary" onclick="approveGapCard(' + g.gap_id + ')">Add to knowledge</button>' +
+        '<button class="btn-secondary" onclick="rejectGapCard(' + g.gap_id + ')">Discard</button>' +
+        '</div>';
+      html += '</div>';
+    });
+    list.innerHTML = html;
+  }
+
+  function _gapBusy(gapId, busy) {
+    var card = document.getElementById('gap-sug-' + gapId);
+    if (!card) return;
+    card.querySelectorAll('button').forEach(function (b) { b.disabled = busy; });
+    card.style.opacity = busy ? '0.55' : '1';
+  }
+
+  function approveGapCard(gapId) {
+    var q = (document.getElementById('gapq-' + gapId) || {}).value || '';
+    var a = (document.getElementById('gapa-' + gapId) || {}).value || '';
+    if (a.trim().length < 3) { showMsg('Add an answer before approving.', 'err'); return; }
+    _gapBusy(gapId, true);
+    api({ action: 'approve_gap_card', gap_id: gapId, question: q, answer: a }).then(function (res) {
+      // Require an explicit success. A backend that does not know this action falls through to
+      // the generic update path and returns {updated: []}, which has no error field, so a
+      // truthiness check would report a false success and hide the card as if it had landed.
+      if (!res || res.error || res.success !== true) {
+        _gapBusy(gapId, false);
+        showMsg((res && res.error) || 'Could not save that. Please reload and try again.', 'err');
+        return;
+      }
+      showMsg(res.warning || 'Added. Your assistant can answer that question from now on.', res.warning ? 'err' : 'ok');
+      // Re-read both: the KB changed, and this suggestion is gone.
+      GAPS = GAPS.filter(function (g) { return g.gap_id !== gapId; });
+      renderGapSuggestions();
+      loadKb();
+    }).catch(function () { _gapBusy(gapId, false); showMsg('Could not save that. Please try again.', 'err'); });
+  }
+
+  function rejectGapCard(gapId) {
+    if (!window.confirm('Discard this suggestion? It will not be added to your knowledge, and the answer stays on record.')) return;
+    _gapBusy(gapId, true);
+    api({ action: 'reject_gap_card', gap_id: gapId }).then(function (res) {
+      if (!res || res.error || res.success !== true) {
+        _gapBusy(gapId, false);
+        showMsg((res && res.error) || 'Could not discard that. Please reload and try again.', 'err');
+        return;
+      }
+      showMsg('Discarded. Nothing was added to your knowledge.', 'ok');
+      GAPS = GAPS.filter(function (g) { return g.gap_id !== gapId; });
+      renderGapSuggestions();
+    }).catch(function () { _gapBusy(gapId, false); showMsg('Could not discard that. Please try again.', 'err'); });
+  }
+
   function loadKb() {
+    loadGapSuggestions();
     api({ action: 'get_kb' }).then(function (res) {
       if (res.error) return; // knowledge tab stays empty; other tabs unaffected
       KB.cards = res.cards || [];
