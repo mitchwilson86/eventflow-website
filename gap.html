@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Answer a question</title>
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="/favicon.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/eventflow-shared.css" />
+  <link rel="stylesheet" href="/bookings.css" />
+  <script src="/bookings-shared.js"></script>
+  <style>
+    body { background: var(--bg-page); }
+    .gap-wrap { max-width: 640px; margin: 0 auto; padding: 32px 16px 80px; }
+    .gap-brand {
+      font-family: 'DM Serif Display', Georgia, serif; font-size: 22px;
+      color: var(--teal); text-align: center; margin-bottom: 4px;
+    }
+    .gap-venue { text-align: center; color: var(--text-secondary); font-size: 14px; margin-bottom: 24px; }
+    .gap-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+      padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .gap-eyebrow {
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text-secondary); margin-bottom: 8px;
+    }
+    .gap-question {
+      font-size: 20px; font-weight: 600; color: var(--text-primary);
+      line-height: 1.35; margin: 0 0 14px 0;
+    }
+    .gap-needed {
+      border-left: 3px solid var(--orange); background: var(--orange-bg);
+      padding: 10px 12px; border-radius: 0 8px 8px 0; font-size: 14px;
+      color: var(--text-primary); margin-bottom: 20px;
+    }
+    .gap-needed strong { display: block; font-size: 11px; text-transform: uppercase;
+      letter-spacing: 0.05em; color: var(--burnt); margin-bottom: 3px; font-weight: 600; }
+    .gap-label { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
+    .gap-hint { font-size: 13px; color: var(--text-secondary); margin: 0 0 10px 0; line-height: 1.5; }
+    textarea#answer {
+      width: 100%; box-sizing: border-box; padding: 12px; border: 1px solid var(--border-hover);
+      border-radius: 8px; font-family: inherit; font-size: 15px; line-height: 1.5;
+      color: var(--text-primary); background: var(--bg-card); resize: vertical; min-height: 150px;
+    }
+    textarea#answer:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px var(--teal-bg); }
+    .gap-counter { font-size: 12px; color: var(--text-muted); text-align: right; margin-top: 4px; }
+    .gap-actions { margin-top: 18px; display: flex; align-items: center; gap: 12px; }
+    .gap-actions .btn.primary { padding: 10px 20px; font-size: 15px; }
+    .gap-footnote {
+      margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--border);
+      font-size: 13px; color: var(--text-secondary); line-height: 1.55;
+    }
+    .gap-state { text-align: center; padding: 12px 0; }
+    .gap-state h2 { font-family: 'DM Serif Display', Georgia, serif; font-size: 24px;
+      color: var(--text-primary); margin: 0 0 10px 0; font-weight: 400; }
+    .gap-state p { font-size: 15px; color: var(--text-secondary); line-height: 1.6; margin: 0 0 10px 0; }
+    .gap-tick { font-size: 40px; line-height: 1; margin-bottom: 10px; }
+    .gap-prev {
+      text-align: left; background: var(--bg-inset); border-radius: 8px; padding: 12px 14px;
+      font-size: 14px; color: var(--text-primary); white-space: pre-wrap; margin: 14px 0 0 0;
+    }
+    .gap-err { color: var(--red); font-size: 14px; margin-top: 10px; display: none; }
+    .gap-loader { text-align: center; color: var(--text-secondary); padding: 48px 0; font-size: 14px; }
+    .gap-chip {
+      display: inline-block; font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.05em; padding: 3px 8px; border-radius: 999px;
+      background: var(--bg-inset); color: var(--text-secondary); margin-left: 8px; vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+
+<div class="gap-wrap">
+  <div class="gap-brand">EventFlow</div>
+  <div class="gap-venue" id="venue"></div>
+
+  <div class="gap-loader" id="loader">Loading the question...</div>
+
+  <!-- error / dead link -->
+  <div class="gap-card" id="error" style="display:none">
+    <div class="gap-state">
+      <h2>We could not open this link</h2>
+      <p id="error-msg"></p>
+      <p>If you still have the report email, you can simply reply to it instead.</p>
+    </div>
+  </div>
+
+  <!-- the form -->
+  <div class="gap-card" id="content" style="display:none">
+    <div class="gap-eyebrow">A guest asked us this and we could not answer it<span class="gap-chip" id="chip" style="display:none"></span></div>
+    <p class="gap-question" id="question"></p>
+
+    <div class="gap-needed" id="needed-box" style="display:none">
+      <strong>What we need from you</strong>
+      <span id="needed"></span>
+    </div>
+
+    <div class="gap-label">Your answer</div>
+    <p class="gap-hint">Write it the way you would say it to a guest. Plain sentences are perfect, and there is no need to make it tidy. If the answer depends on the date, the group size, or anything else, say so and we will handle that.</p>
+    <textarea id="answer" maxlength="4000" placeholder="For example: Yes, outside cake is allowed. There is a $2 per person cutting fee, and we need to know at least 48 hours ahead."></textarea>
+    <div class="gap-counter"><span id="counter">0</span> / 4000</div>
+
+    <div class="gap-actions">
+      <button class="btn primary" id="submit-btn" onclick="submitAnswer()" disabled>Send this answer</button>
+      <span style="font-size:13px;color:var(--text-secondary)" id="submit-note"></span>
+    </div>
+    <div class="gap-err" id="submit-error"></div>
+
+    <div class="gap-footnote">
+      Your answer is reviewed by EventFlow before it is added to the assistant's knowledge.
+      Nothing you type here goes out to a guest automatically. Once it is approved, the next
+      guest who asks this gets the answer straight away instead of waiting on you.
+    </div>
+  </div>
+
+  <!-- thank you / already answered -->
+  <div class="gap-card" id="done" style="display:none">
+    <div class="gap-state">
+      <div class="gap-tick">&#10003;</div>
+      <h2 id="done-title">Thank you</h2>
+      <p id="done-body"></p>
+      <div class="gap-prev" id="done-answer" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* PHASE_C_ANSWER_LINK_V1. Public, token-gated page. No login: possession of the link is the
+   credential, same posture as menu.html and sign.html. Both RPCs are SECURITY DEFINER over an
+   RLS-denied table and return only the question, never guest details. */
+
+// Accept ?t= (what the gap email sends) and ?token= (what menu.html uses), so a hand-edited
+// or mail-client-mangled link does not silently lose an answer.
+var params = new URLSearchParams(window.location.search);
+var token = params.get('t') || params.get('token') || '';
+var ctx = null;
+
+window.addEventListener('load', boot);
+
+async function boot() {
+  if (!token) return showError('This link is missing its code. Please open the link from the report email again.');
+  try {
+    var sb = await getSupabase();
+    var res = await sb.rpc('get_gap_for_answer', { p_token: token });
+    if (res.error) return showError(humanizeError(res.error.message));
+    ctx = res.data || {};
+
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('venue').textContent = ctx.venue_name || '';
+
+    if (ctx.already_answered) return showDone(true, ctx.existing_answer);
+
+    document.getElementById('question').textContent = ctx.question || '';
+    if (ctx.needed_from_venue) {
+      document.getElementById('needed').textContent = ctx.needed_from_venue;
+      document.getElementById('needed-box').style.display = 'block';
+    }
+    if (ctx.priority === 'high') {
+      var chip = document.getElementById('chip');
+      chip.textContent = 'high priority';
+      chip.style.display = 'inline-block';
+    }
+    var ta = document.getElementById('answer');
+    ta.addEventListener('input', onType);
+    document.getElementById('content').style.display = 'block';
+    ta.focus();
+  } catch (err) {
+    showError(humanizeError((err && err.message) || String(err)));
+  }
+}
+
+function onType() {
+  var v = document.getElementById('answer').value;
+  document.getElementById('counter').textContent = v.length;
+  document.getElementById('submit-btn').disabled = v.trim().length < 2;
+}
+
+async function submitAnswer() {
+  var btn = document.getElementById('submit-btn');
+  var errEl = document.getElementById('submit-error');
+  var answer = document.getElementById('answer').value.trim();
+  if (answer.length < 2) return;
+
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+  document.getElementById('submit-note').textContent = '';
+
+  try {
+    var sb = await getSupabase();
+    var res = await sb.rpc('submit_gap_answer', { p_token: token, p_answer: answer });
+    if (res.error) throw res.error;
+    var data = res.data || {};
+    if (data.ok !== true) throw new Error('Unexpected response');
+    // already_answered means someone got there first. Show theirs, not a false success.
+    showDone(data.already_answered === true, data.already_answered === true ? data.answer : answer);
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = 'Send this answer';
+    errEl.textContent = humanizeError((err && err.message) || String(err));
+    errEl.style.display = 'block';
+  }
+}
+
+function showDone(wasAlreadyAnswered, answerText) {
+  document.getElementById('loader').style.display = 'none';
+  document.getElementById('content').style.display = 'none';
+  document.getElementById('error').style.display = 'none';
+  document.getElementById('done').style.display = 'block';
+
+  if (wasAlreadyAnswered) {
+    document.getElementById('done-title').textContent = 'This one is already answered';
+    document.getElementById('done-body').textContent =
+      'Someone has already sent an answer for this question, so there is nothing left to do here. '
+      + 'It is with EventFlow for review. If it needs changing, just reply to the report email.';
+  } else {
+    document.getElementById('done-title').textContent = 'Thank you, that is exactly what we needed';
+    document.getElementById('done-body').textContent =
+      "Your answer is saved and queued for review. Once it is approved it goes into the assistant's "
+      + 'knowledge, so the next guest who asks this gets the answer straight away.';
+  }
+
+  if (answerText) {
+    var box = document.getElementById('done-answer');
+    box.textContent = answerText;
+    box.style.display = 'block';
+  }
+}
+
+function showError(msg) {
+  document.getElementById('loader').style.display = 'none';
+  document.getElementById('content').style.display = 'none';
+  document.getElementById('done').style.display = 'none';
+  document.getElementById('error').style.display = 'block';
+  document.getElementById('error-msg').textContent = msg;
+}
+
+/* A raw Postgres exception must never reach the venue. Every message these two RPCs can raise
+   is mapped here; anything unmapped falls back to a plain sentence rather than the raw text. */
+function humanizeError(msg) {
+  if (!msg) return 'Something went wrong. Please try again in a moment.';
+  if (/token expired/i.test(msg)) {
+    return 'This link has expired. Links stay valid for 30 days. Please reply to the report email instead and we will take it from there.';
+  }
+  if (/token not found|invalid token/i.test(msg)) {
+    return 'This link is not valid. It may have been copied incompletely, or the question may have been removed.';
+  }
+  if (/answer is empty/i.test(msg)) return 'Please type an answer before sending.';
+  if (/Failed to fetch|NetworkError|network/i.test(msg)) {
+    return 'We could not reach the server. Please check your connection and try again.';
+  }
+  return 'Something went wrong. Please try again in a moment, or reply to the report email.';
+}
+</script>
+</body>
+</html>

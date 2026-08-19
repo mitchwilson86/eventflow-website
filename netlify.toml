@@ -49,6 +49,11 @@
   status = 200
 
 [[redirects]]
+  from = "/gap"
+  to = "/gap.html"
+  status = 200
+
+[[redirects]]
   from = "/unsubscribe"
   to = "/unsubscribe.html"
   status = 200
