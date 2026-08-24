@@ -310,7 +310,14 @@ window.EF_SHELL = (function () {
    * these read actions are served; anything else in demo mode answers with a polite
    * error instead of ever reaching the backend. */
   function demoActive() {
-    try { return sessionStorage.getItem('ef_demo') === '1'; } catch (e) { return false; }
+    // Demo mode is a DASHBOARD-PAGE feature. The flag lives in sessionStorage, so
+    // without the path guard a ?demo=1 visit would break every other shell page's
+    // api() calls for the rest of the browser session (caught live 2026-08-24 on
+    // /admin: "Not available while viewing sample data" with no banner in sight).
+    try {
+      if (sessionStorage.getItem('ef_demo') !== '1') return false;
+    } catch (e) { return false; }
+    return /^\/dashboard(\.html)?\/?$/.test(window.location.pathname);
   }
   var DEMO_FILES = {
     get_home_overview: '/assets/demo/home_overview.json',
