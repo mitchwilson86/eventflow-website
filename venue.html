@@ -1185,7 +1185,7 @@
       { ok: !!setup.has_venue_facts, label: 'Venue facts', note: 'Capacities, minimums, and policies the assistant quotes to guests.', go: function () { switchTab('facts'); } },
       { ok: spacesOk, label: 'Event spaces', note: (setup.private_spaces_missing_min || 0) > 0 ? ((setup.private_spaces_missing_min) + ' private space(s) still need an F&B minimum.') : 'Each bookable space, with capacities and minimums.', go: function () { switchTab('spaces'); } },
       { ok: !!setup.has_escalation_contact, label: 'AI settings and escalation contact', note: 'Tone, signature, and who handles big groups and tricky asks.', go: function () { switchTab('ai'); } },
-      { ok: !!setup.has_menus, label: 'Menu links', note: setup.has_group_rules ? 'Group-size rules: ready.' : 'Group-size rules are created automatically from your escalation threshold when you save AI settings.', go: function () { switchTab('facts'); swScroll('menuLinksPanel'); } },
+      { ok: !!setup.has_menus, label: 'Menu links', note: 'Links to your menus (PDFs or pages). ' + (setup.has_group_rules ? 'Group-size rules: ready.' : 'Group-size rules derive automatically from your escalation threshold.'), go: function () { switchTab('facts'); swScroll('menuLinksPanel'); } },
       { ok: !!setup.has_kb, label: 'Knowledge base', note: 'Policies and FAQs the assistant answers from.', go: function () { switchTab('kb'); } },
       { ok: !!setup.has_channel, label: 'Email channel', note: 'Which inbox the assistant works.', go: function () { swScroll('sw-channel-panel'); } },
       { ok: !!setup.has_crm, label: 'Booking system', note: 'Tripleseat, or plain email.', go: function () { swScroll('sw-crm-panel'); } }
