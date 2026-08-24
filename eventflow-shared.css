@@ -57,6 +57,13 @@
   --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --serif: 'DM Serif Display', serif;
   --radius: 10px;
+
+  /* Back-compat aliases. Several pages reference these names; they used to be
+     undefined and silently fell back to inherited colors. Keep them mapped to
+     the canonical tokens above. */
+  --muted: var(--text-muted);
+  --text: var(--text-primary);
+  --ef-border: var(--border);
 }
 
 html { scroll-behavior: smooth; }
@@ -429,6 +436,46 @@ thead th.sorted .sort-arrow { opacity: 1; color: var(--orange); }
   color: var(--text-secondary); cursor: pointer; transition: all .2s;
 }
 .btn-secondary:hover { border-color: var(--teal); color: var(--teal); }
+
+/* Unified button family (canonical since 2026-08-23; formerly bookings.css).
+   .btn-primary / .btn-secondary above are legacy aliases still used by older
+   pages; prefer .btn / .btn.primary / .btn.danger / .btn.ghost / .btn.sm. */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px; border-radius: var(--radius);
+  font-family: var(--font); font-size: 14px; font-weight: 600;
+  border: 1px solid var(--border); background: var(--bg-card);
+  color: var(--text-primary); cursor: pointer; transition: all .15s;
+}
+.btn:hover { border-color: var(--border-hover); background: var(--bg-inset); }
+.btn.primary { background: var(--teal); color: #fff; border-color: var(--teal); }
+.btn.primary:hover { background: var(--teal-light); border-color: var(--teal-light); }
+.btn.danger { background: var(--red); color: #fff; border-color: var(--red); }
+.btn.danger:hover { background: #dc2626; border-color: #dc2626; }
+.btn.ghost { background: transparent; }
+.btn.sm { padding: 4px 10px; font-size: 13px; }
+.btn[disabled] { opacity: .5; cursor: not-allowed; }
+
+/* ── Shared shell: loading / empty / error states, toasts ──── */
+.ef-state { padding: 14px 4px; }
+.ef-state.ef-empty { color: var(--text-muted); font-size: 14px; text-align: center; padding: 28px 12px; }
+.ef-state.ef-error { color: var(--red); font-size: 14px; display: flex; align-items: center; gap: 10px; padding: 18px 8px; }
+.ef-skel {
+  height: 14px; border-radius: 6px; margin: 10px 0;
+  background: linear-gradient(90deg, var(--bg-inset) 25%, #E9EEF4 50%, var(--bg-inset) 75%);
+  background-size: 200% 100%; animation: ef-shimmer 1.2s infinite linear;
+}
+.ef-skel.short { width: 60%; }
+@keyframes ef-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+#ef-toast-wrap { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+.ef-toast {
+  background: var(--dark-navy); color: #fff; padding: 12px 18px; border-radius: 8px;
+  font-size: 14px; box-shadow: var(--shadow-lg); max-width: 360px;
+  transition: opacity .3s; animation: ef-toast-in .2s ease-out;
+}
+.ef-toast.error { background: #7F1D1D; }
+.ef-toast.success { background: var(--teal-dark); }
+@keyframes ef-toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
 /* ── Campaign Analytics ─────────────────────────────────────── */
 .campaign-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }

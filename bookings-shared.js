@@ -152,9 +152,14 @@ function computeTotals({ items, taxRate, serviceChargeRate, depositPct }) {
 
 /* Sidebar nav — identical structure to dashboard for visual continuity */
 function renderSidebar(activeKey, venueName, userEmail) {
-  const ADMIN_EMAILS_LOCAL = ['mitchwilson@eventflowsales.com'];
+  // Delegate to the shared shell when it is loaded (EF_SHELL, 2026-08-23) so
+  // both clusters render the identical sidebar from one source. The legacy
+  // markup below stays as a fallback for any page that does not load it.
+  if (window.EF_SHELL && window.EF_SHELL.sidebarHtml) {
+    return EF_SHELL.sidebarHtml(activeKey, { venueName: venueName, email: userEmail });
+  }
   const signedIn = (sessionStorage.getItem('ef_user_email') || userEmail || '').toLowerCase();
-  const isAdmin = ADMIN_EMAILS_LOCAL.indexOf(signedIn) !== -1;
+  const isAdmin = !!(window.EF_ADMIN && EF_ADMIN.isAdmin(signedIn));
   const nav = [
     { key: 'dashboard',    href: '/dashboard',    label: 'Dashboard',    icon: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>' },
     { key: 'bookings',     href: '/bookings',     label: 'Bookings',     icon: '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>' },

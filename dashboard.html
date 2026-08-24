@@ -18,6 +18,7 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="/eventflow-admin.js" defer></script>
   <script src="/ef-venue-picker.js" defer></script>
+  <script src="/ef-shell.js" defer></script>
 </head>
 <body>
 <script>
@@ -49,56 +50,8 @@
 <!-- DASHBOARD -->
 <div id="dashboard">
   <div class="app-layout">
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-brand">
-        <span class="brand-logo">EventFlow</span>
-        <span class="venue-name" id="venue-name"></span>
-      </div>
-      <nav class="sidebar-nav">
-        <a href="/dashboard" class="nav-item active">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-          <span>Dashboard</span>
-        </a>
-        <a href="/bookings" class="nav-item">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          <span>Bookings</span>
-        </a>
-        <a href="/booking" class="nav-item">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="14" y2="15"/></svg>
-          <span>BEO</span>
-        </a>
-        <a href="/venue" class="nav-item">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
-          <span>Venue</span>
-        </a>
-        <a href="/menus" class="nav-item">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
-          <span>Menus</span>
-        </a>
-        <a href="/campaigns" class="nav-item">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-          <span>Campaigns</span>
-        </a>
-        <a href="/settings" class="nav-item">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          <span>Settings</span>
-        </a>
-        <a href="/notifications" class="nav-item">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-          <span>Notifications</span>
-        </a>
-        <a href="/admin" class="nav-item admin-nav-link" style="display:none;">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-          <span>Admin Dashboard</span>
-        </a>
-      </nav>
-      <div class="sidebar-footer">
-        <span class="user-email" id="user-email-sidebar"></span>
-        <button class="logout-btn" onclick="doLogout()">Sign Out</button>
-      </div>
-    </aside>
-    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <!-- Sidebar (rendered by EF_SHELL.mountSidebar) -->
+    <div id="sidebar-host"></div>
 
     <!-- Main -->
     <div class="main-content">
@@ -191,168 +144,27 @@
 </div>
 
 <script>
-/* ═══ CLIENT DATA ═════════════════════════════════════════════ */
-// Authorization is by Google account email only. To grant access,
-// add a row to the client_registry sheet with a matching gmail address.
-let CLIENTS = {
-  sunda: {
-    slug: 'sunda-nashville',
-    gmail_address: 'sales@eventflowsales.com',
-    venue: 'Sunda Nashville'
-  }
-};
-
-const DATA_URL = 'https://script.google.com/macros/s/AKfycbxEpfGswzFnPTFLaKWlt332kv6Jy7vdagPcDEDMXbEDwrrFzpoPLc8wrmTW5UEB2xVj8w/exec';
-const GOOGLE_CLIENT_ID = '551797277858-ne7qntlo2jgmdp36o2lpcnv8qr6u7ofv.apps.googleusercontent.com';
+/* ═══ PAGE BOOT (shared shell: ef-shell.js owns sign-in, sidebar,
+       clients, venue picker, admin nav) ═══════════════════════ */
 let currentClient = null;
 
-/* ═══ SIDEBAR TOGGLE ═════════════════════════════════════════ */
-function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('sidebar-overlay').classList.toggle('active');
-}
-
-/* ═══ GOOGLE SIGN-IN ═════════════════════════════════════════ */
-function initGoogleSignIn() {
-  if (typeof google === 'undefined' || !google.accounts) {
-    setTimeout(initGoogleSignIn, 500);
-    return;
-  }
-  google.accounts.id.initialize({
-    client_id: GOOGLE_CLIENT_ID,
-    callback: handleGoogleSignIn,
-    auto_select: true
-  });
-  google.accounts.id.renderButton(
-    document.getElementById('google-signin-btn'),
-    { theme: 'outline', size: 'large', width: 340, text: 'signin_with', shape: 'rectangular' }
-  );
-  const savedEmail = sessionStorage.getItem('ef_user_email');
-  if (savedEmail) {
-    const client = (window.EF_ADMIN && EF_ADMIN.resolveActiveClient(CLIENTS, savedEmail))
-      || Object.values(CLIENTS).find(c => c.gmail_address === savedEmail);
-    if (client) {
-      document.getElementById('session-msg').style.display = 'block';
-      currentClient = client;
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('dashboard').style.display = 'block';
-      renderDashboard(client);
-      if (window.EF_ADMIN) EF_ADMIN.showAdminNav();
-    }
-  }
-}
-
-function handleGoogleSignIn(response) {
-  const idToken = response.credential;
-  const payload = JSON.parse(atob(idToken.split('.')[1]));
-  const email = payload.email;
-  const errEl = document.getElementById('login-error');
-  const client = (window.EF_ADMIN && EF_ADMIN.resolveActiveClient(CLIENTS, email))
-    || Object.values(CLIENTS).find(c => c.gmail_address === email);
-  if (!client) {
-    errEl.textContent = 'Access denied. ' + email + ' is not authorized for any venue.';
-    errEl.style.display = 'block';
-    return;
-  }
-  errEl.style.display = 'none';
-  sessionStorage.setItem('ef_user_email', email);
-  sessionStorage.setItem('ef_id_token', idToken);
-  sessionStorage.setItem('ef_id_token_exp', String(payload.exp * 1000));
+function onClientReady(client) {
   currentClient = client;
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
+  EF_SHELL.mountSidebar('dashboard', { venueName: client.venue });
   renderDashboard(client);
-  if (window.EF_ADMIN) EF_ADMIN.showAdminNav();
 }
 
-window.addEventListener('load', function() {
-  initGoogleSignIn();
-  loadDynamicClients();
+window.addEventListener('load', function () {
+  EF_SHELL.boot({ onClient: onClientReady });
 });
-
-/* ═══ DYNAMIC CLIENT LOADING ═════════════════════════════════ */
-function loadDynamicClients() {
-  fetch(DATA_URL + '?type=client_list')
-    .then(r => r.json())
-    .then(data => {
-      if (!data.clients || !data.clients.length) return;
-      let added = 0;
-      for (const c of data.clients) {
-        const existing = Object.values(CLIENTS).find(cl => cl.gmail_address === c.gmail || cl.venue === c.venue);
-        let authList = [];
-        try { authList = JSON.parse(c.authorized_emails || '[]') || []; } catch (e) { authList = []; }
-        if (existing) {
-          existing.slug = c.slug;
-          existing.authorized_emails = authList;
-          continue;
-        }
-        // Include pending venues — fresh signups need to view their own
-        // (empty) dashboard. Backend already excludes deleted.
-        const key = c.slug.replace(/[^a-z0-9]/g, '');
-        CLIENTS[key] = {
-          slug: c.slug,
-          gmail_address: c.gmail || '',
-          venue: c.venue || c.slug,
-          authorized_emails: authList
-        };
-        added++;
-      }
-      if (added > 0) console.log('Dynamic clients loaded:', added, 'new');
-      // Re-resolve in case the user (signup flow) signed in before their
-      // own venue row was in CLIENTS.
-      if (!currentClient) {
-        const savedEmail = sessionStorage.getItem('ef_user_email');
-        if (savedEmail) {
-          const c3 = (window.EF_ADMIN && EF_ADMIN.resolveActiveClient(CLIENTS, savedEmail))
-            || Object.values(CLIENTS).find(cl => (cl.gmail_address || '').toLowerCase() === savedEmail.toLowerCase());
-          if (c3) {
-            currentClient = c3;
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('dashboard').style.display = 'block';
-            renderDashboard(c3);
-            if (window.EF_ADMIN) EF_ADMIN.showAdminNav();
-          }
-        }
-      }
-      // Global venue picker (sidebar). client_list may reveal the stored slug's
-      // venue only now — re-resolve so the global selection wins, then render.
-      const gvEmail = sessionStorage.getItem('ef_user_email');
-      if (gvEmail && window.EF_ADMIN && window.EF_VENUE_PICKER && currentClient) {
-        const gvActive = EF_ADMIN.resolveActiveClient(CLIENTS, gvEmail);
-        if (gvActive && gvActive.slug !== currentClient.slug) {
-          currentClient = gvActive;
-          renderDashboard(gvActive);
-        }
-        EF_VENUE_PICKER.render({
-          venues: EF_ADMIN.accessibleVenues(CLIENTS, gvEmail).map(c => ({ slug: c.slug, name: c.venue || c.slug })),
-          activeSlug: currentClient.slug
-        });
-      }
-    })
-    .catch(err => console.warn('Dynamic client load failed:', err));
-}
-
-/* ═══ LOGOUT ═════════════════════════════════════════════════ */
-function doLogout() {
-  currentClient = null;
-  sessionStorage.removeItem('ef_user_email');
-  sessionStorage.removeItem('ef_id_token');
-  sessionStorage.removeItem('ef_id_token_exp');
-  if (typeof google !== 'undefined' && google.accounts) {
-    google.accounts.id.disableAutoSelect();
-  }
-  document.getElementById('dashboard').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
-}
 
 /* ═══ RENDER ══════════════════════════════════════════════════ */
 function renderDashboard(client) {
-  document.getElementById('venue-name').textContent = client.venue;
-  const signedInEmail = sessionStorage.getItem('ef_user_email') || client.gmail_address || '';
-  if (signedInEmail) {
-    document.getElementById('user-email-sidebar').textContent = signedInEmail;
-  }
   const slug = client.slug || '';
+  EF_SHELL.setState('activity-feed', 'loading');
+  EF_SHELL.setState('snapshot-grid', 'loading');
   loadCostSummary();
   loadLiveKpis(slug);
   loadLivePipeline(slug);
@@ -364,12 +176,30 @@ function clientParam(slug) {
   return slug ? '&client=' + encodeURIComponent(slug) : '';
 }
 
+/* One visible notice per page load when any panel fails, instead of
+   silent console.warn-only failures. */
+let _dashFailNotified = false;
+function dataLoadFailed(what, err) {
+  console.warn(what + ' load failed:', err);
+  if (!_dashFailNotified) {
+    _dashFailNotified = true;
+    EF_SHELL.toast('Some dashboard data failed to load. Refresh to retry.', 'error');
+  }
+}
+function kpiLoadFailed(err) {
+  ['kpi-emails', 'kpi-responses', 'kpi-confidence', 'kpi-escalation'].forEach(function (id) {
+    const el = document.getElementById(id);
+    if (el && el.textContent === '--') el.textContent = '—';
+  });
+  dataLoadFailed('Email KPIs', err);
+}
+
 /* ═══ LIVE DATA LOADERS ══════════════════════════════════════ */
 function loadLiveKpis(slug) {
-  fetch(DATA_URL + '?type=email_kpis' + clientParam(slug))
+  fetch(EF_SHELL.CONFIG.DATA_URL + '?type=email_kpis' + clientParam(slug))
     .then(r => r.json())
     .then(data => {
-      if (data.error) { console.warn('KPI error:', data.error); return; }
+      if (data.error) { kpiLoadFailed(data.error); return; }
       document.getElementById('kpi-emails').textContent = data.totalEmails;
       document.getElementById('kpi-responses').textContent = data.totalResponses;
       document.getElementById('kpi-confidence').textContent = data.avgConfidence;
@@ -399,30 +229,41 @@ function loadLiveKpis(slug) {
             </div>
           `;
         }).join('');
+      } else {
+        document.getElementById('email-chart').innerHTML =
+          '<div class="ef-state ef-empty">No email volume yet</div>';
       }
       console.log('Live KPIs loaded');
     })
-    .catch(err => console.warn('Live KPI fetch failed:', err));
+    .catch(err => kpiLoadFailed(err));
 }
 
 function loadLivePipeline(slug) {
-  fetch(DATA_URL + '?type=pipeline' + clientParam(slug))
+  fetch(EF_SHELL.CONFIG.DATA_URL + '?type=pipeline' + clientParam(slug))
     .then(r => r.json())
     .then(data => {
-      if (data.error) { console.warn('Pipeline error:', data.error); return; }
+      if (data.error) { dataLoadFailed('Pipeline', data.error); return; }
       if (data.bookings !== undefined) document.getElementById('stat-bookings').textContent = data.bookings;
       if (data.revenue) document.getElementById('stat-revenue').textContent = data.revenue;
       console.log('Live pipeline loaded');
     })
-    .catch(err => console.warn('Live pipeline fetch failed:', err));
+    .catch(err => dataLoadFailed('Pipeline', err));
 }
 
 function loadLiveActivity(slug) {
-  fetch(DATA_URL + '?type=activity' + clientParam(slug))
+  fetch(EF_SHELL.CONFIG.DATA_URL + '?type=activity' + clientParam(slug))
     .then(r => r.json())
     .then(data => {
-      if (data.error || !data.activity || !data.activity.length) return;
       const feedEl = document.getElementById('activity-feed');
+      if (data.error) {
+        EF_SHELL.setState(feedEl, 'error', { message: 'Could not load recent activity.', retry: () => loadLiveActivity(slug) });
+        dataLoadFailed('Activity', data.error);
+        return;
+      }
+      if (!data.activity || !data.activity.length) {
+        EF_SHELL.setState(feedEl, 'empty', { message: 'No activity yet. New inquiries and replies will appear here.' });
+        return;
+      }
       feedEl.innerHTML = data.activity.map(a => `
         <div class="feed-item">
           <div class="feed-dot" style="background:${a.color}"></div>
@@ -435,15 +276,22 @@ function loadLiveActivity(slug) {
       `).join('');
       console.log('Live activity loaded');
     })
-    .catch(err => console.warn('Live activity fetch failed:', err));
+    .catch(err => {
+      EF_SHELL.setState('activity-feed', 'error', { message: 'Could not load recent activity.', retry: () => loadLiveActivity(slug) });
+      dataLoadFailed('Activity', err);
+    });
 }
 
 function loadLiveSnapshot(slug) {
-  fetch(DATA_URL + '?type=business_snapshot' + clientParam(slug))
+  fetch(EF_SHELL.CONFIG.DATA_URL + '?type=business_snapshot' + clientParam(slug))
     .then(r => r.json())
     .then(data => {
-      if (data.error) { console.warn('Snapshot error:', data.error); return; }
       const gridEl = document.getElementById('snapshot-grid');
+      if (data.error) {
+        EF_SHELL.setState(gridEl, 'error', { message: 'Could not load the snapshot.', retry: () => loadLiveSnapshot(slug) });
+        dataLoadFailed('Snapshot', data.error);
+        return;
+      }
 
       // 1. This week vs last week
       const weekChange = data.week_change_pct;
@@ -496,7 +344,10 @@ function loadLiveSnapshot(slug) {
       `;
       console.log('Live snapshot loaded');
     })
-    .catch(err => console.warn('Live snapshot fetch failed:', err));
+    .catch(err => {
+      EF_SHELL.setState('snapshot-grid', 'error', { message: 'Could not load the snapshot.', retry: () => loadLiveSnapshot(slug) });
+      dataLoadFailed('Snapshot', err);
+    });
 }
 
 function formatMinutes(min) {
@@ -509,7 +360,7 @@ function formatMinutes(min) {
 
 /* ═══ COST SUMMARY ═══════════════════════════════════════════ */
 function loadCostSummary() {
-  fetch(DATA_URL + '?type=cost_summary')
+  fetch(EF_SHELL.CONFIG.DATA_URL + '?type=cost_summary')
     .then(r => r.json())
     .then(data => {
       const el = document.getElementById('cost-summary');
