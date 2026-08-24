@@ -8,7 +8,7 @@
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="/favicon.png" sizes="32x32" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <meta name="description" content="EventFlow client dashboard — view email KPIs, AI confidence metrics, pipeline revenue, and activity feed for your venue.">
+  <meta name="description" content="EventFlow client dashboard — what the AI handled this week, what needs your attention, and every recent conversation.">
   <link rel="canonical" href="https://eventflowsales.com/dashboard">
   <meta name="robots" content="noindex">
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -19,14 +19,58 @@
   <script src="/eventflow-admin.js" defer></script>
   <script src="/ef-venue-picker.js" defer></script>
   <script src="/ef-shell.js" defer></script>
+  <style>
+    /* A2_HOME_OVERVIEW_V1 — page-local styles only; tokens come from eventflow-shared.css */
+    .demo-banner { display:none; background:#fef3c7; color:#92400e; border-bottom:1px solid #fcd34d;
+      padding:10px 16px; font-size:0.9rem; text-align:center; }
+    .demo-banner button { margin-left:10px; border:1px solid #d97706; background:transparent; color:#92400e;
+      border-radius:6px; padding:2px 10px; cursor:pointer; font-size:0.85em; }
+    .attn-item { display:flex; gap:12px; align-items:flex-start; padding:12px 4px; border-bottom:1px solid var(--border);
+      cursor:pointer; text-decoration:none; color:inherit; }
+    .attn-item:last-child { border-bottom:none; }
+    .attn-item:hover { background:var(--bg-inset, #fafafa); }
+    .attn-dot { width:10px; height:10px; border-radius:50%; margin-top:6px; flex:0 0 10px; }
+    .attn-title { font-weight:600; font-size:0.95rem; }
+    .attn-detail { color:var(--text-secondary); font-size:0.88rem; margin-top:2px; }
+    .attn-meta { color:var(--text-muted); font-size:0.8rem; margin-top:3px; }
+    .attn-go { margin-left:auto; color:var(--text-muted); align-self:center; }
+    .conv-table { width:100%; border-collapse:collapse; font-size:0.92rem; }
+    .conv-table th { text-align:left; color:var(--text-muted); font-weight:600; font-size:0.8rem;
+      text-transform:uppercase; letter-spacing:0.04em; padding:8px 10px; border-bottom:1px solid var(--border); }
+    .conv-table td { padding:10px; border-bottom:1px solid var(--border); vertical-align:top; }
+    .conv-table tr.conv-row { cursor:pointer; }
+    .conv-table tr.conv-row:hover { background:var(--bg-inset, #fafafa); }
+    .chip { display:inline-block; border-radius:999px; padding:2px 9px; font-size:0.75rem; font-weight:600;
+      margin-right:4px; white-space:nowrap; }
+    .chip.esc { background:#fee2e2; color:#b91c1c; }
+    .chip.hold { background:#fef3c7; color:#92400e; }
+    .chip.ok { background:#dcfce7; color:#166534; }
+    .chip.quiet { background:var(--bg-inset, #f1f5f9); color:var(--text-secondary); }
+    .conv-drawer { position:fixed; top:0; right:0; height:100%; width:min(500px, 94vw); background:#fff;
+      box-shadow:-8px 0 30px rgba(15,23,42,0.18); transform:translateX(105%); transition:transform 0.22s ease;
+      z-index:70; display:flex; flex-direction:column; }
+    .conv-drawer.open { transform:translateX(0); }
+    .conv-drawer-head { padding:16px 18px; border-bottom:1px solid var(--border); display:flex; gap:10px; align-items:flex-start; }
+    .conv-drawer-body { padding:16px 18px; overflow-y:auto; flex:1; }
+    .conv-turn { border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:14px; }
+    .conv-turn h5 { margin:0 0 4px; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-muted); }
+    .conv-turn .reply-text { white-space:pre-wrap; font-size:0.88rem; color:var(--text-primary); }
+    .drawer-close { margin-left:auto; border:none; background:transparent; font-size:1.3rem; cursor:pointer; color:var(--text-muted); }
+    .drawer-scrim { position:fixed; inset:0; background:rgba(15,23,42,0.25); z-index:60; display:none; }
+    .drawer-scrim.open { display:block; }
+    .src-footnote { color:var(--text-muted); font-size:0.8rem; margin-top:10px; }
+    @media (max-width: 768px) { .kpi-grid { grid-template-columns:1fr 1fr; } }
+  </style>
 </head>
 <body>
 <script>
-  // Preflight: hide login before first paint if a Google ID-token session
-  // already lives in sessionStorage. Eliminates the login flash on nav.
+  // Preflight: hide login before first paint if a session (or demo mode) exists.
   (function(){
     try {
-      if (sessionStorage.getItem('ef_user_email')) {
+      var q = new URLSearchParams(location.search);
+      if (q.get('demo') === '1') sessionStorage.setItem('ef_demo', '1');
+      if (q.get('demo') === '0') sessionStorage.removeItem('ef_demo');
+      if (sessionStorage.getItem('ef_user_email') || sessionStorage.getItem('ef_demo') === '1') {
         var s = document.createElement('style');
         s.textContent = '#login-screen{display:none !important}';
         document.head.appendChild(s);
@@ -49,6 +93,10 @@
 
 <!-- DASHBOARD -->
 <div id="dashboard">
+  <div class="demo-banner" id="demo-banner">
+    Sample data — a fictional venue, for demonstration only.
+    <button type="button" onclick="exitDemo()">Exit sample data</button>
+  </div>
   <div class="app-layout">
     <!-- Sidebar (rendered by EF_SHELL.mountSidebar) -->
     <div id="sidebar-host"></div>
@@ -62,80 +110,62 @@
       </div>
       <div class="dash-body">
 
-        <!-- KPIs -->
-        <div class="kpi-grid">
-          <div class="kpi-card blue">
-            <div class="kpi-label">Incoming Emails</div>
-            <div class="kpi-value" id="kpi-emails">--</div>
-            <div class="kpi-sub">Last 30 days</div>
-          </div>
-          <div class="kpi-card gold">
-            <div class="kpi-label">AI Responses Sent</div>
-            <div class="kpi-value" id="kpi-responses">--</div>
-            <div class="kpi-sub">Auto + reviewed</div>
-          </div>
-          <div class="kpi-card green">
-            <div class="kpi-label">Avg Confidence</div>
-            <div class="kpi-value" id="kpi-confidence">--</div>
-            <div class="kpi-sub">AI response accuracy</div>
-          </div>
-          <div class="kpi-card purple">
-            <div class="kpi-label">Escalation Rate</div>
-            <div class="kpi-value" id="kpi-escalation">--</div>
-            <div class="kpi-sub">Sent to manager</div>
-          </div>
-        </div>
-
-        <!-- Inquiry Types + Email Volume -->
-        <div class="two-col">
-          <div class="panel">
-            <h3>Event Inquiry Types</h3>
-            <div class="donut-wrap" id="inquiry-donut">
-              <div class="donut-chart" id="donut-chart"></div>
-              <div class="donut-legend" id="donut-legend"></div>
-            </div>
-          </div>
-          <div class="panel">
-            <h3>Email Volume (7 Weeks)</h3>
-            <div class="chart-container" id="email-chart"></div>
-          </div>
-        </div>
-
-        <!-- Quick Stats -->
+        <!-- Row 1: what the AI did -->
         <div class="panel">
-          <h3>Quick Stats</h3>
-          <div class="stat-grid">
-            <div class="stat-item">
-              <div class="stat-val" id="stat-bookings">--</div>
-              <div class="stat-label">Bookings Confirmed</div>
+          <h3>This week the assistant handled</h3>
+          <div class="kpi-grid" style="margin-top:0.8rem;">
+            <div class="kpi-card blue">
+              <div class="kpi-label">Inquiries</div>
+              <div class="kpi-value" id="kpi-inquiries">--</div>
+              <div class="kpi-sub">Guest emails, last 7 days</div>
             </div>
-            <div class="stat-item">
-              <div class="stat-val" id="stat-revenue">--</div>
-              <div class="stat-label">Est. Revenue Influenced</div>
+            <div class="kpi-card gold">
+              <div class="kpi-label">AI Replies Sent</div>
+              <div class="kpi-value" id="kpi-replies">--</div>
+              <div class="kpi-sub">Answered automatically</div>
             </div>
-            <div class="stat-item">
-              <div class="stat-val" id="stat-response">--</div>
-              <div class="stat-label">Avg Response Time</div>
+            <div class="kpi-card green">
+              <div class="kpi-label">Avg Response Time</div>
+              <div class="kpi-value" id="kpi-response">--</div>
+              <div class="kpi-sub">Inquiry to reply</div>
+            </div>
+            <div class="kpi-card purple">
+              <div class="kpi-label">Escalations</div>
+              <div class="kpi-value" id="kpi-escalations">--</div>
+              <div class="kpi-sub">Handed to your manager</div>
             </div>
           </div>
+          <div class="stat-grid" style="margin-top:1rem;">
+            <div class="stat-item">
+              <div class="stat-val" id="stat-holds">--</div>
+              <div class="stat-label">Dates Held</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-val" id="stat-menulinks">--</div>
+              <div class="stat-label">Menu Links Sent</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-val" id="stat-pipeline">--</div>
+              <div class="stat-label">Pipeline Value</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-val" id="stat-leads">--</div>
+              <div class="stat-label">Active Leads</div>
+            </div>
+          </div>
+          <div class="src-footnote" id="src-footnote" style="display:none;"></div>
         </div>
 
-        <!-- Activity Feed + Business Snapshot -->
-        <div class="two-col">
-          <div class="panel">
-            <h3>Recent Activity</h3>
-            <div id="activity-feed"></div>
-          </div>
-          <div class="panel">
-            <h3>Business Snapshot</h3>
-            <div class="snap-grid" id="snapshot-grid"></div>
-          </div>
+        <!-- Row 2: needs your attention -->
+        <div class="panel" style="margin-top:1.5rem;">
+          <h3>Needs your attention <span id="attn-count" style="font-weight:normal;color:var(--text-muted);font-size:0.85em;"></span></h3>
+          <div id="attention-list"></div>
         </div>
 
-        <!-- LLM Cost -->
-        <div class="panel" style="margin-top: 1.5rem;">
-          <h3>LLM Cost <span style="font-weight: normal; color: var(--muted); font-size: 0.85em;">— top 3 spenders</span></h3>
-          <div id="cost-summary" style="color: var(--muted); font-size: 0.9em;">Loading cost data...</div>
+        <!-- Row 3: conversations -->
+        <div class="panel" style="margin-top:1.5rem;" id="conversations">
+          <h3>Recent conversations</h3>
+          <div id="conv-wrap" style="overflow-x:auto;"></div>
         </div>
 
       </div>
@@ -143,339 +173,235 @@
   </div>
 </div>
 
+<!-- Conversation drawer -->
+<div class="drawer-scrim" id="drawer-scrim" onclick="closeDrawer()"></div>
+<div class="conv-drawer" id="conv-drawer" aria-hidden="true">
+  <div class="conv-drawer-head">
+    <div>
+      <div class="attn-title" id="drawer-guest"></div>
+      <div class="attn-detail" id="drawer-subject"></div>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()" aria-label="Close">&times;</button>
+  </div>
+  <div class="conv-drawer-body" id="drawer-body"></div>
+</div>
+
 <script>
-/* ═══ PAGE BOOT (shared shell: ef-shell.js owns sign-in, sidebar,
-       clients, venue picker, admin nav) ═══════════════════════ */
+/* ═══ A2_HOME_OVERVIEW_V1 — one authenticated batched read for the page ═══ */
 let currentClient = null;
+let convIndex = {};   // thread_id -> conversation summary (for the drawer header)
+
+function isDemo() { return window.EF_SHELL && EF_SHELL.demoActive(); }
+function exitDemo() {
+  try { sessionStorage.removeItem('ef_demo'); } catch (e) {}
+  window.location.href = '/dashboard';
+}
 
 function onClientReady(client) {
   currentClient = client;
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
   EF_SHELL.mountSidebar('dashboard', { venueName: client.venue });
+  if (isDemo()) document.getElementById('demo-banner').style.display = 'block';
   renderDashboard(client);
 }
 
 window.addEventListener('load', function () {
+  if (isDemo()) {
+    // Demo mode: no sign-in, EF_SHELL.api serves static fixtures.
+    onClientReady({ slug: 'harborview-demo', venue: 'The Harborview (sample)' });
+    return;
+  }
   EF_SHELL.boot({ onClient: onClientReady });
 });
 
-/* ═══ RENDER ══════════════════════════════════════════════════ */
 function renderDashboard(client) {
-  const slug = client.slug || '';
-  EF_SHELL.setState('activity-feed', 'loading');
-  EF_SHELL.setState('snapshot-grid', 'loading');
-  loadCostSummary();
-  loadLiveKpis(slug);
-  loadLivePipeline(slug);
-  loadLiveActivity(slug);
-  loadLiveSnapshot(slug);
+  loadOverview(client.slug);
+  loadConversations(client.slug);
 }
 
-function clientParam(slug) {
-  return slug ? '&client=' + encodeURIComponent(slug) : '';
+/* ── helpers ─────────────────────────────────────────────────── */
+function esc(s) { const d = document.createElement('div'); d.textContent = (s == null ? '' : String(s)); return d.innerHTML; }
+function relTime(iso) {
+  const t = new Date(iso).getTime();
+  if (!t) return '';
+  const diff = Math.floor((Date.now() - t) / 1000);
+  if (diff < 90) return 'just now';
+  if (diff < 3600) return Math.floor(diff / 60) + ' min ago';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+  if (diff < 12 * 86400) return Math.floor(diff / 86400) + 'd ago';
+  return new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
-
-/* One visible notice per page load when any panel fails, instead of
-   silent console.warn-only failures. */
-let _dashFailNotified = false;
-function dataLoadFailed(what, err) {
-  console.warn(what + ' load failed:', err);
-  if (!_dashFailNotified) {
-    _dashFailNotified = true;
-    EF_SHELL.toast('Some dashboard data failed to load. Refresh to retry.', 'error');
-  }
-}
-function kpiLoadFailed(err) {
-  ['kpi-emails', 'kpi-responses', 'kpi-confidence', 'kpi-escalation'].forEach(function (id) {
-    const el = document.getElementById(id);
-    if (el && el.textContent === '--') el.textContent = '—';
-  });
-  dataLoadFailed('Email KPIs', err);
-}
-
-/* ═══ LIVE DATA LOADERS ══════════════════════════════════════ */
-function loadLiveKpis(slug) {
-  fetch(EF_SHELL.CONFIG.DATA_URL + '?type=email_kpis' + clientParam(slug))
-    .then(r => r.json())
-    .then(data => {
-      if (data.error) { kpiLoadFailed(data.error); return; }
-      document.getElementById('kpi-emails').textContent = data.totalEmails;
-      document.getElementById('kpi-responses').textContent = data.totalResponses;
-      document.getElementById('kpi-confidence').textContent = data.avgConfidence;
-      if (data.escalationRate) document.getElementById('kpi-escalation').textContent = data.escalationRate;
-
-      // Prefer inquiryTypes (distribution) over confidence (avg score per type)
-      if (data.inquiryTypes && data.inquiryTypes.length) {
-        renderDonut(data.inquiryTypes);
-      } else if (data.confidence && data.confidence.length) {
-        renderDonut(data.confidence);  // fallback
-      } else {
-        document.getElementById('donut-legend').innerHTML =
-          '<div class="donut-empty">No inquiries yet</div>';
-      }
-
-      if (data.weeklyEmails && data.weeklyEmails.length) {
-        const chartEl = document.getElementById('email-chart');
-        const maxVal = Math.max(...data.weeklyEmails.map(w => w.value), 1);
-        chartEl.innerHTML = data.weeklyEmails.map(w => {
-          const pct = (w.value / maxVal) * 180;
-          return `
-            <div class="chart-bar-wrap">
-              <div class="chart-bar" style="height:${pct}px;background:var(--teal);">
-                <span class="bar-val">${w.value}</span>
-              </div>
-              <span class="chart-label">${esc(w.label)}</span>
-            </div>
-          `;
-        }).join('');
-      } else {
-        document.getElementById('email-chart').innerHTML =
-          '<div class="ef-state ef-empty">No email volume yet</div>';
-      }
-      console.log('Live KPIs loaded');
-    })
-    .catch(err => kpiLoadFailed(err));
-}
-
-function loadLivePipeline(slug) {
-  fetch(EF_SHELL.CONFIG.DATA_URL + '?type=pipeline' + clientParam(slug))
-    .then(r => r.json())
-    .then(data => {
-      if (data.error) { dataLoadFailed('Pipeline', data.error); return; }
-      if (data.bookings !== undefined) document.getElementById('stat-bookings').textContent = data.bookings;
-      if (data.revenue) document.getElementById('stat-revenue').textContent = data.revenue;
-      console.log('Live pipeline loaded');
-    })
-    .catch(err => dataLoadFailed('Pipeline', err));
-}
-
-function loadLiveActivity(slug) {
-  fetch(EF_SHELL.CONFIG.DATA_URL + '?type=activity' + clientParam(slug))
-    .then(r => r.json())
-    .then(data => {
-      const feedEl = document.getElementById('activity-feed');
-      if (data.error) {
-        EF_SHELL.setState(feedEl, 'error', { message: 'Could not load recent activity.', retry: () => loadLiveActivity(slug) });
-        dataLoadFailed('Activity', data.error);
-        return;
-      }
-      if (!data.activity || !data.activity.length) {
-        EF_SHELL.setState(feedEl, 'empty', { message: 'No activity yet. New inquiries and replies will appear here.' });
-        return;
-      }
-      feedEl.innerHTML = data.activity.map(a => `
-        <div class="feed-item">
-          <div class="feed-dot" style="background:${a.color}"></div>
-          <div>
-            <div class="feed-text">${esc(a.text)}</div>
-            ${a.preview ? `<div class="feed-preview">${esc(a.preview)}</div>` : ''}
-            <div class="feed-time">${esc(a.time)}</div>
-          </div>
-        </div>
-      `).join('');
-      console.log('Live activity loaded');
-    })
-    .catch(err => {
-      EF_SHELL.setState('activity-feed', 'error', { message: 'Could not load recent activity.', retry: () => loadLiveActivity(slug) });
-      dataLoadFailed('Activity', err);
-    });
-}
-
-function loadLiveSnapshot(slug) {
-  fetch(EF_SHELL.CONFIG.DATA_URL + '?type=business_snapshot' + clientParam(slug))
-    .then(r => r.json())
-    .then(data => {
-      const gridEl = document.getElementById('snapshot-grid');
-      if (data.error) {
-        EF_SHELL.setState(gridEl, 'error', { message: 'Could not load the snapshot.', retry: () => loadLiveSnapshot(slug) });
-        dataLoadFailed('Snapshot', data.error);
-        return;
-      }
-
-      // 1. This week vs last week
-      const weekChange = data.week_change_pct;
-      let weekSubtext;
-      if (weekChange === null || weekChange === undefined) {
-        weekSubtext = `${data.last_week || 0} last week`;
-      } else {
-        const arrow = weekChange > 0 ? '▲' : weekChange < 0 ? '▼' : '';
-        const color = weekChange > 0 ? 'var(--green)' : weekChange < 0 ? '#ef4444' : 'var(--muted)';
-        weekSubtext = `<span style="color:${color}">${arrow} ${Math.abs(weekChange)}%</span> vs ${data.last_week} last week`;
-      }
-
-      // 2. Top event type
-      const topLabel = data.top_event_type
-        ? `${data.top_event_type} <span class="snap-sub">(${data.top_event_type_count})</span>`
-        : '—';
-
-      // 3. Avg guest count & escalations
-      const guestsLabel = data.avg_guest_count !== null && data.avg_guest_count !== undefined
-        ? data.avg_guest_count
-        : '—';
-      const escLabel = `${data.escalations_this_month || 0} escalation${data.escalations_this_month === 1 ? '' : 's'}`;
-
-      // 4. Avg response time
-      const respLabel = data.avg_response_minutes !== null && data.avg_response_minutes !== undefined
-        ? formatMinutes(data.avg_response_minutes)
-        : '—';
-
-      gridEl.innerHTML = `
-        <div class="snap-item">
-          <div class="snap-label">This Week</div>
-          <div class="snap-val">${data.this_week}</div>
-          <div class="snap-sub">${weekSubtext}</div>
-        </div>
-        <div class="snap-item">
-          <div class="snap-label">Top Event Type</div>
-          <div class="snap-val">${topLabel}</div>
-          <div class="snap-sub">Last 30 days</div>
-        </div>
-        <div class="snap-item">
-          <div class="snap-label">Avg Guest Count</div>
-          <div class="snap-val">${guestsLabel}</div>
-          <div class="snap-sub">${escLabel} this month</div>
-        </div>
-        <div class="snap-item">
-          <div class="snap-label">Avg Response Time</div>
-          <div class="snap-val">${respLabel}</div>
-          <div class="snap-sub">AI auto-reply</div>
-        </div>
-      `;
-      console.log('Live snapshot loaded');
-    })
-    .catch(err => {
-      EF_SHELL.setState('snapshot-grid', 'error', { message: 'Could not load the snapshot.', retry: () => loadLiveSnapshot(slug) });
-      dataLoadFailed('Snapshot', err);
-    });
-}
-
-function formatMinutes(min) {
+function fmtMinutes(min) {
+  if (min === null || min === undefined) return '—';
   if (min < 1) return '<1 min';
   if (min < 60) return min + ' min';
-  const hr = Math.floor(min / 60);
-  const rem = min % 60;
-  return rem === 0 ? `${hr}h` : `${hr}h ${rem}m`;
+  const hr = Math.floor(min / 60), rem = min % 60;
+  return rem === 0 ? hr + 'h' : hr + 'h ' + rem + 'm';
 }
 
-/* ═══ COST SUMMARY ═══════════════════════════════════════════ */
-function loadCostSummary() {
-  fetch(EF_SHELL.CONFIG.DATA_URL + '?type=cost_summary')
-    .then(r => r.json())
-    .then(data => {
-      const el = document.getElementById('cost-summary');
-      if (!el) return;
-      if (data.error) { el.innerHTML = `<em>Cost data unavailable: ${data.error}</em>`; return; }
-      if (data.note) { el.innerHTML = `<em>${data.note}</em>`; return; }
+const ATTN_STYLE = {
+  escalation:           { dot: '#ef4444', label: 'Escalation' },
+  hold:                 { dot: '#f59e0b', label: 'Date hold' },
+  knowledge_gap:        { dot: '#3b82f6', label: 'Knowledge' },
+  low_confidence_draft: { dot: '#a855f7', label: 'Draft waiting' },
+  campaign_pending:     { dot: '#14b8a6', label: 'Campaign' },
+  setup:                { dot: '#94a3b8', label: 'Setup' }
+};
 
-      const fmt = n => '$' + (Number(n) || 0).toFixed(2);
-      const fmtSmall = n => '$' + (Number(n) || 0).toFixed(4);
-
-      const tw = data.thisWeek || { total: 0, byWorkflow: {}, callCount: 0 };
-      const lw = data.lastWeek || { total: 0, byWorkflow: {}, callCount: 0 };
-
-      // Delta vs last week
-      let deltaHtml = '';
-      if (lw.total > 0) {
-        const pct = ((tw.total - lw.total) / lw.total) * 100;
-        const arrow = pct > 0 ? '▲' : pct < 0 ? '▼' : '';
-        const color = pct > 5 ? '#ef4444' : pct < -5 ? 'var(--green)' : 'var(--muted)';
-        deltaHtml = `<span style="color:${color}">${arrow} ${Math.abs(pct).toFixed(0)}%</span> vs ${fmt(lw.total)} last week`;
-      } else if (tw.total > 0) {
-        deltaHtml = `(no spend last week)`;
-      } else {
-        deltaHtml = `(no spend this week or last)`;
+/* ── Row 1 + 2: overview ─────────────────────────────────────── */
+function loadOverview(slug) {
+  EF_SHELL.setState('attention-list', 'loading');
+  EF_SHELL.api({ action: 'get_home_overview', client_slug: slug })
+    .then(function (data) {
+      if (!data || data.error || !data.success) {
+        throw new Error((data && data.error) || 'empty response');
       }
+      const k = data.kpis || {};
+      setVal('kpi-inquiries', k.inquiries);
+      setVal('kpi-replies', k.ai_replies);
+      setVal('kpi-response', fmtMinutes(k.avg_response_minutes));
+      setVal('kpi-escalations', k.escalations);
+      setVal('stat-holds', k.holds_placed);
+      setVal('stat-menulinks', k.menu_links_sent);
+      setVal('stat-pipeline', k.pipeline_value == null ? '—' : k.pipeline_value);
+      setVal('stat-leads', k.pipeline_leads == null ? '—' : k.pipeline_leads);
 
-      // By-workflow breakdown for this week (sorted desc)
-      const byWf = Object.entries(tw.byWorkflow).sort((a, b) => b[1] - a[1]);
-      const breakdownHtml = byWf.length
-        ? byWf.map(([name, usd]) => {
-            const pct = tw.total > 0 ? (usd / tw.total) * 100 : 0;
-            return `<div style="display:flex;justify-content:space-between;font-size:0.9em;padding:4px 0;border-bottom:1px solid var(--border, #eee)">
-                      <span>${name}</span>
-                      <span style="font-variant-numeric:tabular-nums;color:var(--muted)">${fmt(usd)} <span style="color:#aaa">(${pct.toFixed(0)}%)</span></span>
-                    </div>`;
-          }).join('')
-        : '<em style="color:var(--muted)">No spend logged this week yet.</em>';
+      // Dead sources are named, never silently zero.
+      const dead = Object.keys(data.sources || {}).filter(function (s) { return data.sources[s] === false; });
+      const fn = document.getElementById('src-footnote');
+      if (dead.length) {
+        fn.style.display = 'block';
+        fn.textContent = 'Heads up: ' + dead.join(', ') + ' could not be read just now — those numbers may be missing rather than zero.';
+      } else fn.style.display = 'none';
 
-      // 8-week trend sparkline (CSS bars)
-      const trend = data.weeklyTrend || [];
-      const maxTotal = Math.max(...trend.map(t => t.total), 0.01);
-      const sparkHtml = trend.map(t => {
-        const heightPct = (t.total / maxTotal) * 100;
-        const isThisWeek = trend.indexOf(t) === trend.length - 1;
-        return `<div title="${t.week}: ${fmt(t.total)} (${t.callCount} calls)" style="display:inline-block;width:11%;margin:0 0.5%;vertical-align:bottom;text-align:center">
-                  <div style="height:50px;display:flex;align-items:flex-end;justify-content:center">
-                    <div style="width:100%;height:${heightPct}%;background:${isThisWeek ? '#4a90e2' : '#b8d4f0'};border-radius:2px 2px 0 0;min-height:2px"></div>
-                  </div>
-                  <div style="font-size:0.7em;color:var(--muted);margin-top:2px">${t.week.slice(-3)}</div>
-                </div>`;
-      }).join('');
-
-      el.innerHTML = `
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start">
-          <div>
-            <div style="font-size:1.6em;font-weight:600;color:#222">${fmt(tw.total)}</div>
-            <div style="font-size:0.85em;color:var(--muted);margin-top:2px">This week — ${tw.callCount} LLM calls</div>
-            <div style="font-size:0.85em;margin-top:6px">${deltaHtml}</div>
-            <div style="margin-top:10px;font-size:0.8em;color:var(--muted)">4-week avg: <strong>${fmt(data.last4WeeksAvgPerWeek)}</strong>/week</div>
-          </div>
-          <div>
-            <div style="font-size:0.85em;color:var(--muted);margin-bottom:6px">By workflow (this week)</div>
-            ${breakdownHtml}
-          </div>
-        </div>
-        <div style="margin-top:14px">
-          <div style="font-size:0.8em;color:var(--muted);margin-bottom:4px">Last 8 weeks</div>
-          <div style="white-space:nowrap;font-size:0">${sparkHtml}</div>
-        </div>
-      `;
-      console.log('Cost summary loaded');
+      renderAttention(data.attention || []);
     })
-    .catch(err => {
-      const el = document.getElementById('cost-summary');
-      if (el) el.innerHTML = `<em>Cost fetch failed — ${err.message}</em>`;
-      console.warn('Cost summary fetch failed:', err);
+    .catch(function (err) {
+      ['kpi-inquiries','kpi-replies','kpi-response','kpi-escalations','stat-holds','stat-menulinks','stat-pipeline','stat-leads']
+        .forEach(function (id) { setVal(id, '—'); });
+      EF_SHELL.setState('attention-list', 'error', { message: 'Could not load the overview.', retry: function () { loadOverview(slug); } });
+      console.warn('Overview load failed:', err);
+      EF_SHELL.toast('Some dashboard data failed to load. Refresh to retry.', 'error');
+    });
+}
+function setVal(id, v) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = (v === undefined || v === null) ? '—' : v;
+}
+
+function renderAttention(items) {
+  const el = document.getElementById('attention-list');
+  const count = document.getElementById('attn-count');
+  count.textContent = items.length ? '(' + items.length + ')' : '';
+  if (!items.length) {
+    EF_SHELL.setState(el, 'empty', { message: 'Nothing needs you right now — the assistant is handling it.' });
+    return;
+  }
+  el.innerHTML = items.map(function (a, i) {
+    const st = ATTN_STYLE[a.type] || { dot: 'var(--text-muted)', label: '' };
+    return '<a class="attn-item" data-i="' + i + '" href="' + esc(a.link || '#') + '">' +
+      '<div class="attn-dot" style="background:' + st.dot + '"></div>' +
+      '<div><div class="attn-title">' + esc(a.title) + '</div>' +
+      (a.detail ? '<div class="attn-detail">' + esc(a.detail) + '</div>' : '') +
+      '<div class="attn-meta">' + esc(st.label) + (a.when ? ' · ' + esc(relTime(a.when)) : '') + '</div></div>' +
+      '<div class="attn-go">&rsaquo;</div></a>';
+  }).join('');
+  // Items pointing at a conversation open the drawer instead of navigating.
+  el.querySelectorAll('.attn-item').forEach(function (node) {
+    const a = items[Number(node.getAttribute('data-i'))];
+    if (a && a.thread_id) {
+      node.addEventListener('click', function (ev) {
+        ev.preventDefault();
+        openDrawer(a.thread_id);
+      });
+    }
+  });
+}
+
+/* ── Row 3: conversations ────────────────────────────────────── */
+function loadConversations(slug) {
+  EF_SHELL.setState('conv-wrap', 'loading');
+  EF_SHELL.api({ action: 'get_conversations', client_slug: slug })
+    .then(function (data) {
+      if (!data || data.error || !data.success) throw new Error((data && data.error) || 'empty response');
+      const convs = data.conversations || [];
+      convIndex = {};
+      convs.forEach(function (c) { convIndex[c.thread_id] = c; });
+      const el = document.getElementById('conv-wrap');
+      if (!convs.length) {
+        EF_SHELL.setState(el, 'empty', { message: 'No conversations yet. New inquiries will appear here.' });
+        return;
+      }
+      el.innerHTML = '<table class="conv-table"><thead><tr>' +
+        '<th>Guest</th><th>Subject</th><th>Status</th><th style="white-space:nowrap;">Last activity</th>' +
+        '</tr></thead><tbody>' +
+        convs.map(function (c) {
+          const chips = [];
+          if (c.escalated) chips.push('<span class="chip esc">Escalated</span>');
+          if (c.hold_intent) chips.push('<span class="chip hold">Hold</span>');
+          if (c.replied) chips.push('<span class="chip ok">Replied</span>');
+          if (!chips.length) chips.push('<span class="chip quiet">' + esc(c.classification || 'New') + '</span>');
+          return '<tr class="conv-row" data-thread="' + esc(c.thread_id) + '">' +
+            '<td style="font-weight:600;white-space:nowrap;">' + esc(c.guest) + '</td>' +
+            '<td>' + esc(c.subject || '(no subject)') + '</td>' +
+            '<td>' + chips.join('') + '</td>' +
+            '<td style="white-space:nowrap;color:var(--text-muted);">' + esc(relTime(c.last_at)) + '</td></tr>';
+        }).join('') + '</tbody></table>';
+      el.querySelectorAll('.conv-row').forEach(function (row) {
+        row.addEventListener('click', function () { openDrawer(row.getAttribute('data-thread')); });
+      });
+    })
+    .catch(function (err) {
+      EF_SHELL.setState('conv-wrap', 'error', { message: 'Could not load conversations.', retry: function () { loadConversations(slug); } });
+      console.warn('Conversations load failed:', err);
     });
 }
 
-/* ═══ DONUT CHART ════════════════════════════════════════════ */
-function renderDonut(categories) {
-  // Supports two shapes:
-  //   - Distribution: [{category, count, pct, color}] — pct is share of inquiries (preferred)
-  //   - Confidence:   [{category, score, color}] — legacy, equal slices, score in legend
-  const isDistribution = categories.length > 0 && categories[0].pct !== undefined;
-
-  let cumulative = 0;
-  const segments = categories.map(c => {
-    const slice = isDistribution ? c.pct : (100 / categories.length);
-    const start = cumulative;
-    cumulative += slice;
-    return { ...c, slice, start };
-  });
-
-  const gradientStops = segments.map(s =>
-    `${s.color} ${s.start.toFixed(1)}% ${(s.start + s.slice).toFixed(1)}%`
-  ).join(', ');
-  document.getElementById('donut-chart').style.background =
-    `conic-gradient(${gradientStops})`;
-
-  document.getElementById('donut-legend').innerHTML = segments.map(s => {
-    const val = isDistribution
-      ? `${s.pct}% <span class="donut-legend-count">(${s.count})</span>`
-      : `${s.score}%`;
-    return `
-      <div class="donut-legend-item">
-        <div class="donut-legend-dot" style="background:${s.color}"></div>
-        <span class="donut-legend-label">${esc(s.category)}</span>
-        <span class="donut-legend-val">${val}</span>
-      </div>
-    `;
-  }).join('');
+/* ── Drawer ──────────────────────────────────────────────────── */
+function openDrawer(threadId) {
+  const c = convIndex[threadId] || {};
+  document.getElementById('drawer-guest').textContent = c.guest || 'Conversation';
+  document.getElementById('drawer-subject').textContent = c.subject || '';
+  document.getElementById('conv-drawer').classList.add('open');
+  document.getElementById('drawer-scrim').classList.add('open');
+  const body = document.getElementById('drawer-body');
+  EF_SHELL.setState(body, 'loading');
+  EF_SHELL.api({ action: 'get_conversation', client_slug: (currentClient || {}).slug, thread_id: threadId })
+    .then(function (data) {
+      if (!data || data.error || !data.success) throw new Error((data && data.error) || 'empty response');
+      const turns = data.turns || [];
+      if (!turns.length) {
+        EF_SHELL.setState(body, 'empty', { message: 'No messages recorded on this thread.' });
+        return;
+      }
+      body.innerHTML = turns.map(function (t) {
+        const flags = [];
+        if (t.escalated) flags.push('<span class="chip esc">Escalated</span>');
+        if (t.hold_intent) flags.push('<span class="chip hold">Hold</span>');
+        const replyBlock = t.reply
+          ? '<h5 style="margin-top:10px;">Assistant replied</h5><div class="reply-text">' + esc(t.reply) + '</div>'
+          : (t.reply_draft
+            ? '<h5 style="margin-top:10px;">Draft (not sent)</h5><div class="reply-text">' + esc(t.reply_draft) + '</div>'
+            : '');
+        return '<div class="conv-turn">' +
+          '<div class="attn-meta">' + esc(relTime(t.at)) + (flags.length ? ' &nbsp;' + flags.join('') : '') + '</div>' +
+          (t.summary ? '<h5 style="margin-top:8px;">Guest</h5><div class="reply-text">' + esc(t.summary) + '</div>' : '') +
+          replyBlock +
+          (t.next_action ? '<div class="attn-meta" style="margin-top:8px;">Next: ' + esc(t.next_action) + '</div>' : '') +
+          '</div>';
+      }).join('');
+    })
+    .catch(function (err) {
+      EF_SHELL.setState(body, 'error', { message: 'Could not load this conversation.', retry: function () { openDrawer(threadId); } });
+      console.warn('Conversation load failed:', err);
+    });
 }
-
-function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function closeDrawer() {
+  document.getElementById('conv-drawer').classList.remove('open');
+  document.getElementById('drawer-scrim').classList.remove('open');
+}
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeDrawer(); });
 </script>
 </body>
 </html>

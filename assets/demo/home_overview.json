@@ -1,0 +1,64 @@
+{
+  "success": true,
+  "client_slug": "harborview-demo",
+  "caller": "demo@eventflowsales.com",
+  "window_days": 7,
+  "generated_at": "2026-08-21T14:05:00.000Z",
+  "kpis": {
+    "inquiries": 14,
+    "ai_replies": 12,
+    "avg_response_minutes": 0,
+    "escalations": 2,
+    "holds_placed": 2,
+    "menu_links_sent": 3,
+    "pipeline_value": "$61,400",
+    "pipeline_leads": 9
+  },
+  "attention": [
+    {
+      "type": "escalation",
+      "title": "Priya Raman - Holiday party for 60, budget question",
+      "detail": "Asked for a discount on the December minimum. Handed to your events manager with the full thread and a suggested reply.",
+      "when": "2026-08-21T02:14:00.000Z",
+      "link": "#conversations",
+      "thread_id": "demo-thread-priya"
+    },
+    {
+      "type": "hold",
+      "title": "Date on hold: 2026-10-09 for Marcus Webb",
+      "detail": "The guest accepted a 48 hour courtesy hold on the Terrace Room. Reminder goes out automatically before it expires.",
+      "when": "2026-08-20T19:40:00.000Z",
+      "link": "/bookings"
+    },
+    {
+      "type": "knowledge_gap",
+      "title": "The assistant needs an answer",
+      "detail": "Can the private dining room host a live acoustic duo, and is there a sound limit after 10 PM?",
+      "when": "2026-08-20T16:22:00.000Z",
+      "link": "/venue?tab=kb"
+    },
+    {
+      "type": "low_confidence_draft",
+      "title": "Dana Kowalski - Rehearsal dinner for 24",
+      "detail": "The assistant was not confident enough to send this itself; a draft is waiting for review (confidence 74%).",
+      "when": "2026-08-19T21:03:00.000Z",
+      "link": "#conversations",
+      "thread_id": "demo-thread-dana"
+    },
+    {
+      "type": "campaign_pending",
+      "title": "Campaign waiting for approval: Fall Private Events",
+      "detail": "Nothing sends until it is approved on the Campaigns page.",
+      "when": "2026-08-18T15:00:00.000Z",
+      "link": "/campaigns"
+    }
+  ],
+  "sources": {
+    "email_log": true,
+    "soft_holds": true,
+    "knowledge_gaps": true,
+    "campaigns": true,
+    "bookings": true,
+    "pipeline": true
+  }
+}

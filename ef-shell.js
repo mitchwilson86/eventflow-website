@@ -142,16 +142,28 @@ window.EF_SHELL = (function () {
 
   /* ── Clients (registry) ──────────────────────────────────── */
 
+  /* A2_HOME_OVERVIEW_V1 (2026-08-24): client_list is an AUTHENTICATED action now.
+   * The server returns only the venues the signed-in caller can access (admins get
+   * all), so the old world-readable authorized_emails lists never reach the browser.
+   * Because access is already server-filtered, each returned venue is shimmed with
+   * authorized_emails = [me] so EF_ADMIN.accessibleVenues / resolveActiveClient keep
+   * working unchanged. A load attempted BEFORE sign-in is not memoised: the first
+   * call after a token appears re-fetches. */
   var _clientsPromise = null;
+  var _clientsAuthed = false;
+  function _haveToken() {
+    try { return !!sessionStorage.getItem('ef_id_token'); } catch (e) { return false; }
+  }
   function loadClients() {
-    if (_clientsPromise) return _clientsPromise;
-    _clientsPromise = fetch(CONFIG.DATA_URL + '?type=client_list')
-      .then(function (r) { return r.json(); })
+    var tok = _haveToken();
+    if (_clientsPromise && (_clientsAuthed || !tok)) return _clientsPromise;
+    _clientsAuthed = tok;
+    _clientsPromise = api({ action: 'client_list' })
       .then(function (data) {
-        (data.clients || []).forEach(function (c) {
+        var me = signedInEmail();
+        (data && data.clients || []).forEach(function (c) {
           if (!c || !c.slug) return;
-          var authList = [];
-          try { authList = JSON.parse(c.authorized_emails || '[]') || []; } catch (e) { authList = []; }
+          var authList = me ? [me] : [];
           var existing = Object.values(CLIENTS).find(function (cl) {
             return cl.slug === c.slug || (c.gmail && cl.gmail_address === c.gmail);
           });
@@ -292,8 +304,35 @@ window.EF_SHELL = (function () {
 
   /* ── Apps Script helpers ─────────────────────────────────── */
 
+  /* A2 demo mode (?demo=1 → sessionStorage ef_demo): api() short-circuits the home
+   * page's read actions to static fixtures in /assets/demo/, so the dashboard can be
+   * shown on a prospect call with a fictional venue and NO signed-in session. Only
+   * these read actions are served; anything else in demo mode answers with a polite
+   * error instead of ever reaching the backend. */
+  function demoActive() {
+    try { return sessionStorage.getItem('ef_demo') === '1'; } catch (e) { return false; }
+  }
+  var DEMO_FILES = {
+    get_home_overview: '/assets/demo/home_overview.json',
+    get_conversations: '/assets/demo/conversations.json',
+    get_conversation: '/assets/demo/conversations.json'
+  };
   function api(payload) {
     payload = payload || {};
+    if (demoActive() && payload.action && DEMO_FILES[payload.action]) {
+      return fetch(DEMO_FILES[payload.action])
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (payload.action === 'get_conversation') {
+            var turns = (d.threads || {})[payload.thread_id] || [];
+            return { success: true, thread_id: payload.thread_id, turns: turns };
+          }
+          return d;
+        });
+    }
+    if (demoActive()) {
+      return Promise.resolve({ error: 'Not available while viewing sample data.' });
+    }
     if (!payload.id_token && !payload.session_token) {
       try {
         var t = sessionStorage.getItem('ef_id_token');
@@ -364,6 +403,7 @@ window.EF_SHELL = (function () {
     signOut: signOut,
     api: api,
     getJson: getJson,
+    demoActive: demoActive,
     setState: setState,
     toast: toast
   };

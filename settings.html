@@ -180,12 +180,12 @@ function loadSettings() {
     fetchFullSettings(currentClient.slug);
     return;
   }
-  // Fallback: look up slug from client_list if we only have gmail_address
-  fetch(EF_SHELL.CONFIG.DATA_URL + '?type=client_list')
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      var c = (data.clients || []).find(function(cl) { return cl.venue === currentClient.venue || cl.gmail === currentClient.gmail_address; });
-      if (!c) return;
+  // Fallback: look up slug via the authenticated, caller-scoped client list
+  // (A2: the unauthenticated ?type=client_list GET is closed).
+  EF_SHELL.loadClients()
+    .then(function(CL) {
+      var c = Object.values(CL).find(function(cl) { return cl.venue === currentClient.venue || cl.gmail_address === currentClient.gmail_address; });
+      if (!c || !c.slug) return;
       currentClient._slug = c.slug;
       currentClient.slug = c.slug;
       return fetchFullSettings(c.slug);

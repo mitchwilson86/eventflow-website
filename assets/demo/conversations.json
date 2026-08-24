@@ -1,0 +1,166 @@
+{
+  "success": true,
+  "client_slug": "harborview-demo",
+  "conversations": [
+    {
+      "thread_id": "demo-thread-priya",
+      "guest": "Priya Raman",
+      "subject": "Holiday party for 60 in December",
+      "last_at": "2026-08-21T02:14:00.000Z",
+      "classification": "A",
+      "escalated": true,
+      "hold_intent": false,
+      "replied": true,
+      "messages": 3
+    },
+    {
+      "thread_id": "demo-thread-marcus",
+      "guest": "Marcus Webb",
+      "subject": "40th birthday dinner - October 9",
+      "last_at": "2026-08-20T19:38:00.000Z",
+      "classification": "A",
+      "escalated": false,
+      "hold_intent": true,
+      "replied": true,
+      "messages": 4
+    },
+    {
+      "thread_id": "demo-thread-dana",
+      "guest": "Dana Kowalski",
+      "subject": "Rehearsal dinner for 24",
+      "last_at": "2026-08-19T21:03:00.000Z",
+      "classification": "B",
+      "escalated": false,
+      "hold_intent": false,
+      "replied": false,
+      "messages": 1
+    },
+    {
+      "thread_id": "demo-thread-alicia",
+      "guest": "Alicia Fontaine",
+      "subject": "Corporate mixer, 45 guests, mid September",
+      "last_at": "2026-08-19T15:47:00.000Z",
+      "classification": "A",
+      "escalated": false,
+      "hold_intent": false,
+      "replied": true,
+      "messages": 2
+    },
+    {
+      "thread_id": "demo-thread-jon",
+      "guest": "Jon Park",
+      "subject": "Anniversary dinner for 6",
+      "last_at": "2026-08-18T22:10:00.000Z",
+      "classification": "D",
+      "escalated": false,
+      "hold_intent": false,
+      "replied": true,
+      "messages": 1
+    },
+    {
+      "thread_id": "demo-thread-renata",
+      "guest": "Renata Silva",
+      "subject": "Wedding welcome drinks, 80 guests",
+      "last_at": "2026-08-17T18:30:00.000Z",
+      "classification": "A",
+      "escalated": false,
+      "hold_intent": false,
+      "replied": true,
+      "messages": 2
+    },
+    {
+      "thread_id": "demo-thread-theo",
+      "guest": "Theo Brandt",
+      "subject": "Team offsite lunch options",
+      "last_at": "2026-08-16T16:05:00.000Z",
+      "classification": "B",
+      "escalated": false,
+      "hold_intent": false,
+      "replied": true,
+      "messages": 2
+    }
+  ],
+  "threads": {
+    "demo-thread-priya": [
+      {
+        "at": "2026-08-19T14:02:00.000Z",
+        "guest": "Priya Raman",
+        "subject": "Holiday party for 60 in December",
+        "summary": "First inquiry: company holiday party for about 60 people, second week of December, asking about private space options and pricing.",
+        "reply": "Hi Priya,\n\nThank you for thinking of The Harborview for your holiday party. For a group of 60 the Terrace Room is a wonderful fit: it seats up to 70 with room for a welcome cocktail moment by the windows.\n\nDecember dates book quickly, and the second week still has good availability. Our seasonal group menus start at $85 per person, and I have linked them below so you can browse.\n\nWould a Thursday or a Friday evening suit your team better?\n\nWarmly,\nSage | Events Assistant | The Harborview",
+        "escalated": false,
+        "hold_intent": false,
+        "confidence": 0.93,
+        "next_action": "Awaiting date preference",
+        "replied": true
+      },
+      {
+        "at": "2026-08-20T17:45:00.000Z",
+        "guest": "Priya Raman",
+        "subject": "RE: Holiday party for 60 in December",
+        "summary": "Asked whether the December food and beverage minimum could be reduced for a Thursday booking.",
+        "reply": "Hi Priya,\n\nGreat question. Pricing flexibility is something our events manager handles personally, so I have looped in Jordan, who will get back to you shortly with options for a Thursday evening.\n\nWarmly,\nSage | Events Assistant | The Harborview",
+        "escalated": true,
+        "hold_intent": false,
+        "confidence": 0.88,
+        "next_action": "Jordan to respond on pricing",
+        "replied": true
+      }
+    ],
+    "demo-thread-marcus": [
+      {
+        "at": "2026-08-18T13:20:00.000Z",
+        "guest": "Marcus Webb",
+        "subject": "40th birthday dinner - October 9",
+        "summary": "Inquiry for a 40th birthday dinner, 18 guests, October 9, asking about private rooms and wine pairings.",
+        "reply": "Hi Marcus,\n\nHappy early birthday! October 9 is currently open, and for 18 guests our Private Dining Room is ideal: a single long table, dimmable lighting, and a dedicated server.\n\nOur sommelier can build wine pairings for the group menu, which I have linked below.\n\nWould you like me to place a courtesy hold on October 9 while you decide?\n\nWarmly,\nSage | Events Assistant | The Harborview",
+        "escalated": false,
+        "hold_intent": false,
+        "confidence": 0.95,
+        "next_action": "Offered courtesy hold",
+        "replied": true
+      },
+      {
+        "at": "2026-08-20T19:38:00.000Z",
+        "guest": "Marcus Webb",
+        "subject": "RE: 40th birthday dinner - October 9",
+        "summary": "Accepted the courtesy hold on October 9 and asked when a final guest count is needed.",
+        "reply": "Hi Marcus,\n\nWonderful. I have placed a 48 hour courtesy hold on the Private Dining Room for October 9, so the date is yours while you confirm with your group.\n\nA final guest count is due seven business days before the event, and small changes after that are usually fine.\n\nWarmly,\nSage | Events Assistant | The Harborview",
+        "escalated": false,
+        "hold_intent": true,
+        "confidence": 0.94,
+        "next_action": "Hold placed, awaiting confirmation",
+        "replied": true
+      }
+    ],
+    "demo-thread-dana": [
+      {
+        "at": "2026-08-19T21:03:00.000Z",
+        "guest": "Dana Kowalski",
+        "subject": "Rehearsal dinner for 24",
+        "summary": "Rehearsal dinner for 24 with several dietary restrictions and a question about bringing a family cake with a custom topper.",
+        "reply": "",
+        "reply_draft": "Hi Dana,\n\nCongratulations to the couple! For 24 guests our Garden Room is a lovely fit, and our kitchen handles gluten free, vegan, and nut allergies with separate preparation.\n\nYou are welcome to bring the family cake; we charge a small cake service fee of $3 per person and take care of plating.\n\nWould you like to look at menus for the evening?\n\nWarmly,\nSage | Events Assistant | The Harborview",
+        "escalated": false,
+        "hold_intent": false,
+        "confidence": 0.74,
+        "next_action": "Draft awaiting review",
+        "replied": false
+      }
+    ],
+    "demo-thread-alicia": [
+      {
+        "at": "2026-08-19T15:47:00.000Z",
+        "guest": "Alicia Fontaine",
+        "subject": "Corporate mixer, 45 guests, mid September",
+        "summary": "Corporate mixer for about 45 guests in mid September, standing reception style, asking about AV for a short presentation.",
+        "reply": "Hi Alicia,\n\nA standing reception for 45 works beautifully on our Harbor Deck, and for a short presentation we have a built in screen and microphone in the adjoining lounge.\n\nMid September currently has the 16th, 17th, and 19th open. Our reception menus with passed appetizers start at $48 per person.\n\nWhich date would you like me to check in detail?\n\nWarmly,\nSage | Events Assistant | The Harborview",
+        "escalated": false,
+        "hold_intent": false,
+        "confidence": 0.91,
+        "next_action": "Awaiting date choice",
+        "replied": true
+      }
+    ]
+  }
+}

@@ -263,6 +263,13 @@
             </div>
           </div>
 
+          <!-- 6b. LLM Cost (A2: moved here from the client dashboard — platform
+               telemetry belongs on the admin page, not in front of operators) -->
+          <div class="panel">
+            <h3>LLM Cost <span style="font-weight: normal; color: var(--text-muted); font-size: 0.85em;">— top spenders</span></h3>
+            <div id="cost-summary" style="color: var(--text-muted); font-size: 0.9em;">Loading cost data...</div>
+          </div>
+
           <!-- 7. Activity Feed -->
           <div class="panel">
             <h3>Recent Activity</h3>
@@ -393,14 +400,15 @@ async function loadAdminData() {
   document.getElementById('content').style.display = 'none';
 
   try {
-    const url = DATA_URL + '?type=admin_overview&start=' + startDate + '&end=' + endDate;
-    const res = await fetch(url);
-    const data = await res.json();
+    // A2_HOME_OVERVIEW_V1: admin_overview is an authenticated, ADMIN-ONLY doPost
+    // action now (the old world-readable GET is closed).
+    const data = await EF_SHELL.api({ action: 'admin_overview', start: startDate, end: endDate });
     if (data.error) throw new Error(data.error);
     adminData = data;
     document.getElementById('loading').style.display = 'none';
     document.getElementById('content').style.display = 'block';
     renderAll(data);
+    loadCostSummary();
   } catch (err) {
     document.getElementById('loading').innerHTML =
       '<div style="color:var(--red);">Failed to load data: ' + esc(err.message) + '</div>' +
@@ -422,11 +430,72 @@ function renderAll(data) {
   loadPendingSignups();
 }
 
+/* ═══ LLM COST (A2: moved from the client dashboard) ═══════════ */
+async function loadCostSummary() {
+  const el = document.getElementById('cost-summary');
+  if (!el) return;
+  try {
+    const data = await EF_SHELL.api({ action: 'cost_summary' });
+    if (data.error) { el.innerHTML = '<em>Cost data unavailable: ' + esc(data.error) + '</em>'; return; }
+    if (data.note) { el.innerHTML = '<em>' + esc(data.note) + '</em>'; return; }
+
+    const fmt = n => '$' + (Number(n) || 0).toFixed(2);
+    const tw = data.thisWeek || { total: 0, byWorkflow: {}, callCount: 0 };
+    const lw = data.lastWeek || { total: 0, byWorkflow: {}, callCount: 0 };
+
+    let deltaHtml = '';
+    if (lw.total > 0) {
+      const pct = ((tw.total - lw.total) / lw.total) * 100;
+      const arrow = pct > 0 ? '▲' : pct < 0 ? '▼' : '';
+      const color = pct > 5 ? '#ef4444' : pct < -5 ? 'var(--green)' : 'var(--text-muted)';
+      deltaHtml = '<span style="color:' + color + '">' + arrow + ' ' + Math.abs(pct).toFixed(0) + '%</span> vs ' + fmt(lw.total) + ' last week';
+    } else if (tw.total > 0) {
+      deltaHtml = '(no spend last week)';
+    } else {
+      deltaHtml = '(no spend this week or last)';
+    }
+
+    const byWf = Object.entries(tw.byWorkflow).sort((a, b) => b[1] - a[1]);
+    const breakdownHtml = byWf.length
+      ? byWf.map(([name, usd]) => {
+          const pct = tw.total > 0 ? (usd / tw.total) * 100 : 0;
+          return '<div style="display:flex;justify-content:space-between;font-size:0.9em;padding:4px 0;border-bottom:1px solid var(--border, #eee)">' +
+                 '<span>' + esc(name) + '</span>' +
+                 '<span style="font-variant-numeric:tabular-nums;color:var(--text-muted)">' + fmt(usd) + ' <span style="color:#aaa">(' + pct.toFixed(0) + '%)</span></span></div>';
+        }).join('')
+      : '<em style="color:var(--text-muted)">No spend logged this week yet.</em>';
+
+    const trend = data.weeklyTrend || [];
+    const maxTotal = Math.max(...trend.map(t => t.total), 0.01);
+    const sparkHtml = trend.map(t => {
+      const heightPct = (t.total / maxTotal) * 100;
+      const isThisWeek = trend.indexOf(t) === trend.length - 1;
+      return '<div title="' + esc(t.week) + ': ' + fmt(t.total) + ' (' + t.callCount + ' calls)" style="display:inline-block;width:11%;margin:0 0.5%;vertical-align:bottom;text-align:center">' +
+             '<div style="height:50px;display:flex;align-items:flex-end;justify-content:center">' +
+             '<div style="width:100%;height:' + heightPct + '%;background:' + (isThisWeek ? '#4a90e2' : '#b8d4f0') + ';border-radius:2px 2px 0 0;min-height:2px"></div></div>' +
+             '<div style="font-size:0.7em;color:var(--text-muted);margin-top:2px">' + esc(String(t.week).slice(-3)) + '</div></div>';
+    }).join('');
+
+    el.innerHTML =
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start">' +
+        '<div><div style="font-size:1.6em;font-weight:600;color:var(--text-primary)">' + fmt(tw.total) + '</div>' +
+        '<div style="font-size:0.85em;color:var(--text-muted);margin-top:2px">This week — ' + tw.callCount + ' LLM calls</div>' +
+        '<div style="font-size:0.85em;margin-top:6px">' + deltaHtml + '</div>' +
+        '<div style="margin-top:10px;font-size:0.8em;color:var(--text-muted)">4-week avg: <strong>' + fmt(data.last4WeeksAvgPerWeek) + '</strong>/week</div></div>' +
+        '<div><div style="font-size:0.85em;color:var(--text-muted);margin-bottom:6px">By workflow (this week)</div>' + breakdownHtml + '</div></div>' +
+      '<div style="margin-top:14px"><div style="font-size:0.8em;color:var(--text-muted);margin-bottom:4px">Last 8 weeks</div>' +
+      '<div style="white-space:nowrap;font-size:0">' + sparkHtml + '</div></div>';
+  } catch (err) {
+    el.innerHTML = '<em>Cost fetch failed — ' + esc(err.message) + '</em>';
+    console.warn('Cost summary fetch failed:', err);
+  }
+}
+
 /* ═══ PENDING SIGNUPS ══════════════════════════════════════════ */
 async function loadPendingSignups() {
   try {
-    const res = await fetch(DATA_URL + '?type=client_list');
-    const data = await res.json();
+    // A2: client_list is authenticated + caller-scoped now (admins see all venues).
+    const data = await EF_SHELL.api({ action: 'client_list' });
     const pending = (data.clients || []).filter(c => (c.status || '').toString().toLowerCase() === 'pending');
     renderPending(pending);
     // Global venue picker: admin content stays cross-venue; the selection made
