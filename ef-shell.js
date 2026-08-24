@@ -115,6 +115,16 @@ window.EF_SHELL = (function () {
       sessionStorage.removeItem('ef_user_email');
       sessionStorage.removeItem('ef_id_token');
       sessionStorage.removeItem('ef_id_token_exp');
+      sessionStorage.removeItem('ef_admin_email');
+    } catch (e) {}
+    try {
+      // Magic-link venue sessions (ef_vf_token_<slug>) end on sign-out too.
+      var kill = [];
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf('ef_vf_token_') === 0) kill.push(k);
+      }
+      kill.forEach(function (kk) { localStorage.removeItem(kk); });
     } catch (e) {}
     try {
       if (typeof google !== 'undefined' && google.accounts) google.accounts.id.disableAutoSelect();

@@ -449,7 +449,14 @@
     } catch (err) {
       btn.textContent = 'Confirm Enrollment \u2192';
       btn.disabled = false;
-      alert('Something went wrong. Please try again.');
+      var errEl = document.getElementById('form-error');
+      if (!errEl) {
+        errEl = document.createElement('div');
+        errEl.id = 'form-error';
+        errEl.style.cssText = 'margin-top:12px;color:#EF4444;font-size:14px;';
+        btn.parentNode.appendChild(errEl);
+      }
+      errEl.textContent = 'Something went wrong. Please try again.';
     }
   }
 </script>

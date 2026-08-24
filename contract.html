@@ -90,8 +90,19 @@ async function boot() {
 
 async function copySignLink() {
   if (!signUrl) return;
-  try { await navigator.clipboard.writeText(signUrl); alert('Signing link copied:\n' + signUrl); }
-  catch { prompt('Copy signing link:', signUrl); }
+  const btn = document.getElementById('copy-link-btn');
+  try {
+    await navigator.clipboard.writeText(signUrl);
+    if (btn) {
+      const prev = btn.textContent;
+      btn.textContent = 'Link copied ✓';
+      btn.disabled = true;
+      setTimeout(() => { btn.textContent = prev; btn.disabled = false; }, 2500);
+    }
+  } catch {
+    // Clipboard access denied: prompt() still lets the user copy by hand.
+    prompt('Copy signing link:', signUrl);
+  }
 }
 
 function renderDoc(b, items, contract, signature) {
