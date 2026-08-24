@@ -23,69 +23,69 @@
   <style>
     .menus-layout { display: grid; grid-template-columns: 280px 1fr; gap: 0; min-height: calc(100vh - 56px); }
     @media (max-width: 900px) { .menus-layout { grid-template-columns: 1fr; } }
-    .menus-rail { border-right: 1px solid var(--ef-border, #e5e7eb); padding: 16px 12px; background: #fafafa; }
-    .menus-rail h3 { margin: 8px 8px 12px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: #6b7280; }
+    .menus-rail { border-right: 1px solid var(--border); padding: 16px 12px; background: var(--bg-inset); }
+    .menus-rail h3 { margin: 8px 8px 12px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--text-secondary); }
     .menu-pill { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 8px; cursor: pointer; margin-bottom: 4px; font-size: 14px; }
     .menu-pill:hover { background: #fff; }
-    .menu-pill.active { background: #fff; border: 1px solid #d1d5db; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+    .menu-pill.active { background: #fff; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,.04); }
     .menu-pill .name { flex: 1; font-weight: 500; }
-    .menu-pill .badge { font-size: 11px; padding: 2px 6px; border-radius: 999px; background: #eef2ff; color: #4338ca; font-weight: 600; }
+    .menu-pill .badge { font-size: 11px; padding: 2px 6px; border-radius: 999px; background: var(--teal-bg); color: var(--teal-dark); font-weight: 600; }
     .menu-pill .badge.per_guest { background: #fef3c7; color: #92400e; }
     .menu-pill.inactive { opacity: 0.55; }
     .menus-main { padding: 24px 32px; }
     .menus-main h1 { margin: 0 0 4px; }
-    .menus-main .sub { color: #6b7280; font-size: 14px; margin-bottom: 18px; }
-    .empty { padding: 60px 20px; text-align: center; color: #6b7280; }
-    .empty .big { font-size: 18px; font-weight: 600; color: #111827; margin-bottom: 8px; }
-    .menu-form { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px 20px; margin-bottom: 18px; }
+    .menus-main .sub { color: var(--text-secondary); font-size: 14px; margin-bottom: 18px; }
+    .empty { padding: 60px 20px; text-align: center; color: var(--text-secondary); }
+    .empty .big { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+    .menu-form { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; margin-bottom: 18px; }
     .menu-form h2 { margin: 0 0 12px; font-size: 18px; }
     .field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px 16px; margin-bottom: 8px; }
     .field { display: flex; flex-direction: column; gap: 4px; }
-    .field label { font-size: 12px; color: #4b5563; font-weight: 500; }
+    .field label { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
     .field input, .field select, .field textarea {
-      padding: 7px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;
+      padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px;
       font-family: inherit; background: #fff;
     }
     .field input:focus, .field select:focus, .field textarea:focus {
-      outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.15);
+      outline: none; border-color: var(--teal-light); box-shadow: 0 0 0 3px rgba(21,97,109,.15);
     }
     .field textarea { resize: vertical; min-height: 70px; }
     .row-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1px solid #d1d5db; border-radius: 6px; background: #fff; font-size: 13px; cursor: pointer; font-family: inherit; }
-    .btn:hover { background: #f3f4f6; }
-    .btn-primary { background: #4f46e5; color: #fff; border-color: #4f46e5; }
-    .btn-primary:hover { background: #4338ca; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1px solid var(--border); border-radius: 6px; background: #fff; font-size: 13px; cursor: pointer; font-family: inherit; }
+    .btn:hover { background: var(--bg-inset); }
+    .btn-primary { background: var(--teal); color: #fff; border-color: var(--teal); }
+    .btn-primary:hover { background: var(--teal-dark); }
     .btn-danger { color: #b91c1c; }
     .btn-danger:hover { background: #fef2f2; }
     .btn-ghost { border: none; padding: 4px 8px; }
-    .save-indicator { font-size: 12px; color: #6b7280; margin-left: 8px; }
+    .save-indicator { font-size: 12px; color: var(--text-secondary); margin-left: 8px; }
     .save-indicator.saved { color: #047857; }
     .save-indicator.error { color: #b91c1c; }
 
-    .section-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; }
+    .section-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; }
     .section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-    .section-head .drag { cursor: grab; color: #9ca3af; user-select: none; padding: 0 4px; font-size: 18px; }
+    .section-head .drag { cursor: grab; color: var(--text-muted); user-select: none; padding: 0 4px; font-size: 18px; }
     .section-head .drag:active { cursor: grabbing; }
     .section-head .name-input { flex: 1; font-weight: 600; font-size: 15px; padding: 6px 8px; border: 1px solid transparent; border-radius: 6px; }
-    .section-head .name-input:hover { border-color: #e5e7eb; }
-    .section-head .name-input:focus { border-color: #6366f1; outline: none; }
+    .section-head .name-input:hover { border-color: var(--border); }
+    .section-head .name-input:focus { border-color: var(--teal-light); outline: none; }
     .section-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px 12px; margin-bottom: 10px; }
     .section-meta .field label { font-size: 11px; }
     .section-meta input[type="number"] { width: 100%; }
-    .section-included { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #4b5563; }
+    .section-included { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary); }
 
-    .options-list { padding: 8px 0 4px; border-top: 1px dashed #e5e7eb; }
+    .options-list { padding: 8px 0 4px; border-top: 1px dashed var(--border); }
     .option-row { display: grid; grid-template-columns: 24px 1.5fr 2fr auto auto; gap: 8px; align-items: start; padding: 8px 0; }
-    .option-row .drag { cursor: grab; color: #9ca3af; padding-top: 6px; }
+    .option-row .drag { cursor: grab; color: var(--text-muted); padding-top: 6px; }
     .option-row input, .option-row textarea { padding: 6px 8px; font-size: 13px; }
     .option-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
-    .tag-chip { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #f3f4f6; color: #374151; cursor: pointer; user-select: none; border: 1px solid #e5e7eb; }
-    .tag-chip.selected { background: #eef2ff; color: #4338ca; border-color: #c7d2fe; }
+    .tag-chip { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: var(--bg-inset); color: var(--text-primary); cursor: pointer; user-select: none; border: 1px solid var(--border); }
+    .tag-chip.selected { background: var(--teal-bg); color: var(--teal-dark); border-color: var(--teal-light); }
     .tag-chip.allergen.selected { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
     .option-detail { display: flex; flex-direction: column; gap: 4px; }
     .option-upcharge { width: 80px; }
 
-    .top-bar-pill { display: inline-flex; gap: 6px; align-items: center; background: #eef2ff; color: #4338ca; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; margin-left: 12px; }
+    .top-bar-pill { display: inline-flex; gap: 6px; align-items: center; background: var(--teal-bg); color: var(--teal-dark); padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; margin-left: 12px; }
     .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
 
     /* Upload modal */
@@ -93,16 +93,16 @@
     .modal-mask.open { display: flex; }
     .modal { background:#fff; border-radius:12px; max-width:640px; width:92%; max-height:88vh; overflow:auto; padding:22px 24px; box-shadow:0 12px 40px rgba(0,0,0,.18); }
     .modal h2 { margin:0 0 6px; font-size:18px; }
-    .modal .sub { color:#6b7280; font-size:13px; margin-bottom:14px; }
-    .upload-drop { border:2px dashed #c7d2fe; border-radius:10px; padding:28px 20px; text-align:center; color:#4338ca; cursor:pointer; background:#eef2ff; }
-    .upload-drop:hover { background:#e0e7ff; }
-    .upload-status { margin-top:14px; font-size:14px; color:#374151; }
+    .modal .sub { color:var(--text-secondary); font-size:13px; margin-bottom:14px; }
+    .upload-drop { border:2px dashed var(--teal-light); border-radius:10px; padding:28px 20px; text-align:center; color:var(--teal-dark); cursor:pointer; background:var(--teal-bg); }
+    .upload-drop:hover { background:var(--teal-bg); }
+    .upload-status { margin-top:14px; font-size:14px; color:var(--text-primary); }
     .upload-status.error { color:#b91c1c; }
-    .draft-preview { margin-top:14px; max-height:50vh; overflow:auto; border:1px solid #e5e7eb; border-radius:8px; padding:12px 14px; font-size:13px; background:#fafafa; }
+    .draft-preview { margin-top:14px; max-height:50vh; overflow:auto; border:1px solid var(--border); border-radius:8px; padding:12px 14px; font-size:13px; background:var(--bg-inset); }
     .draft-preview h4 { margin:8px 0 4px; font-size:14px; }
     .draft-preview ul { margin:4px 0 6px 18px; padding:0; }
     .draft-preview li { margin-bottom:2px; }
-    .draft-preview .pill { display:inline-block; font-size:10px; background:#e5e7eb; color:#374151; padding:1px 6px; border-radius:4px; margin-left:6px; }
+    .draft-preview .pill { display:inline-block; font-size:10px; background:var(--border); color:var(--text-primary); padding:1px 6px; border-radius:4px; margin-left:6px; }
     .draft-preview .pill.warn { background:#fef3c7; color:#92400e; }
     .modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:14px; }
   </style>
@@ -175,20 +175,20 @@
     <div class="upload-drop" id="upload-drop">
       <div style="font-size:30px;">📄</div>
       <div style="margin-top:6px;font-weight:600;">Click to choose a PDF or image</div>
-      <div style="margin-top:4px;font-size:12px;color:#6366f1;">Max 25 MB · PDF, PNG, JPG, WebP</div>
+      <div style="margin-top:4px;font-size:12px;color:var(--teal-light);">Max 25 MB · PDF, PNG, JPG, WebP</div>
     </div>
 
-    <div style="display:flex;align-items:center;gap:10px;margin:14px 0;color:#9ca3af;font-size:12px;">
-      <div style="flex:1;height:1px;background:#e5e7eb;"></div><span>OR</span><div style="flex:1;height:1px;background:#e5e7eb;"></div>
+    <div style="display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--text-muted);font-size:12px;">
+      <div style="flex:1;height:1px;background:var(--border);"></div><span>OR</span><div style="flex:1;height:1px;background:var(--border);"></div>
     </div>
 
     <div class="field" style="gap:6px;">
-      <label style="font-size:12px;color:#4b5563;font-weight:500;">Paste a Google Doc / Drive URL</label>
+      <label style="font-size:12px;color:var(--text-secondary);font-weight:500;">Paste a Google Doc / Drive URL</label>
       <div style="display:flex;gap:6px;">
-        <input type="url" id="drive-url-input" placeholder="https://docs.google.com/document/d/..." style="flex:1;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;" />
+        <input type="url" id="drive-url-input" placeholder="https://docs.google.com/document/d/..." style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:14px;" />
         <button class="btn btn-primary" id="btn-import-drive">Import</button>
       </div>
-      <div style="font-size:11px;color:#9ca3af;margin-top:2px;">Doc must be shared with mitchwilson@eventflowsales.com</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Doc must be shared with mitchwilson@eventflowsales.com</div>
     </div>
 
     <div class="upload-status" id="upload-status"></div>
@@ -276,7 +276,7 @@ function loadMenus() {
 function renderMenuList() {
   const list = document.getElementById('menu-list');
   if (!currentMenus.length) {
-    list.innerHTML = '<div style="padding:14px 8px;color:#6b7280;font-size:13px;">No menus yet</div>';
+    list.innerHTML = '<div style="padding:14px 8px;color:var(--text-secondary);font-size:13px;">No menus yet</div>';
     return;
   }
   list.innerHTML = currentMenus.map(m => {
@@ -394,7 +394,7 @@ function renderSectionHtml(s) {
         <div class="field"><label>Notes (optional)</label><input data-sf="notes" value="${escAttr(s.notes||'')}" /></div>
       </div>
       <div class="options-list">
-        ${s.options.map(renderOptionHtml).join('') || '<div style="font-size:13px;color:#9ca3af;padding:8px 4px;">No dishes yet</div>'}
+        ${s.options.map(renderOptionHtml).join('') || '<div style="font-size:13px;color:var(--text-muted);padding:8px 4px;">No dishes yet</div>'}
       </div>
       <div style="margin-top:6px;"><button class="btn" data-act="new-option">+ Add dish</button></div>
     </div>
@@ -417,10 +417,10 @@ function renderOptionHtml(o) {
       <div class="option-detail">
         <textarea data-of="description" rows="1" placeholder="Description (optional)">${escHtml(o.description||'')}</textarea>
         <div class="option-tags">
-          <strong style="font-size:10px;color:#6b7280;align-self:center;">Diet:</strong>${dietary}
+          <strong style="font-size:10px;color:var(--text-secondary);align-self:center;">Diet:</strong>${dietary}
         </div>
         <div class="option-tags">
-          <strong style="font-size:10px;color:#6b7280;align-self:center;">Allergens:</strong>${allergens}
+          <strong style="font-size:10px;color:var(--text-secondary);align-self:center;">Allergens:</strong>${allergens}
         </div>
       </div>
       <input class="option-upcharge" type="number" step="0.01" min="0" data-of="upcharge_per_person" value="${o.upcharge_per_person||0}" title="Upcharge per person ($)" />
@@ -752,10 +752,10 @@ function renderDraft(draft) {
         ...(o.allergen_tags||[]).map(t => `<span class="pill warn">contains ${escHtml(t)}</span>`)
       ].join('');
       const upcharge = Number(o.upcharge_per_person) > 0 ? `<span class="pill">+$${o.upcharge_per_person}/guest</span>` : '';
-      const desc = o.description ? `<div style="font-size:12px;color:#6b7280;">${escHtml(o.description)}</div>` : '';
+      const desc = o.description ? `<div style="font-size:12px;color:var(--text-secondary);">${escHtml(o.description)}</div>` : '';
       return `<li><strong>${escHtml(o.name)}</strong> ${tags}${upcharge}${desc}</li>`;
     }).join('');
-    return `<h4>${escHtml(s.name)} ${rule}${s.notes ? ' <span style="font-weight:400;color:#6b7280;font-size:12px;">' + escHtml(s.notes) + '</span>' : ''}</h4><ul>${opts}</ul>`;
+    return `<h4>${escHtml(s.name)} ${rule}${s.notes ? ' <span style="font-weight:400;color:var(--text-secondary);font-size:12px;">' + escHtml(s.notes) + '</span>' : ''}</h4><ul>${opts}</ul>`;
   }).join('');
   draftPreview.style.display = 'block';
   draftPreview.innerHTML = `
@@ -764,7 +764,7 @@ function renderDraft(draft) {
       ${draft.price_per_person ? `<span class="pill">$${draft.price_per_person}/guest</span>` : ''}
       ${draft.min_guests || draft.max_guests ? `<span class="pill">${draft.min_guests||1}–${draft.max_guests||9999} guests</span>` : ''}
     </div>
-    ${draft.description ? `<div style="margin-top:4px;color:#374151;">${escHtml(draft.description)}</div>` : ''}
+    ${draft.description ? `<div style="margin-top:4px;color:var(--text-primary);">${escHtml(draft.description)}</div>` : ''}
     ${sectionsHtml}
   `;
 }
