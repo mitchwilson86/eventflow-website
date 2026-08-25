@@ -84,8 +84,7 @@
       <div class="dash-body">
         <!-- Loading -->
         <div class="loading-state" id="loading">
-          <div class="spinner"></div>
-          <div>Loading admin data...</div>
+          <div class="ef-state"><div class="ef-skel"></div><div class="ef-skel"></div><div class="ef-skel short"></div></div>
         </div>
 
         <!-- Content -->
@@ -267,7 +266,7 @@
                telemetry belongs on the admin page, not in front of operators) -->
           <div class="panel">
             <h3>LLM Cost <span style="font-weight: normal; color: var(--text-muted); font-size: 0.85em;">— top spenders</span></h3>
-            <div id="cost-summary" style="color: var(--text-muted); font-size: 0.9em;">Loading cost data...</div>
+            <div id="cost-summary" style="color: var(--text-muted); font-size: 0.9em;"><div class="ef-state"><div class="ef-skel"></div><div class="ef-skel"></div><div class="ef-skel short"></div></div></div>
           </div>
 
           <!-- 7. Activity Feed -->
@@ -396,6 +395,9 @@ document.addEventListener('change', e => {
 async function loadAdminData() {
   const startDate = document.getElementById('date-start').value;
   const endDate = document.getElementById('date-end').value;
+  // Re-render the skeletons each load: the catch below replaces this div's
+  // markup with an error message, so a retry must rebuild it.
+  EF_SHELL.setState('loading', 'loading');
   document.getElementById('loading').style.display = 'block';
   document.getElementById('content').style.display = 'none';
 
