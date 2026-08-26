@@ -538,8 +538,12 @@
           </div>
 
           <div class="panel">
-            <h3>Version history <span class="vb-h-hint">every save is kept; restore any earlier version with one click</span></h3>
-            <div id="kbVersions"></div>
+            <details>
+              <summary style="cursor:pointer; user-select:none;">
+                <h3 style="display:inline; margin:0;">Version history <span class="vb-h-hint" id="kbVersionsHint">every save is kept; click to view and restore</span></h3>
+              </summary>
+              <div id="kbVersions" style="margin-top:8px;"></div>
+            </details>
           </div>
         </div>
 
@@ -1062,6 +1066,10 @@
         '</div>';
     });
     document.getElementById('kbVersions').innerHTML = vhtml || '<span class="hint">No saved versions yet.</span>';
+    var vHint = document.getElementById('kbVersionsHint');
+    if (vHint) vHint.textContent = (KB.versions || []).length
+      ? (KB.versions.length + ' saved; click to view and restore an earlier version')
+      : 'every save is kept; restore any earlier version with one click';
 
     var pre = document.getElementById('kbPreview');
     if (pre.style.display !== 'none') pre.textContent = KB.kb_text || '';
