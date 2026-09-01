@@ -1,0 +1,33 @@
+# EventFlow
+
+> EventFlow is an AI-powered sales automation platform for restaurants and hospitality venues. It responds to event inquiries instantly, qualifies leads, follows up automatically, and books more private events.
+
+EventFlow is sold per venue. Plans start at $249 per month; current tiers and what each includes are on the pricing page. To talk to the team, use the contact form on the home page (book a demo or start a trial).
+
+## Pages
+
+- [Home](https://eventflowsales.com/): product overview, features, and the contact form
+- [Pricing](https://eventflowsales.com/pricing): current plans and comparison
+- [Documentation](https://eventflowsales.com/documentation): how EventFlow works for venue operators
+- [Help Center](https://eventflowsales.com/help): frequently asked questions
+- [Integrations](https://eventflowsales.com/integrations): platforms EventFlow works with
+- [About](https://eventflowsales.com/about): company background
+- [Get Started](https://eventflowsales.com/signup): signup for venues
+
+## Machine-readable
+
+- [Sitemap](https://eventflowsales.com/sitemap.xml): all indexable pages
+- [OpenAPI spec](https://eventflowsales.com/openapi.json): valid spec with zero endpoints (see API note below)
+
+## API
+
+EventFlow does not currently offer a public API. Operator features are delivered through the EventFlow dashboard, not a developer API. The OpenAPI document at /openapi.json is a valid spec with no endpoints, published so automated tools get a machine-readable answer instead of a 404. Requests under /api/ return a structured JSON 404. For integration questions, use the contact form on the home page.
+
+## Optional
+
+- [Blog](https://eventflowsales.com/blog)
+- [Careers](https://eventflowsales.com/careers)
+- [Changelog](https://eventflowsales.com/changelog)
+- [Privacy Policy](https://eventflowsales.com/privacy)
+- [Terms of Service](https://eventflowsales.com/terms)
+- [Unsubscribe](https://eventflowsales.com/unsubscribe): email unsubscribe page

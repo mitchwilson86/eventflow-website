@@ -1,0 +1,12 @@
+{
+  "error": {
+    "code": "not_found",
+    "status": 404,
+    "message": "EventFlow does not offer a public API. This path does not exist.",
+    "hints": [
+      "Site guide for agents: https://eventflowsales.com/llms.txt",
+      "OpenAPI spec (zero endpoints): https://eventflowsales.com/openapi.json",
+      "Documentation: https://eventflowsales.com/documentation"
+    ]
+  }
+}

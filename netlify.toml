@@ -88,6 +88,17 @@
   to = "/dashboard.html"
   status = 301
 
+[[redirects]]
+  from = "/docs"
+  to = "/documentation"
+  status = 301
+
+[[redirects]]
+  from = "/api/*"
+  to = "/api-404.json"
+  status = 404
+  force = true
+
 [[headers]]
   for = "/*"
   [headers.values]

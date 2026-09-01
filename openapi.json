@@ -1,0 +1,16 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "EventFlow API",
+    "version": "0.1.0",
+    "description": "EventFlow does not currently expose a public API. This document is published so automated tools get a machine-readable answer instead of a 404. EventFlow is an AI-powered sales automation platform for restaurants and hospitality venues; operator features are delivered through the EventFlow dashboard rather than a developer API. For a guide to this site, see https://eventflowsales.com/llms.txt. For integration questions, use the contact form at https://eventflowsales.com/.",
+    "contact": {
+      "name": "EventFlow",
+      "url": "https://eventflowsales.com/"
+    }
+  },
+  "servers": [
+    { "url": "https://eventflowsales.com" }
+  ],
+  "paths": {}
+}
