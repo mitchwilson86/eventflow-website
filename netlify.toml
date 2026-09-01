@@ -1,3 +1,17 @@
+# Host-scoped rules first: force the netlify.app aliases to the apex domain
+# so search engines never index a duplicate copy of the site.
+[[redirects]]
+  from = "https://eventflow-sales.netlify.app/*"
+  to = "https://eventflowsales.com/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://main--eventflow-sales.netlify.app/*"
+  to = "https://eventflowsales.com/:splat"
+  status = 301
+  force = true
+
 [[redirects]]
   from = "/dashboard"
   to = "/dashboard.html"
