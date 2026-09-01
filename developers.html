@@ -3,26 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Documentation — EventFlow</title>
+    <title>Developer Resources | EventFlow</title>
     <!-- Favicon -->
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" type="image/png" href="/favicon.png" sizes="32x32">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <meta name="description" content="Set up and configure EventFlow — guides for email integration, knowledge base setup, lead scoring, and CRM connections.">
+    <meta name="description" content="EventFlow developer resources: OpenAPI spec, llms.txt agent guide, sitemap, and structured JSON error format. EventFlow has no public API yet; custom integrations are available on the Premium plan.">
 
     <!-- Open Graph -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Documentation — EventFlow">
-    <meta property="og:description" content="Set up and configure EventFlow — guides for email integration, knowledge base setup, lead scoring, and CRM connections.">
-    <meta property="og:url" content="https://eventflowsales.com">
+    <meta property="og:title" content="Developer Resources | EventFlow">
+    <meta property="og:description" content="EventFlow developer resources: OpenAPI spec, llms.txt agent guide, sitemap, and structured JSON error format.">
+    <meta property="og:url" content="https://eventflowsales.com/developers">
     <meta property="og:site_name" content="EventFlow">
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Documentation — EventFlow">
-    <meta name="twitter:description" content="Set up and configure EventFlow — guides for email integration, knowledge base setup, lead scoring, and CRM connections.">
+    <meta name="twitter:title" content="Developer Resources | EventFlow">
+    <meta name="twitter:description" content="EventFlow developer resources: OpenAPI spec, llms.txt agent guide, sitemap, and structured JSON error format.">
 
-    <link rel="canonical" href="https://eventflowsales.com/documentation">
+    <link rel="canonical" href="https://eventflowsales.com/developers">
 
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y5L9CGEL9S"></script>
@@ -60,8 +60,8 @@
 
     <div class="page-header">
         <div class="container">
-            <h1>Documentation</h1>
-            <p>Everything you need to set up, configure, and get the most out of EventFlow.</p>
+            <h1>EventFlow developer resources</h1>
+            <p>Machine-readable entry points for the EventFlow platform, in one place.</p>
         </div>
     </div>
     <div class="page-content">
@@ -69,38 +69,33 @@
             <div class="cards-grid">
                 <div class="card">
                     <div class="card-icon"><svg width="24" height="24" fill="none" stroke="var(--teal-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
-                    <h3>Getting Started</h3>
-                    <p>Connect your inbox, upload your venue documents, and configure your first AI responses in under 15 minutes.</p>
+                    <h3>OpenAPI Spec</h3>
+                    <p>EventFlow does not offer a public API yet. The spec at <a href="/openapi.json" style="color:var(--teal-light, #1b7a89);text-decoration:underline;">/openapi.json</a> is a valid OpenAPI document with zero endpoints, published so automated tools get a machine-readable answer instead of a 404.</p>
                 </div>
                 <div class="card">
                     <div class="card-icon"><svg width="24" height="24" fill="none" stroke="var(--teal-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
-                    <h3>Knowledge Base Setup</h3>
-                    <p>Learn how to upload event packets, menus, pricing docs, and policies so EventFlow can answer questions accurately.</p>
+                    <h3>llms.txt Agent Guide</h3>
+                    <p>A markdown guide to this site for AI agents, including when EventFlow is the right tool and how to proceed. Lives at <a href="/llms.txt" style="color:var(--teal-light, #1b7a89);text-decoration:underline;">/llms.txt</a>.</p>
                 </div>
                 <div class="card">
-                    <div class="card-icon"><svg width="24" height="24" fill="none" stroke="var(--teal-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
-                    <h3>Email Configuration</h3>
-                    <p>Set up Gmail monitoring (Outlook support coming soon), customize response templates, and configure your sender settings.</p>
+                    <div class="card-icon"><svg width="24" height="24" fill="none" stroke="var(--teal-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+                    <h3>Sitemap</h3>
+                    <p>Every indexable page on eventflowsales.com, listed at <a href="/sitemap.xml" style="color:var(--teal-light, #1b7a89);text-decoration:underline;">/sitemap.xml</a>.</p>
                 </div>
                 <div class="card">
-                    <div class="card-icon"><svg width="24" height="24" fill="none" stroke="var(--teal-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
-                    <h3>Lead Scoring & Classification</h3>
-                    <p>Understand how EventFlow scores leads (A/B/C/D) and customize classification rules for your venue.</p>
+                    <div class="card-icon"><svg width="24" height="24" fill="none" stroke="var(--teal-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+                    <h3>Structured JSON Errors</h3>
+                    <p>Requests under /api/ return HTTP 404 with a structured JSON body: an error code, a plain message, and hint links. Unknown page paths return a real 404 status with pointers to these resources.</p>
                 </div>
                 <div class="card">
-                    <div class="card-icon"><svg width="24" height="24" fill="none" stroke="var(--teal-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
-                    <h3>Follow-Up Sequences</h3>
-                    <p>Configure automated follow-up timing, customize messaging, and set up smart reply detection.</p>
-                </div>
-                <div class="card">
-                    <div class="card-icon"><svg width="24" height="24" fill="none" stroke="var(--teal-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
-                    <h3>CRM Integration</h3>
-                    <p>Connect TripleSeat for real-time availability checks, automatic web-lead replies, running notes, and soft holds. Other platforms are available as custom integrations on the Premium plan.</p>
+                    <div class="card-icon"><svg width="24" height="24" fill="none" stroke="var(--teal-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+                    <h3>Product Documentation</h3>
+                    <p>Guides for venue operators on setup, knowledge base, email configuration, and CRM integration, at <a href="/documentation" style="color:var(--teal-light, #1b7a89);text-decoration:underline;">/documentation</a>.</p>
                 </div>
                 <div class="card">
                     <div class="card-icon"><svg width="24" height="24" fill="none" stroke="var(--teal-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
-                    <h3>Developer Resources</h3>
-                    <p>OpenAPI spec, llms.txt agent guide, and machine-readable endpoints. <a href="/developers" style="color:var(--teal-light, #1b7a89);text-decoration:underline;">Browse developer resources</a>.</p>
+                    <h3>Want an Integration?</h3>
+                    <p>EventFlow integrates with Gmail, Outlook, Slack, and Tripleseat out of the box. Custom integrations are available on the Premium plan. <a href="/#contact" style="color:var(--teal-light, #1b7a89);text-decoration:underline;">Talk to the team</a>.</p>
                 </div>
             </div>
         </div>
@@ -133,6 +128,7 @@
                 <div class="footer-col">
                     <h4>Resources</h4>
                     <a href='/documentation'>Documentation</a>
+                    <a href='/developers'>Developer Resources</a>
                     <a href='/help'>Help Center</a>
                     <a href='/privacy'>Privacy Policy</a>
                     <a href='/terms'>Terms of Service</a>

@@ -51,6 +51,58 @@
     }
     </script>
 
+    <!-- Identity Schema (Organization + SoftwareApplication) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://eventflowsales.com/#organization",
+          "name": "EventFlow",
+          "url": "https://eventflowsales.com/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://eventflowsales.com/apple-touch-icon.png"
+          },
+          "slogan": "Smarter bookings. Fuller rooms.",
+          "description": "EventFlow builds AI-powered sales automation for restaurants and hospitality venues.",
+          "sameAs": [
+            "https://www.linkedin.com/company/eventflowsales/"
+          ]
+        },
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://eventflowsales.com/#software",
+          "name": "EventFlow",
+          "url": "https://eventflowsales.com/",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web",
+          "description": "EventFlow is an AI-powered sales automation platform for restaurants and hospitality venues. It responds to event inquiries instantly, qualifies leads, and books more private events.",
+          "publisher": { "@id": "https://eventflowsales.com/#organization" },
+          "offers": [
+            {
+              "@type": "Offer",
+              "name": "Copilot",
+              "price": "249",
+              "priceCurrency": "USD",
+              "url": "https://eventflowsales.com/pricing",
+              "description": "AI answers every inquiry with a manager copied on each reply. Billed monthly per venue."
+            },
+            {
+              "@type": "Offer",
+              "name": "Autopilot",
+              "price": "449",
+              "priceCurrency": "USD",
+              "url": "https://eventflowsales.com/pricing",
+              "description": "Fully autonomous AI sales with CRM integration and follow-ups. Billed monthly per venue."
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>

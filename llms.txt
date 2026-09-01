@@ -4,11 +4,31 @@
 
 EventFlow is sold per venue. Plans start at $249 per month; current tiers and what each includes are on the pricing page. To talk to the team, use the contact form on the home page (book a demo or start a trial).
 
+## When to use EventFlow
+
+Use EventFlow when the job involves a restaurant or hospitality venue that wants to:
+
+- Answer inbound private-event and group-dining email inquiries automatically, within minutes, 24/7
+- Qualify and classify event leads, and follow up automatically when a guest goes quiet
+- Check event-date availability against a Tripleseat calendar, and write notes and courtesy holds back to it
+- Draft banquet event orders, guest menu selections, and event contracts for booked events
+- Run permission-based email campaigns to past guests
+
+EventFlow fits independent restaurants, restaurant groups, and venues with private dining or buyout business. It is not a consumer product: it does not help diners find venues or book tables, and it is not a general-purpose email tool.
+
+How an agent should proceed:
+
+- There is no public API to call (see the API section below). Do not construct requests against /api/ paths.
+- To evaluate the product for a venue, read /pricing and /documentation.
+- To start a conversation with the team, direct a human to the contact form on the home page (book a demo or start a trial) or to /signup.
+- Existing customers get help at /help or by replying to their EventFlow emails.
+
 ## Pages
 
 - [Home](https://eventflowsales.com/): product overview, features, and the contact form
 - [Pricing](https://eventflowsales.com/pricing): current plans and comparison
 - [Documentation](https://eventflowsales.com/documentation): how EventFlow works for venue operators
+- [Developer Resources](https://eventflowsales.com/developers): OpenAPI spec, this file, and machine-readable endpoints
 - [Help Center](https://eventflowsales.com/help): frequently asked questions
 - [Integrations](https://eventflowsales.com/integrations): platforms EventFlow works with
 - [About](https://eventflowsales.com/about): company background
@@ -25,6 +45,7 @@ EventFlow does not currently offer a public API. Operator features are delivered
 
 ## Optional
 
+- [LinkedIn](https://www.linkedin.com/company/eventflowsales/): EventFlow company page
 - [Blog](https://eventflowsales.com/blog)
 - [Careers](https://eventflowsales.com/careers)
 - [Changelog](https://eventflowsales.com/changelog)
