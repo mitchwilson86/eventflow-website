@@ -322,7 +322,8 @@ window.EF_SHELL = (function () {
   var DEMO_FILES = {
     get_home_overview: '/assets/demo/home_overview.json',
     get_conversations: '/assets/demo/conversations.json',
-    get_conversation: '/assets/demo/conversations.json'
+    get_conversation: '/assets/demo/conversations.json',
+    ask_eventflow: '/assets/demo/ask.json'   // ASK_EVENTFLOW_V1: canned answers keyed by question
   };
   function api(payload) {
     payload = payload || {};
@@ -333,6 +334,12 @@ window.EF_SHELL = (function () {
           if (payload.action === 'get_conversation') {
             var turns = (d.threads || {})[payload.thread_id] || [];
             return { success: true, thread_id: payload.thread_id, turns: turns };
+          }
+          if (payload.action === 'ask_eventflow') {
+            // Static fixtures cannot answer free text: the three example chips are pre-answered,
+            // anything else gets the fallback that says so.
+            var a = (d.answers || {})[String(payload.question || '').trim()] || d.fallback || {};
+            return Object.assign({ success: true, ok: true }, a, { question: payload.question });
           }
           return d;
         });
