@@ -387,6 +387,11 @@
                 <input type="number" id="sp_fb_min_weekend" min="0" step="50" />
               </div>
             </div>
+            <!-- SPACE_FB_MIN_POLICY_V1: hidden until the backend says it keeps this field (caps.space_fb_min_policy) -->
+            <div class="vf-field" id="spNoMinField" style="display:none;">
+              <label class="vf-check"><input type="checkbox" id="sp_no_fb_min" onchange="syncNoMin()" /> This space has no food and beverage minimum</label>
+              <span class="hint">Tick this only when there truly is no minimum (guests simply order from your group menus); the assistant then says so plainly. Leave it unticked with 0 and 0 when a minimum exists but you do not publish it; the assistant hands that pricing to your events manager.</span>
+            </div>
             <div class="vf-field">
               <label>&nbsp;</label>
               <label class="vf-check"><input type="checkbox" id="sp_is_private" /> Fully private</label>
@@ -723,7 +728,9 @@
       if (sp.buyout) badges += '<span class="vb-badge buyout">Buyout</span>';
       badges += sp.is_private === false ? '<span class="vb-badge shared">Semi-private</span>' : '<span class="vb-badge private">Private</span>';
       var meta = 'Seats ' + (sp.capacity_seated || 0) + ' · Standing ' + (sp.capacity_standing || 0)
-        + '<br>Minimums: ' + money(sp.fb_min_weekday) + ' Sun-Thu · ' + money(sp.fb_min_weekend) + ' Fri-Sat'
+        + (sp.fb_min_policy === 'none' /* SPACE_FB_MIN_POLICY_V1 */
+            ? '<br>Minimums: none (the assistant tells guests this space has no minimum)'
+            : ('<br>Minimums: ' + money(sp.fb_min_weekday) + ' Sun-Thu · ' + money(sp.fb_min_weekend) + ' Fri-Sat'))
         + '<br>' + ((sp.photos || []).length ? (sp.photos.length + ' photo' + (sp.photos.length > 1 ? 's' : '')) : 'No photos');
       if (Array.isArray(sp.combo_of) && sp.combo_of.length) meta += '<br>Combines: ' + sp.combo_of.join(' + ');
       var info = document.createElement('div');
@@ -800,12 +807,25 @@
     document.getElementById('sp_fb_min_weekend').value = sp ? (sp.fb_min_weekend || 0) : '';
     document.getElementById('sp_is_private').checked = sp ? sp.is_private !== false : true;
     document.getElementById('sp_buyout').checked = sp ? !!sp.buyout : false;
+    // SPACE_FB_MIN_POLICY_V1: shown only when the backend says it keeps the field, so an older backend can never drop it.
+    document.getElementById('spNoMinField').style.display = (PROFILE.caps && PROFILE.caps.space_fb_min_policy) ? '' : 'none';
+    document.getElementById('sp_no_fb_min').checked = !!(sp && sp.fb_min_policy === 'none');
+    syncNoMin();
     document.getElementById('photoRows').innerHTML = '';
     (sp && sp.photos || []).forEach(function (p) { addPhotoRow(p.url || p, p.caption || ''); });
     document.getElementById('comboPickerWrap').style.display = isCombo ? 'block' : 'none';
     if (isCombo) renderComboPicker(sp ? sp.combo_of : [], name);
     document.getElementById('spaceEditor').style.display = 'block';
     document.getElementById('spaceEditor').scrollIntoView({ behavior: 'smooth' });
+  }
+  // SPACE_FB_MIN_POLICY_V1: "no minimum" and a minimum amount cannot both be true, so ticking the box zeroes and locks the amounts.
+  function syncNoMin() {
+    var on = document.getElementById('spNoMinField').style.display !== 'none' && document.getElementById('sp_no_fb_min').checked;
+    ['sp_fb_min_weekday', 'sp_fb_min_weekend'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (on) el.value = 0;
+      el.disabled = on;
+    });
   }
   function closeSpaceEditor() {
     editingOriginalName = null;
@@ -835,6 +855,15 @@
       photos: photos
     };
     if (comboMembers.length) space.combo_of = comboMembers;
+    // SPACE_FB_MIN_POLICY_V1: the marker is sent only to a backend that keeps it, and a space that HAS the marker is never
+    // saved through a backend that would drop it (that silent loss is how Communal Tables lost it in September 2026).
+    var noMinOk = !!(PROFILE.caps && PROFILE.caps.space_fb_min_policy);
+    var editingSp = editingOriginalName ? PROFILE.spaces.find(function (s) { return s.name === editingOriginalName; }) : null;
+    if (!noMinOk && editingSp && editingSp.fb_min_policy) {
+      showMsg('This space carries a "no minimum" setting that this page cannot save yet. Nothing was changed. Please contact EventFlow.', 'err');
+      return;
+    }
+    if (noMinOk) space.fb_min_policy = document.getElementById('sp_no_fb_min').checked ? 'none' : '';
     var btn = document.getElementById('saveSpaceBtn');
     btn.disabled = true; btn.textContent = 'Saving…';
     api({ action: 'save_space', space: space, original_name: editingOriginalName || '' }).then(function (res) {
@@ -1322,7 +1351,7 @@
   function loadProfile() {
     api({ action: 'get_venue_profile' }).then(function (res) {
       if (res.error) { handleAuthError(res.error); return; }
-      PROFILE = { facts: res.facts || {}, spaces: res.spaces || [], ai: res.ai || {} };
+      PROFILE = { facts: res.facts || {}, spaces: res.spaces || [], ai: res.ai || {}, caps: res.caps || {} }; // SPACE_FB_MIN_POLICY_V1
       EF_SHELL.mountSidebar('venue', { venueName: res.venue_name || SLUG });
       document.getElementById('venue-name').textContent = res.venue_name || SLUG;
       document.getElementById('user-email-sidebar').textContent = res.caller || '';
