@@ -917,10 +917,28 @@
       btn.disabled = false; btn.textContent = 'Save AI settings';
       if (res.error) { handleAuthError(res.error); return; }
       showMsg('AI settings saved (live within a few minutes).', 'ok');
+      /* HANDOVER_ON_SAVE_V1: only a backend that handled a change of events manager sends this; older ones never do. */
+      if (res.handover && res.handover.to) handleHandover(res.handover);
     }).catch(function () {
       btn.disabled = false; btn.textContent = 'Save AI settings';
       showMsg('Save failed. Please try again.', 'err');
     });
+  }
+
+  /* HANDOVER_ON_SAVE_V1 (2026-09-28): the events manager changed. Say what the save did, then ask about the old
+     contact's dashboard access (nothing is removed without a yes). */
+  function handleHandover(ho) {
+    var who = ho.to.name || ho.to.email;
+    var msg = 'AI settings saved. ' + who + ' now gets escalations' + (ho.added_access ? ' and can sign in to this dashboard' : '') + '.';
+    if (ho.from && ho.from.email) msg += ' EventFlow has been sent the remaining steps (Tripleseat user, text alerts).';
+    showMsg(msg, 'ok');
+    if (!(ho.from && ho.from.email && ho.old_has_access)) return;
+    var old = ho.from.name ? ho.from.name + ' (' + ho.from.email + ')' : ho.from.email;
+    if (!confirm(old + ' can still sign in to this dashboard. Remove their access now?\n\nChoose Cancel to keep it for now.')) return;
+    api({ action: 'revoke_dashboard_access', email: ho.from.email }).then(function (r) {
+      if (r && r.success) showMsg(msg + ' ' + old + ' no longer has dashboard access.', 'ok');
+      else showMsg('Saved, but removing ' + old + ' did not work: ' + ((r && r.error) || 'unknown error') + '. EventFlow can remove it for you.', 'err');
+    }).catch(function () { showMsg('Saved, but removing ' + old + ' did not work. EventFlow can remove it for you.', 'err'); });
   }
 
   /* ---------- Knowledge tab (KB_KNOWLEDGE_V1) ---------- */
