@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catering Order</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* CATERING_ORDERS_V1 (2026-09-30): public catering order page, any venue (?venue=<slug>). Everything shown comes from
+     the venue's catering_json via ops-api; prices are re-computed on the server when the order is submitted. */
+  :root { --accent: #15616D; --ink: #0f172a; --muted: #64748b; --line: #e2e8f0; --bg: #f1f5f9; --card: #fff; --soft: #f0fdfa; --serif: 'DM Serif Display', Georgia, serif; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif; color: var(--ink); background: var(--bg); font-size: 15px; line-height: 1.5; padding-bottom: 96px; }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 24px 16px; }
+  header.hero { background: var(--card); border-radius: 14px; padding: 24px; margin-bottom: 16px; border-top: 5px solid var(--accent); }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand img { max-height: 56px; max-width: 140px; object-fit: contain; }
+  h1 { font-family: var(--serif); font-weight: 400; font-size: 32px; margin: 0; line-height: 1.15; }
+  .venue { color: var(--muted); font-weight: 600; letter-spacing: .02em; }
+  .intro { margin: 14px 0 0; padding: 0; list-style: none; color: #334155; }
+  .intro li { margin: 2px 0; }
+  .note { background: var(--soft); border-radius: 10px; padding: 10px 14px; margin-top: 12px; font-size: 14px; }
+  .card { background: var(--card); border-radius: 14px; padding: 20px 24px; margin-bottom: 16px; }
+  h2 { font-family: var(--serif); font-weight: 400; font-size: 24px; margin: 0 0 4px; color: var(--accent); }
+  .sec-note { color: var(--muted); font-size: 13px; margin: 0 0 8px; }
+  .item { border-top: 1px solid var(--line); padding: 14px 0; display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; align-items: start; }
+  .item:first-of-type { border-top: 0; }
+  .iname { font-weight: 600; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 700; border-radius: 999px; padding: 1px 7px; margin-left: 6px; vertical-align: 1px; background: #e2e8f0; color: #334155; }
+  .tag.V { background: #dcfce7; color: #166534; } .tag.GF { background: #fef3c7; color: #92400e; } .tag.RAW { background: #fee2e2; color: #991b1b; }
+  .idesc { color: var(--muted); font-size: 13.5px; }
+  .sizes { display: flex; flex-direction: column; gap: 6px; min-width: 250px; }
+  .size { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+  .slabel { font-size: 13.5px; color: #334155; text-align: right; }
+  .slabel b { color: var(--ink); }
+  .step { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .step button { width: 34px; height: 34px; border: 0; background: #f8fafc; font-size: 18px; cursor: pointer; color: var(--ink); }
+  .step button:hover { background: #eef2f7; }
+  .step input { width: 40px; height: 34px; border: 0; text-align: center; font: inherit; font-weight: 600; -moz-appearance: textfield; }
+  .step input::-webkit-outer-spin-button, .step input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .size.on .step { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(21,97,109,.12); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+  label.f { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  input.t, textarea.t { width: 100%; border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px 12px; font: inherit; background: #fff; }
+  textarea.t { min-height: 80px; resize: vertical; }
+  input.t:focus, textarea.t:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+  .req { color: #b91c1c; }
+  .choice { display: flex; gap: 10px; flex-wrap: wrap; }
+  .pill { border: 1px solid #cbd5e1; border-radius: 999px; padding: 8px 14px; background: #fff; cursor: pointer; font: inherit; font-weight: 600; font-size: 14px; }
+  .pill.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .hint { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .check { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; margin-top: 8px; }
+  .sum { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  .sum td { padding: 5px 0; }
+  .sum td.r { text-align: right; white-space: nowrap; padding-left: 12px; }
+  .sum tr.line td { color: #334155; }
+  .sum tr.sub td { color: var(--muted); }
+  .sum tr.tot td { font-weight: 700; font-size: 17px; border-top: 1px solid var(--line); padding-top: 10px; }
+  .empty { color: var(--muted); font-style: italic; }
+  .btn { background: var(--accent); color: #fff; border: 0; border-radius: 10px; padding: 12px 20px; font: inherit; font-weight: 700; cursor: pointer; }
+  .btn:disabled { opacity: .55; cursor: default; }
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid var(--line); box-shadow: 0 -4px 16px rgba(15,23,42,.06); z-index: 5; }
+  .bar .in { max-width: 920px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .bar .lbl { font-size: 12px; color: var(--muted); }
+  .bar .amt { font-family: var(--serif); font-size: 26px; line-height: 1; }
+  .err { background: #fef2f2; color: #991b1b; border-radius: 10px; padding: 10px 14px; margin-top: 12px; display: none; }
+  .fine { color: var(--muted); font-size: 12.5px; }
+  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  .done h2 { color: var(--ink); }
+  @media (max-width: 640px) {
+    .wrap { padding: 16px 12px; }
+    header.hero, .card { padding: 18px 16px; }
+    h1 { font-size: 27px; }
+    .item { grid-template-columns: 1fr; }
+    .sizes { min-width: 0; }
+    .size { justify-content: space-between; }
+    .slabel { text-align: left; }
+    .grid2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="card" id="loading">Loading the catering menu...</div>
+</div>
+<div class="bar" id="bar" style="display:none"><div class="in">
+  <div><div class="lbl" id="barLbl">Estimated total</div><div class="amt" id="barAmt">$0.00</div></div>
+  <button class="btn" id="barBtn" type="button">Review order</button>
+</div></div>
+<script src="/assets/catering-pricing.js"></script>
+<script>
+(function () {
+  var OPS = 'https://uzojlcwsrbsqckycjlgm.supabase.co/functions/v1/ops-api';
+  var qp = new URLSearchParams(location.search);
+  var VENUE = (qp.get('venue') || qp.get('client') || 'sunda-nashville').toLowerCase().replace(/[^a-z0-9-]/g, '');
+  var app = document.getElementById('app');
+  var MENU = null, VINFO = null;
+  var qty = {};          // 'itemId|sizeId' -> number
+  var fulfillment = 'delivery';
+  var tip = { mode: 'pct', pct: 15 };
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function money(n) { return '$' + (Number(n) || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  function el(id) { return document.getElementById(id); }
+
+  function load() {
+    fetch(OPS + '?action=catering_menu&client=' + encodeURIComponent(VENUE))
+      .then(function (r) { return r.json().then(function (j) { return { s: r.status, j: j }; }); })
+      .then(function (x) {
+        if (!x.j || !x.j.ok) { unavailable(); return; }
+        MENU = x.j.menu; VINFO = x.j.venue || {};
+        if (VINFO.accent) document.documentElement.style.setProperty('--accent', VINFO.accent);
+        document.title = (VINFO.name ? VINFO.name + ' ' : '') + 'Catering Order';
+        tip = (MENU.rules && (MENU.rules.tip_presets || []).indexOf(15) !== -1) ? { mode: 'pct', pct: 15 } : { mode: 'none' };
+        render();
+      })
+      .catch(function () { app.innerHTML = '<div class="card">We could not load the catering menu. Please check your connection and refresh the page.</div>'; });
+  }
+  function unavailable() {
+    app.innerHTML = '<div class="card"><h2>Online catering orders are not available</h2><p>Online catering orders are not available for this venue right now. Please contact the venue directly.</p></div>';
+  }
+
+  function render() {
+    var r = MENU.rules || {};
+    var legend = MENU.legend || {};
+    var h = '';
+    h += '<header class="hero"><div class="brand">' + (VINFO.logo_url ? '<img src="' + esc(VINFO.logo_url) + '" alt="">' : '') +
+      '<div><div class="venue">' + esc(VINFO.name) + '</div><h1>' + esc(MENU.title || 'Catering Menu') + '</h1></div></div>';
+    h += '<ul class="intro">' + (MENU.intro || []).map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul>';
+    var noteBits = [];
+    if (MENU.size_note) noteBits.push(esc(MENU.size_note));
+    if (r.min_notice_hours) noteBits.push('Orders need at least ' + esc(r.min_notice_hours) + " hours' notice.");
+    if (r.delivery_fee != null) noteBits.push('Delivery is ' + money(r.delivery_fee) + (r.delivery_radius_mi ? ' within ' + esc(r.delivery_radius_mi) + ' miles' : '') + (r.pickup !== false ? ', or pick up for free.' : '.'));
+    if (r.packing_pct) noteBits.push('A ' + Math.round(r.packing_pct * 100) + '% packing fee applies.');
+    h += '<div class="note">' + noteBits.join(' ') + '</div>';
+    var tags = Object.keys(legend).map(function (k) { return '<span class="tag ' + esc(k) + '">' + esc(k === 'RAW' ? 'Raw' : k) + '</span> ' + esc(legend[k]); });
+    if (tags.length) h += '<div class="fine" style="margin-top:10px">' + tags.join(' &nbsp; ') + '</div>';
+    h += '</header>';
+
+    (MENU.sections || []).forEach(function (s) {
+      h += '<section class="card"><h2>' + esc(s.name) + '</h2>' + (s.note ? '<p class="sec-note">' + esc(s.note) + '</p>' : '');
+      (s.items || []).forEach(function (it) {
+        h += '<div class="item"><div><span class="iname">' + esc(it.name) + '</span>' +
+          (it.tags || []).map(function (t) { return '<span class="tag ' + esc(t) + '" title="' + esc(legend[t] || t) + '">' + esc(t === 'RAW' ? 'Raw' : t) + '</span>'; }).join('') +
+          (it.desc ? '<div class="idesc">' + esc(it.desc) + '</div>' : '') + '</div><div class="sizes">';
+        (it.sizes || []).forEach(function (z) {
+          var key = it.id + '|' + z.id;
+          h += '<div class="size" data-key="' + esc(key) + '"><span class="slabel">' + (z.id === 'ONE' ? '' : esc(z.label) + ' ') + '<b>' + money(z.price) + '</b>' + (z.count ? ' &middot; ' + esc(z.count) : '') + '</span>' +
+            '<span class="step"><button type="button" data-d="-1" aria-label="Remove one">&minus;</button><input type="number" min="0" max="' + esc(r.max_qty_per_line || 50) + '" value="0" inputmode="numeric" aria-label="Quantity ' + esc(it.name + ' ' + z.label) + '"><button type="button" data-d="1" aria-label="Add one">+</button></span></div>';
+        });
+        h += '</div></div>';
+      });
+      h += '</section>';
+    });
+
+    var minDate = new Date(Date.now() + (Number(r.min_notice_hours) || 0) * 3600 * 1000);
+    var minIso = minDate.getFullYear() + '-' + String(minDate.getMonth() + 1).padStart(2, '0') + '-' + String(minDate.getDate()).padStart(2, '0');
+    h += '<section class="card" id="details"><h2>Your details</h2>' +
+      '<div class="grid2">' +
+      field('name', 'Name', 'text', true, 'autocomplete="name"') + field('company', 'Company (optional)', 'text', false, 'autocomplete="organization"') +
+      field('email', 'Email', 'email', true, 'autocomplete="email"') + field('phone', 'Phone', 'tel', true, 'autocomplete="tel"') +
+      field('event_date', 'Date', 'date', true, 'min="' + minIso + '"') + field('event_time', 'Time', 'time', true, '') +
+      field('guest_count', 'Number of guests', 'number', false, 'min="1" inputmode="numeric"') + '<div></div>' +
+      '</div>' +
+      '<div style="margin-top:16px"><label class="f">Delivery or pickup <span class="req">*</span></label><div class="choice" id="fulfil">' +
+      '<button type="button" class="pill on" data-v="delivery">Delivery (' + money(r.delivery_fee) + ')</button>' +
+      (r.pickup !== false ? '<button type="button" class="pill" data-v="pickup">Pickup (free)</button>' : '') + '</div></div>' +
+      '<div id="addrBox" style="margin-top:12px">' + field('address', 'Delivery address', 'text', true, 'autocomplete="street-address"') +
+      (r.delivery_radius_mi ? '<label class="check"><input type="checkbox" id="over_radius"> <span>This address is more than ' + esc(r.delivery_radius_mi) + ' miles from ' + esc(VINFO.name || 'the venue') + '. (We will confirm whether we can deliver and the delivery fee.)</span></label>' : '') + '</div>' +
+      '<div style="margin-top:12px"><label class="f" for="notes">Notes, dietary needs or allergies</label><textarea class="t" id="notes" maxlength="1000"></textarea></div>' +
+      '<div class="hp" aria-hidden="true"><label>Website <input type="text" id="website" tabindex="-1" autocomplete="off"></label></div>' +
+      '</section>';
+
+    h += '<section class="card" id="review"><h2>Your estimate</h2><div id="lines"></div>' +
+      '<div style="margin:14px 0 6px"><label class="f">Add a tip</label><div class="choice" id="tips">' +
+      (r.tip_presets || [0, 10, 15, 20]).map(function (p) { return '<button type="button" class="pill" data-p="' + p + '">' + (p ? p + '%' : 'No tip') + '</button>'; }).join('') +
+      '<button type="button" class="pill" data-p="custom">Custom</button></div>' +
+      '<div id="customTip" style="display:none;margin-top:8px;max-width:200px"><input class="t" id="tipAmt" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Tip amount ($)"></div>' +
+      '<div class="hint">' + (r.tip_base === 'food' ? 'Percent tips are figured on the food total.' : '') + '</div></div>' +
+      '<table class="sum" id="sum"></table>' +
+      '<p class="fine">This is an estimate. ' + esc(VINFO.name || 'The venue') + ' will confirm your order and final total and send payment details. Catering orders are paid in advance.' + (MENU.footer ? ' ' + esc(MENU.footer) : '') + '</p>' +
+      '<div class="err" id="err"></div>' +
+      '<button class="btn" id="submit" type="button" style="margin-top:12px;width:100%">Submit catering order</button></section>';
+
+    app.innerHTML = h;
+    el('bar').style.display = '';
+    prefill();
+    wire();
+    update();
+  }
+  function field(id, label, type, req, extra) {
+    return '<div><label class="f" for="' + id + '">' + esc(label) + (req ? ' <span class="req">*</span>' : '') + '</label><input class="t" id="' + id + '" type="' + type + '" ' + (extra || '') + '></div>';
+  }
+  function prefill() {
+    var map = { name: 'name', email: 'email', phone: 'phone', date: 'event_date', guests: 'guest_count', company: 'company' };
+    Object.keys(map).forEach(function (k) { var v = qp.get(k); if (v && el(map[k])) el(map[k]).value = v.slice(0, 200); });
+  }
+  function wire() {
+    app.addEventListener('click', function (e) {
+      var b = e.target.closest('.step button');
+      if (b) { var row = b.closest('.size'); var inp = row.querySelector('input'); setQty(row, (parseInt(inp.value, 10) || 0) + Number(b.getAttribute('data-d'))); return; }
+      var f = e.target.closest('#fulfil .pill');
+      if (f) { fulfillment = f.getAttribute('data-v'); Array.prototype.forEach.call(el('fulfil').children, function (x) { x.classList.toggle('on', x === f); }); el('addrBox').style.display = fulfillment === 'delivery' ? '' : 'none'; update(); return; }
+      var t = e.target.closest('#tips .pill');
+      if (t) { var p = t.getAttribute('data-p'); if (p === 'custom') { tip = { mode: 'custom', amount: Number(el('tipAmt').value) || 0 }; el('customTip').style.display = ''; el('tipAmt').focus(); } else { tip = Number(p) ? { mode: 'pct', pct: Number(p) } : { mode: 'none' }; el('customTip').style.display = 'none'; } update(); return; }
+    });
+    app.addEventListener('input', function (e) {
+      if (e.target.closest('.step')) { var row = e.target.closest('.size'); setQty(row, parseInt(e.target.value, 10) || 0, true); }
+      if (e.target.id === 'tipAmt') { tip = { mode: 'custom', amount: Number(e.target.value) || 0 }; update(); }
+    });
+    el('barBtn').addEventListener('click', function () { el('review').scrollIntoView({ behavior: 'smooth' }); });
+    el('submit').addEventListener('click', submit);
+  }
+  function setQty(row, n, typing) {
+    var max = Number((MENU.rules || {}).max_qty_per_line) || 50;
+    n = Math.max(0, Math.min(max, n));
+    var key = row.getAttribute('data-key');
+    if (n) qty[key] = n; else delete qty[key];
+    if (!typing) row.querySelector('input').value = n;
+    row.classList.toggle('on', n > 0);
+    update();
+  }
+  function order() {
+    return { items: Object.keys(qty).map(function (k) { var p = k.split('|'); return { id: p[0], size: p[1], qty: qty[k] }; }), fulfillment: fulfillment, tip: tip };
+  }
+  function update() {
+    var est = window.EFCateringPricing.compute(MENU, order());
+    var r = MENU.rules || {};
+    var tipBtns = el('tips') ? el('tips').children : [];
+    Array.prototype.forEach.call(tipBtns, function (b) { var p = b.getAttribute('data-p'); b.classList.toggle('on', (p === 'custom' && tip.mode === 'custom') || (tip.mode === 'pct' && Number(p) === tip.pct) || (tip.mode === 'none' && p === '0')); });
+    el('lines').innerHTML = est.lines.length ? '' : '<p class="empty">Choose items from the menu above to see your estimate.</p>';
+    var rows = est.lines.map(function (l) { return '<tr class="line"><td>' + l.qty + ' x ' + esc(l.name) + (l.size !== 'ONE' ? ' (' + esc(l.size_label) + ')' : '') + (l.count ? ' <span class="fine">' + esc(l.count) + '</span>' : '') + '</td><td class="r">' + money(l.line_total) + '</td></tr>'; }).join('');
+    if (est.lines.length) {
+      rows += '<tr class="sub"><td>Food</td><td class="r">' + money(est.food) + '</td></tr>' +
+        '<tr class="sub"><td>' + esc(r.packing_label || 'Packing fee') + '</td><td class="r">' + money(est.packing) + '</td></tr>' +
+        '<tr class="sub"><td>' + (est.fulfillment === 'delivery' ? 'Delivery' : 'Pickup') + '</td><td class="r">' + money(est.delivery) + '</td></tr>' +
+        '<tr class="sub"><td>' + esc(r.tax_label || 'Estimated sales tax') + '</td><td class="r">' + money(est.tax) + '</td></tr>' +
+        '<tr class="sub"><td>Tip' + (est.tip_mode === 'pct' ? ' (' + est.tip_pct + '%)' : '') + '</td><td class="r">' + money(est.tip) + '</td></tr>' +
+        '<tr class="tot"><td>Estimated total</td><td class="r">' + money(est.total) + '</td></tr>';
+    }
+    el('sum').innerHTML = rows;
+    var count = est.lines.reduce(function (a, l) { return a + l.qty; }, 0);
+    el('barAmt').textContent = money(est.lines.length ? est.total : 0);
+    el('barLbl').textContent = count ? count + (count === 1 ? ' item' : ' items') + ' - estimated total' : 'Estimated total';
+    return est;
+  }
+  var FIELD_MSG = { name: 'your name', email: 'a valid email address', phone: 'a phone number', event_date: 'the date', event_time: 'the time', guest_count: 'the number of guests (a number)', address: 'the delivery address', too_soon: '', 'no items': '' };
+  function humanize(j, status) {
+    if (status === 429) return 'Too many orders have been sent from this connection in the last hour. Please try again later or contact the venue directly.';
+    if (j && j.error === 'invalid' && Array.isArray(j.fields)) {
+      var f = j.fields;
+      if (f.indexOf('too_soon') !== -1) return 'Catering orders need at least ' + ((MENU.rules || {}).min_notice_hours || 48) + " hours' notice. Please choose a later date or time, or contact the venue directly.";
+      if (f.indexOf('no items') !== -1) return 'Please choose at least one item from the menu.';
+      var need = f.map(function (x) { return FIELD_MSG[x]; }).filter(Boolean);
+      if (need.length) return 'Please add ' + need.join(', ') + '.';
+      return 'Something in the order could not be accepted. Please check your items and try again.';
+    }
+    if (j && j.error === 'not_available') return 'Online catering orders are not available for this venue right now.';
+    return 'We could not send your order. Please try again in a moment, or contact the venue directly.';
+  }
+  function submit() {
+    var errBox = el('err');
+    errBox.style.display = 'none';
+    var est = update();
+    var v = function (id) { return el(id) ? el(id).value.trim() : ''; };
+    var missing = [];
+    if (!est.lines.length) missing.push('at least one item');
+    ['name', 'email', 'phone', 'event_date', 'event_time'].forEach(function (id) { if (!v(id)) missing.push(FIELD_MSG[id]); });
+    if (fulfillment === 'delivery' && !v('address')) missing.push(FIELD_MSG.address);
+    if (missing.length) { errBox.textContent = 'Please add ' + missing.join(', ') + '.'; errBox.style.display = 'block'; return; }
+    var btn = el('submit'); btn.disabled = true; btn.textContent = 'Sending...';
+    var body = { name: v('name'), company: v('company'), email: v('email'), phone: v('phone'), event_date: v('event_date'), event_time: v('event_time'),
+      guest_count: v('guest_count'), fulfillment: fulfillment, address: fulfillment === 'delivery' ? v('address') : '', over_radius: !!(el('over_radius') && el('over_radius').checked && fulfillment === 'delivery'),
+      notes: el('notes').value.trim(), items: order().items, tip: tip, lead: qp.get('lead') || '', website: v('website') };
+    fetch(OPS + '?action=catering_order&client=' + encodeURIComponent(VENUE), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().then(function (j) { return { s: r.status, j: j }; }, function () { return { s: r.status, j: null }; }); })
+      .then(function (x) {
+        if (x.j && x.j.ok) { done(x.j.estimate || est, body); return; }
+        errBox.textContent = humanize(x.j, x.s); errBox.style.display = 'block'; btn.disabled = false; btn.textContent = 'Submit catering order';
+      })
+      .catch(function () { errBox.textContent = humanize(null, 0); errBox.style.display = 'block'; btn.disabled = false; btn.textContent = 'Submit catering order'; });
+  }
+  function done(est, body) {
+    el('bar').style.display = 'none';
+    var lines = (est.lines || []).map(function (l) { return '<tr class="line"><td>' + l.qty + ' x ' + esc(l.name) + (l.size !== 'ONE' ? ' (' + esc(l.size_label) + ')' : '') + '</td><td class="r">' + money(l.line_total) + '</td></tr>'; }).join('');
+    app.innerHTML = '<section class="card done"><h2>Thank you, your order is in!</h2><p>' + esc(VINFO.name || 'The venue') + ' has your catering order and will confirm it, along with the final total and payment details. A copy is on its way to ' + esc(body.email) + '.</p>' +
+      '<table class="sum">' + lines + '<tr class="tot"><td>Estimated total</td><td class="r">' + money(est.total) + '</td></tr></table>' +
+      '<p class="fine">If you need to change anything, just reply to the confirmation email.</p></section>';
+    window.scrollTo(0, 0);
+  }
+  load();
+})();
+</script>
+</body>
+</html>
