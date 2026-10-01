@@ -7,84 +7,117 @@
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&family=Lora:ital,wght@0,400;1,400;1,500&display=swap" rel="stylesheet">
 <style>
   /* CATERING_ORDERS_V1 (2026-09-30): public catering order page, any venue (?venue=<slug>). Everything shown comes from
-     the venue's catering_json via ops-api; prices are re-computed on the server when the order is submitted. */
-  :root { --accent: #15616D; --ink: #0f172a; --muted: #64748b; --line: #e2e8f0; --bg: #f1f5f9; --card: #fff; --soft: #f0fdfa; --serif: 'DM Serif Display', Georgia, serif; }
+     the venue's catering_json via ops-api; prices are re-computed on the server when the order is submitted.
+     CATERING_PRINT_STYLE_V1 (2026-09-30): styled like a printed catering menu (white sheet, ink headings, accent section
+     titles, uppercase item names, italic descriptions, optional fret frame). Colors come from catering_json.theme. */
+  :root { --ink: #1f2a44; --accent: #8a2a2e; --paper: #ffffff; --bg: #f3f1ec; --muted: #5b6478; --line: #d9dce4;
+    --sans: 'Jost', system-ui, -apple-system, 'Segoe UI', sans-serif; --serif: 'Lora', Georgia, serif; }
   * { box-sizing: border-box; }
-  body { margin: 0; font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif; color: var(--ink); background: var(--bg); font-size: 15px; line-height: 1.5; padding-bottom: 96px; }
-  .wrap { max-width: 920px; margin: 0 auto; padding: 24px 16px; }
-  header.hero { background: var(--card); border-radius: 14px; padding: 24px; margin-bottom: 16px; border-top: 5px solid var(--accent); }
-  .brand { display: flex; align-items: center; gap: 14px; }
-  .brand img { max-height: 56px; max-width: 140px; object-fit: contain; }
-  h1 { font-family: var(--serif); font-weight: 400; font-size: 32px; margin: 0; line-height: 1.15; }
-  .venue { color: var(--muted); font-weight: 600; letter-spacing: .02em; }
-  .intro { margin: 14px 0 0; padding: 0; list-style: none; color: #334155; }
-  .intro li { margin: 2px 0; }
-  .note { background: var(--soft); border-radius: 10px; padding: 10px 14px; margin-top: 12px; font-size: 14px; }
-  .card { background: var(--card); border-radius: 14px; padding: 20px 24px; margin-bottom: 16px; }
-  h2 { font-family: var(--serif); font-weight: 400; font-size: 24px; margin: 0 0 4px; color: var(--accent); }
-  .sec-note { color: var(--muted); font-size: 13px; margin: 0 0 8px; }
-  .item { border-top: 1px solid var(--line); padding: 14px 0; display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; align-items: start; }
-  .item:first-of-type { border-top: 0; }
-  .iname { font-weight: 600; }
-  .tag { display: inline-block; font-size: 11px; font-weight: 700; border-radius: 999px; padding: 1px 7px; margin-left: 6px; vertical-align: 1px; background: #e2e8f0; color: #334155; }
-  .tag.V { background: #dcfce7; color: #166534; } .tag.GF { background: #fef3c7; color: #92400e; } .tag.RAW { background: #fee2e2; color: #991b1b; }
-  .idesc { color: var(--muted); font-size: 13.5px; }
-  .sizes { display: flex; flex-direction: column; gap: 6px; min-width: 250px; }
-  .size { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
-  .slabel { font-size: 13.5px; color: #334155; text-align: right; }
-  .slabel b { color: var(--ink); }
-  .step { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
-  .step button { width: 34px; height: 34px; border: 0; background: #f8fafc; font-size: 18px; cursor: pointer; color: var(--ink); }
-  .step button:hover { background: #eef2f7; }
-  .step input { width: 40px; height: 34px; border: 0; text-align: center; font: inherit; font-weight: 600; -moz-appearance: textfield; }
+  body { margin: 0; font-family: var(--sans); color: var(--ink); background: var(--bg); font-size: 16px; line-height: 1.45; padding-bottom: 96px; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+  .sheet { background: var(--paper); border: 1px solid var(--ink); outline: 1px solid var(--ink); outline-offset: 4px; padding: 28px 32px; margin: 8px 0 28px; }
+
+  /* Header: wordmark or logo on the left, framed title box on the right (like the print) */
+  .head { display: flex; gap: 28px; align-items: center; margin-bottom: 28px; }
+  .mark { flex: 0 0 auto; text-align: center; color: var(--ink); }
+  .mark img { max-height: 110px; max-width: 170px; object-fit: contain; display: block; }
+  .mark .w1 { font-family: var(--serif); font-size: 34px; letter-spacing: .22em; line-height: 1; padding-left: .22em; }
+  .mark .w2 { font-weight: 500; font-size: 13px; letter-spacing: .32em; margin-top: 6px; padding-left: .32em; }
+  .frame { position: relative; flex: 1; border: 1.5px solid var(--ink); padding: 18px 34px 16px; text-align: center; }
+  .frame.fret { border-width: 1.5px; outline: 1px solid var(--ink); outline-offset: -7px; }
+  .frame .c { position: absolute; width: 30px; height: 30px; color: var(--ink); background: var(--paper); }
+  .frame .c.tl { top: -9px; left: -9px; } .frame .c.tr { top: -9px; right: -9px; transform: scaleX(-1); }
+  .frame .c.bl { bottom: -9px; left: -9px; transform: scaleY(-1); } .frame .c.br { bottom: -9px; right: -9px; transform: scale(-1,-1); }
+  h1 { font-family: var(--sans); font-weight: 600; font-size: 34px; letter-spacing: .03em; text-transform: uppercase; margin: 0 0 6px; line-height: 1.1; }
+  .intro p { margin: 2px 0; color: #3d4660; font-family: var(--serif); font-size: 15px; }
+  .callout { color: var(--accent); font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 15px; margin-top: 6px; }
+  .callout p { margin: 1px 0; }
+
+  /* Menu: sections flow in two columns on wide screens, like the printed page */
+  .menu { column-count: 2; column-gap: 44px; }
+  .sec { break-inside: avoid; margin: 0 0 26px; }
+  .sec-h { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; border-bottom: 1px solid var(--line); padding-bottom: 4px; margin-bottom: 6px; }
+  h2 { font-family: var(--sans); font-weight: 600; font-size: 21px; letter-spacing: .05em; text-transform: uppercase; color: var(--accent); margin: 0; }
+  .sec-note { color: var(--accent); font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 14px; white-space: nowrap; }
+  .item { padding: 9px 0 10px; break-inside: avoid; }
+  .item + .item { border-top: 1px dotted var(--line); }
+  .iline { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .iname { font-weight: 500; font-size: 16px; letter-spacing: .04em; text-transform: uppercase; }
+  .iprice { font-weight: 500; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .iprice .psep { color: var(--muted); padding: 0 3px; font-weight: 400; }
+  .idesc { font-family: var(--serif); font-style: italic; color: #4a5370; font-size: 14.5px; margin-top: 1px; }
+  .tg { display: inline-flex; vertical-align: -2px; margin-left: 4px; color: var(--ink); }
+  .tg svg { width: 15px; height: 15px; }
+  .tg.raw { font-weight: 600; vertical-align: 0; margin-left: 1px; }
+  .tg.txt { font-size: 11px; font-weight: 600; border: 1px solid var(--ink); border-radius: 999px; padding: 0 5px; vertical-align: 1px; }
+  .sizes { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 7px; }
+  .size { display: flex; align-items: center; gap: 8px; }
+  .slabel { font-size: 13px; color: var(--muted); letter-spacing: .03em; }
+  .step { display: inline-flex; align-items: center; border: 1px solid #b9bfcc; border-radius: 4px; overflow: hidden; background: #fff; }
+  .step button { width: 30px; height: 30px; border: 0; background: transparent; font-size: 17px; cursor: pointer; color: var(--ink); font-family: var(--sans); }
+  .step button:hover { background: #eef0f5; }
+  .step input { width: 34px; height: 30px; border: 0; border-left: 1px solid #e3e6ec; border-right: 1px solid #e3e6ec; text-align: center; font: inherit; font-weight: 500; color: var(--ink); -moz-appearance: textfield; }
   .step input::-webkit-outer-spin-button, .step input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-  .size.on .step { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(21,97,109,.12); }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
-  label.f { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
-  input.t, textarea.t { width: 100%; border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px 12px; font: inherit; background: #fff; }
-  textarea.t { min-height: 80px; resize: vertical; }
-  input.t:focus, textarea.t:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
-  .req { color: #b91c1c; }
+  .size.on .step { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+  .size.on .slabel { color: var(--ink); font-weight: 500; }
+
+  .legend { border: 1px solid var(--ink); text-align: center; padding: 10px 16px; margin: 6px auto 0; max-width: 760px; font-size: 14px; }
+  .legend .keys { font-weight: 500; display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 14px; }
+  .legend .keys span { display: inline-flex; align-items: center; gap: 4px; }
+  .legend .keys svg { width: 15px; height: 15px; }
+  .legend p { margin: 4px 0 0; font-family: var(--serif); font-size: 13.5px; color: #3d4660; }
+
+  /* Order details and estimate */
+  .panel h2 { color: var(--ink); margin-bottom: 14px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 18px; }
+  label.f { display: block; font-size: 13px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 4px; }
+  input.t, textarea.t { width: 100%; border: 1px solid #b9bfcc; border-radius: 4px; padding: 10px 12px; font: inherit; color: var(--ink); background: #fff; }
+  textarea.t { min-height: 80px; resize: vertical; font-family: var(--sans); }
+  input.t:focus, textarea.t:focus { outline: 2px solid var(--ink); outline-offset: 0; border-color: transparent; }
+  .req { color: var(--accent); }
   .choice { display: flex; gap: 10px; flex-wrap: wrap; }
-  .pill { border: 1px solid #cbd5e1; border-radius: 999px; padding: 8px 14px; background: #fff; cursor: pointer; font: inherit; font-weight: 600; font-size: 14px; }
-  .pill.on { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .hint { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .pill { border: 1px solid var(--ink); border-radius: 4px; padding: 8px 14px; background: #fff; color: var(--ink); cursor: pointer; font: inherit; font-weight: 500; font-size: 14px; letter-spacing: .03em; }
+  .pill.on { background: var(--ink); color: #fff; }
+  .hint { color: var(--muted); font-size: 13px; margin-top: 4px; font-family: var(--serif); font-style: italic; }
   .check { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; margin-top: 8px; }
-  .sum { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  .sum { width: 100%; border-collapse: collapse; font-size: 15px; }
   .sum td { padding: 5px 0; }
-  .sum td.r { text-align: right; white-space: nowrap; padding-left: 12px; }
-  .sum tr.line td { color: #334155; }
+  .sum td.r { text-align: right; white-space: nowrap; padding-left: 12px; font-variant-numeric: tabular-nums; }
   .sum tr.sub td { color: var(--muted); }
-  .sum tr.tot td { font-weight: 700; font-size: 17px; border-top: 1px solid var(--line); padding-top: 10px; }
-  .empty { color: var(--muted); font-style: italic; }
-  .btn { background: var(--accent); color: #fff; border: 0; border-radius: 10px; padding: 12px 20px; font: inherit; font-weight: 700; cursor: pointer; }
+  .sum tr.tot td { font-weight: 600; font-size: 18px; border-top: 1.5px solid var(--ink); padding-top: 10px; }
+  .empty { color: var(--muted); font-family: var(--serif); font-style: italic; }
+  .btn { background: var(--ink); color: #fff; border: 0; border-radius: 4px; padding: 13px 22px; font: inherit; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; cursor: pointer; }
+  .btn:hover { filter: brightness(1.15); }
   .btn:disabled { opacity: .55; cursor: default; }
-  .bar { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid var(--line); box-shadow: 0 -4px 16px rgba(15,23,42,.06); z-index: 5; }
-  .bar .in { max-width: 920px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-  .bar .lbl { font-size: 12px; color: var(--muted); }
-  .bar .amt { font-family: var(--serif); font-size: 26px; line-height: 1; }
-  .err { background: #fef2f2; color: #991b1b; border-radius: 10px; padding: 10px 14px; margin-top: 12px; display: none; }
-  .fine { color: var(--muted); font-size: 12.5px; }
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--paper); border-top: 2px solid var(--ink); z-index: 5; }
+  .bar .in { max-width: 1100px; margin: 0 auto; padding: 11px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .bar .lbl { font-size: 12px; color: var(--muted); letter-spacing: .05em; text-transform: uppercase; }
+  .bar .amt { font-size: 25px; font-weight: 600; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .err { background: #fbf0f0; color: var(--accent); border: 1px solid var(--accent); border-radius: 4px; padding: 10px 14px; margin-top: 12px; display: none; }
+  .fine { color: var(--muted); font-size: 13px; font-family: var(--serif); }
   .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
-  .done h2 { color: var(--ink); }
+  .msg { text-align: center; }
+
+  @media (max-width: 860px) {
+    .menu { column-count: 1; }
+    .head { flex-direction: column; gap: 18px; }
+  }
   @media (max-width: 640px) {
-    .wrap { padding: 16px 12px; }
-    header.hero, .card { padding: 18px 16px; }
-    h1 { font-size: 27px; }
-    .item { grid-template-columns: 1fr; }
-    .sizes { min-width: 0; }
-    .size { justify-content: space-between; }
-    .slabel { text-align: left; }
+    .wrap { padding: 14px 12px; }
+    .sheet { padding: 20px 16px; outline-offset: 3px; }
+    .frame { padding: 16px 16px 14px; }
+    h1 { font-size: 25px; }
     .grid2 { grid-template-columns: 1fr; }
+    .sec-note { white-space: normal; text-align: right; }
   }
 </style>
 </head>
 <body>
 <div class="wrap" id="app">
-  <div class="card" id="loading">Loading the catering menu...</div>
+  <div class="sheet msg" id="loading">Loading the catering menu...</div>
 </div>
 <div class="bar" id="bar" style="display:none"><div class="in">
   <div><div class="lbl" id="barLbl">Estimated total</div><div class="amt" id="barAmt">$0.00</div></div>
@@ -102,9 +135,23 @@
   var fulfillment = 'delivery';
   var tip = { mode: 'pct', pct: 15 };
 
+  // Dietary marks drawn like the printed menu: a leaf for vegan, a circled GF, an asterisk for raw.
+  var LEAF = '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M14.5 1.5C8 1.6 3.4 4.4 2.6 9.2c-.2 1.2 0 2.3.5 3.2L1.5 14l.9.9 1.6-1.6c.9.5 2 .7 3.2.5 4.8-.8 7.6-5.4 7.3-12.3zM5 11.6l-.6-.6C6 8.4 8.3 6.4 11 5.2c-2.4 1.6-4.4 3.8-6 6.4z"/></svg>';
+  var GFC = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.2" fill="none" stroke="currentColor" stroke-width="1.3"/><text x="8" y="10.6" text-anchor="middle" font-size="7.2" font-weight="700" font-family="Jost, sans-serif" fill="currentColor">GF</text></svg>';
+  var CORNER = '<svg class="c {p}" viewBox="0 0 30 30" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 28V2h26"/><path d="M7 23V7h16"/><path d="M12 18v-6h6v3h-3"/></svg>';
+
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function money(n) { return '$' + (Number(n) || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  function plain(n) { n = Number(n) || 0; return n % 1 ? n.toFixed(2) : String(n); }
   function el(id) { return document.getElementById(id); }
+  function hex(v) { return /^#[0-9a-fA-F]{6}$/.test(String(v || '')) ? v : ''; }
+  function tagMark(t, legend) {
+    var title = esc(legend[t] || t);
+    if (t === 'V') return '<span class="tg" title="' + title + '" aria-label="' + title + '">' + LEAF + '</span>';
+    if (t === 'GF') return '<span class="tg" title="' + title + '" aria-label="' + title + '">' + GFC + '</span>';
+    if (t === 'RAW') return '<span class="tg raw" title="' + title + '" aria-label="' + title + '">*</span>';
+    return '<span class="tg txt" title="' + title + '">' + esc(t) + '</span>';
+  }
 
   function load() {
     fetch(OPS + '?action=catering_menu&client=' + encodeURIComponent(VENUE))
@@ -112,53 +159,84 @@
       .then(function (x) {
         if (!x.j || !x.j.ok) { unavailable(); return; }
         MENU = x.j.menu; VINFO = x.j.venue || {};
-        if (VINFO.accent) document.documentElement.style.setProperty('--accent', VINFO.accent);
+        var th = MENU.theme || {}, root = document.documentElement.style;
+        if (hex(th.ink)) root.setProperty('--ink', th.ink);
+        if (hex(th.accent) || hex(VINFO.accent)) root.setProperty('--accent', hex(th.accent) || VINFO.accent);
+        if (hex(th.paper)) root.setProperty('--paper', th.paper);
         document.title = (VINFO.name ? VINFO.name + ' ' : '') + 'Catering Order';
         tip = (MENU.rules && (MENU.rules.tip_presets || []).indexOf(15) !== -1) ? { mode: 'pct', pct: 15 } : { mode: 'none' };
         render();
       })
-      .catch(function () { app.innerHTML = '<div class="card">We could not load the catering menu. Please check your connection and refresh the page.</div>'; });
+      .catch(function () { app.innerHTML = '<div class="sheet msg">We could not load the catering menu. Please check your connection and refresh the page.</div>'; });
   }
   function unavailable() {
-    app.innerHTML = '<div class="card"><h2>Online catering orders are not available</h2><p>Online catering orders are not available for this venue right now. Please contact the venue directly.</p></div>';
+    app.innerHTML = '<div class="sheet msg"><h2>Online catering orders are not available</h2><p>Online catering orders are not available for this venue right now. Please contact the venue directly.</p></div>';
+  }
+  function sizeHeader(s) {
+    if (s.note) return s.note.replace(/,\s*/g, ' | ');
+    var first = ((s.items || [])[0] || {}).sizes || [];
+    if (first.length < 2) return '';
+    var labels = first.map(function (z) { return z.label; }).join('|');
+    var same = (s.items || []).every(function (it) { return (it.sizes || []).map(function (z) { return z.label; }).join('|') === labels; });
+    return same ? first.map(function (z) { return z.label; }).join(' | ') : '';
   }
 
   function render() {
     var r = MENU.rules || {};
     var legend = MENU.legend || {};
-    var h = '';
-    h += '<header class="hero"><div class="brand">' + (VINFO.logo_url ? '<img src="' + esc(VINFO.logo_url) + '" alt="">' : '') +
-      '<div><div class="venue">' + esc(VINFO.name) + '</div><h1>' + esc(MENU.title || 'Catering Menu') + '</h1></div></div>';
-    h += '<ul class="intro">' + (MENU.intro || []).map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul>';
-    var noteBits = [];
-    if (MENU.size_note) noteBits.push(esc(MENU.size_note));
-    if (r.min_notice_hours) noteBits.push('Orders need at least ' + esc(r.min_notice_hours) + " hours' notice.");
-    if (r.delivery_fee != null) noteBits.push('Delivery is ' + money(r.delivery_fee) + (r.delivery_radius_mi ? ' within ' + esc(r.delivery_radius_mi) + ' miles' : '') + (r.pickup !== false ? ', or pick up for free.' : '.'));
-    if (r.packing_pct) noteBits.push('A ' + Math.round(r.packing_pct * 100) + '% packing fee applies.');
-    h += '<div class="note">' + noteBits.join(' ') + '</div>';
-    var tags = Object.keys(legend).map(function (k) { return '<span class="tag ' + esc(k) + '">' + esc(k === 'RAW' ? 'Raw' : k) + '</span> ' + esc(legend[k]); });
-    if (tags.length) h += '<div class="fine" style="margin-top:10px">' + tags.join(' &nbsp; ') + '</div>';
-    h += '</header>';
+    var th = MENU.theme || {};
+    var h = '<div class="sheet">';
 
+    // Header
+    var mark = '';
+    if (VINFO.logo_url) mark = '<div class="mark"><img src="' + esc(VINFO.logo_url) + '" alt="' + esc(VINFO.name) + '"></div>';
+    else if (th.wordmark && th.wordmark.main) mark = '<div class="mark" aria-label="' + esc(VINFO.name) + '"><div class="w1">' + esc(th.wordmark.main) + '</div>' + (th.wordmark.sub ? '<div class="w2">' + esc(th.wordmark.sub) + '</div>' : '') + '</div>';
+    var fret = th.frame === 'fret';
+    var fees = [];
+    if (r.packing_pct) fees.push('A ' + Math.round(r.packing_pct * 100) + '% packing fee applies.');
+    if (r.delivery_fee != null) fees.push('Delivery is ' + money(r.delivery_fee).replace('.00', '') + (r.delivery_radius_mi ? ' within ' + esc(r.delivery_radius_mi) + ' miles' : '') + (r.pickup !== false ? ', or pick up for free.' : '.'));
+    var callout = [];
+    if (MENU.size_note) callout.push(esc(MENU.size_note));
+    if (r.min_notice_hours) callout.push('All orders need at least ' + esc(r.min_notice_hours) + " hours' notice.");
+    h += '<header class="head">' + mark + '<div class="frame' + (fret ? ' fret' : '') + '">' +
+      (fret ? ['tl', 'tr', 'bl', 'br'].map(function (p) { return CORNER.replace('{p}', p); }).join('') : '') +
+      '<h1>' + esc(MENU.title || 'Catering Menu') + '</h1>' +
+      '<div class="intro">' + (MENU.intro || []).map(function (l) { return '<p>' + esc(l) + '</p>'; }).join('') + (fees.length ? '<p>' + fees.join(' ') + '</p>' : '') + '</div>' +
+      (callout.length ? '<div class="callout">' + callout.map(function (l) { return '<p>' + l + '</p>'; }).join('') + '</div>' : '') +
+      '</div></header>';
+
+    // Menu sections
+    h += '<div class="menu">';
     (MENU.sections || []).forEach(function (s) {
-      h += '<section class="card"><h2>' + esc(s.name) + '</h2>' + (s.note ? '<p class="sec-note">' + esc(s.note) + '</p>' : '');
+      var sh = sizeHeader(s);
+      h += '<section class="sec"><div class="sec-h"><h2>' + esc(s.name) + '</h2>' + (sh ? '<span class="sec-note">' + esc(sh) + '</span>' : '') + '</div>';
       (s.items || []).forEach(function (it) {
-        h += '<div class="item"><div><span class="iname">' + esc(it.name) + '</span>' +
-          (it.tags || []).map(function (t) { return '<span class="tag ' + esc(t) + '" title="' + esc(legend[t] || t) + '">' + esc(t === 'RAW' ? 'Raw' : t) + '</span>'; }).join('') +
-          (it.desc ? '<div class="idesc">' + esc(it.desc) + '</div>' : '') + '</div><div class="sizes">';
-        (it.sizes || []).forEach(function (z) {
+        var sizes = it.sizes || [];
+        var one = sizes.length === 1;
+        var name = esc(it.name) + (one && sizes[0].count ? ' ' + esc(sizes[0].count) : '');
+        h += '<div class="item"><div class="iline"><span class="iname">' + name + (it.tags || []).map(function (t) { return tagMark(t, legend); }).join('') + '</span>' +
+          '<span class="iprice">' + sizes.map(function (z) { return plain(z.price); }).join('<span class="psep">|</span>') + '</span></div>' +
+          (it.desc ? '<div class="idesc">' + esc(it.desc) + '</div>' : '') + '<div class="sizes">';
+        sizes.forEach(function (z) {
           var key = it.id + '|' + z.id;
-          h += '<div class="size" data-key="' + esc(key) + '"><span class="slabel">' + (z.id === 'ONE' ? '' : esc(z.label) + ' ') + '<b>' + money(z.price) + '</b>' + (z.count ? ' &middot; ' + esc(z.count) : '') + '</span>' +
+          var lbl = one ? 'Quantity' : esc(z.label) + (z.count ? ' (' + esc(z.count) + ')' : '');
+          h += '<div class="size" data-key="' + esc(key) + '"><span class="slabel">' + lbl + '</span>' +
             '<span class="step"><button type="button" data-d="-1" aria-label="Remove one">&minus;</button><input type="number" min="0" max="' + esc(r.max_qty_per_line || 50) + '" value="0" inputmode="numeric" aria-label="Quantity ' + esc(it.name + ' ' + z.label) + '"><button type="button" data-d="1" aria-label="Add one">+</button></span></div>';
         });
         h += '</div></div>';
       });
       h += '</section>';
     });
+    h += '</div>';
+
+    // Legend
+    var keys = Object.keys(legend).map(function (k) { return '<span>' + tagMark(k, legend) + ' ' + esc(legend[k]) + '</span>'; });
+    if (keys.length || MENU.footer) h += '<div class="legend">' + (keys.length ? '<div class="keys">' + keys.join('<span aria-hidden="true">|</span>') + '</div>' : '') + (MENU.footer ? '<p>' + esc(MENU.footer) + '</p>' : '') + '</div>';
+    h += '</div>';
 
     var minDate = new Date(Date.now() + (Number(r.min_notice_hours) || 0) * 3600 * 1000);
     var minIso = minDate.getFullYear() + '-' + String(minDate.getMonth() + 1).padStart(2, '0') + '-' + String(minDate.getDate()).padStart(2, '0');
-    h += '<section class="card" id="details"><h2>Your details</h2>' +
+    h += '<section class="sheet panel" id="details"><h2>Your details</h2>' +
       '<div class="grid2">' +
       field('name', 'Name', 'text', true, 'autocomplete="name"') + field('company', 'Company (optional)', 'text', false, 'autocomplete="organization"') +
       field('email', 'Email', 'email', true, 'autocomplete="email"') + field('phone', 'Phone', 'tel', true, 'autocomplete="tel"') +
@@ -174,14 +252,14 @@
       '<div class="hp" aria-hidden="true"><label>Website <input type="text" id="website" tabindex="-1" autocomplete="off"></label></div>' +
       '</section>';
 
-    h += '<section class="card" id="review"><h2>Your estimate</h2><div id="lines"></div>' +
+    h += '<section class="sheet panel" id="review"><h2>Your estimate</h2><div id="lines"></div>' +
       '<div style="margin:14px 0 6px"><label class="f">Add a tip</label><div class="choice" id="tips">' +
       (r.tip_presets || [0, 10, 15, 20]).map(function (p) { return '<button type="button" class="pill" data-p="' + p + '">' + (p ? p + '%' : 'No tip') + '</button>'; }).join('') +
       '<button type="button" class="pill" data-p="custom">Custom</button></div>' +
       '<div id="customTip" style="display:none;margin-top:8px;max-width:200px"><input class="t" id="tipAmt" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Tip amount ($)"></div>' +
       '<div class="hint">' + (r.tip_base === 'food' ? 'Percent tips are figured on the food total.' : '') + '</div></div>' +
       '<table class="sum" id="sum"></table>' +
-      '<p class="fine">This is an estimate. ' + esc(VINFO.name || 'The venue') + ' will confirm your order and final total and send payment details. Catering orders are paid in advance.' + (MENU.footer ? ' ' + esc(MENU.footer) : '') + '</p>' +
+      '<p class="fine">This is an estimate. ' + esc(VINFO.name || 'The venue') + ' will confirm your order and final total and send payment details. Catering orders are paid in advance.</p>' +
       '<div class="err" id="err"></div>' +
       '<button class="btn" id="submit" type="button" style="margin-top:12px;width:100%">Submit catering order</button></section>';
 
@@ -286,7 +364,7 @@
   function done(est, body) {
     el('bar').style.display = 'none';
     var lines = (est.lines || []).map(function (l) { return '<tr class="line"><td>' + l.qty + ' x ' + esc(l.name) + (l.size !== 'ONE' ? ' (' + esc(l.size_label) + ')' : '') + '</td><td class="r">' + money(l.line_total) + '</td></tr>'; }).join('');
-    app.innerHTML = '<section class="card done"><h2>Thank you, your order is in!</h2><p>' + esc(VINFO.name || 'The venue') + ' has your catering order and will confirm it, along with the final total and payment details. A copy is on its way to ' + esc(body.email) + '.</p>' +
+    app.innerHTML = '<section class="sheet panel"><h2>Thank you, your order is in!</h2><p>' + esc(VINFO.name || 'The venue') + ' has your catering order and will confirm it, along with the final total and payment details. A copy is on its way to ' + esc(body.email) + '.</p>' +
       '<table class="sum">' + lines + '<tr class="tot"><td>Estimated total</td><td class="r">' + money(est.total) + '</td></tr></table>' +
       '<p class="fine">If you need to change anything, just reply to the confirmation email.</p></section>';
     window.scrollTo(0, 0);
