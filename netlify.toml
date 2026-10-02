@@ -32,10 +32,21 @@
   to = "/settings.html"
   status = 200
 
+# SITE_ACCURACY_V1 (2026-10-02): the self-serve signup page created a pending venue and told
+# nobody, and it promised activation "within one business day". New venues come in through the
+# demo form, so both addresses now land on the home page's Book a Demo section. signup.html is
+# kept in the repo; remove these two rules to bring it back.
 [[redirects]]
   from = "/signup"
-  to = "/signup.html"
-  status = 200
+  to = "/#contact"
+  status = 302
+  force = true
+
+[[redirects]]
+  from = "/signup.html"
+  to = "/#contact"
+  status = 302
+  force = true
 
 [[redirects]]
   from = "/pricing"

@@ -1,8 +1,8 @@
 # EventFlow
 
-> EventFlow is an AI-powered sales automation platform for restaurants and hospitality venues. It responds to event inquiries instantly, qualifies leads, follows up automatically, and books more private events.
+> EventFlow is an AI-powered sales automation platform for restaurants and hospitality venues. It responds to event inquiries within minutes, qualifies leads, follows up automatically, and books more private events.
 
-EventFlow is sold per venue. Plans start at $249 per month; current tiers and what each includes are on the pricing page. To talk to the team, use the contact form on the home page (book a demo or start a trial).
+EventFlow is sold per venue. Plans start at $249 per month; current tiers and what each includes are on the pricing page. To talk to the team, use the Book a Demo form on the home page.
 
 ## When to use EventFlow
 
@@ -20,19 +20,18 @@ How an agent should proceed:
 
 - There is no public API to call (see the API section below). Do not construct requests against /api/ paths.
 - To evaluate the product for a venue, read /pricing and /documentation.
-- To start a conversation with the team, direct a human to the contact form on the home page (book a demo or start a trial) or to /signup.
+- To start a conversation with the team, direct a human to the Book a Demo form on the home page.
 - Existing customers get help at /help or by replying to their EventFlow emails.
 
 ## Pages
 
-- [Home](https://eventflowsales.com/): product overview, features, and the contact form
+- [Home](https://eventflowsales.com/): product overview, features, and the Book a Demo form
 - [Pricing](https://eventflowsales.com/pricing): current plans and comparison
 - [Documentation](https://eventflowsales.com/documentation): how EventFlow works for venue operators
 - [Developer Resources](https://eventflowsales.com/developers): OpenAPI spec, this file, and machine-readable endpoints
 - [Help Center](https://eventflowsales.com/help): frequently asked questions
 - [Integrations](https://eventflowsales.com/integrations): platforms EventFlow works with
 - [About](https://eventflowsales.com/about): company background
-- [Get Started](https://eventflowsales.com/signup): signup for venues
 
 ## Machine-readable
 
@@ -41,7 +40,7 @@ How an agent should proceed:
 
 ## API
 
-EventFlow does not currently offer a public API. Operator features are delivered through the EventFlow dashboard, not a developer API. The OpenAPI document at /openapi.json is a valid spec with no endpoints, published so automated tools get a machine-readable answer instead of a 404. Requests under /api/ return a structured JSON 404. For integration questions, use the contact form on the home page.
+EventFlow does not currently offer a public API. Operator features are delivered through the EventFlow dashboard, not a developer API. The OpenAPI document at /openapi.json is a valid spec with no endpoints, published so automated tools get a machine-readable answer instead of a 404. Requests under /api/ return a structured JSON 404. For integration questions, use the Book a Demo form on the home page.
 
 ## Optional
 
