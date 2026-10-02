@@ -164,11 +164,13 @@
         if (hex(th.accent) || hex(VINFO.accent)) root.setProperty('--accent', hex(th.accent) || VINFO.accent);
         if (hex(th.paper)) root.setProperty('--paper', th.paper);
         document.title = (VINFO.name ? VINFO.name + ' ' : '') + 'Catering Order';
-        tip = (MENU.rules && (MENU.rules.tip_presets || []).indexOf(15) !== -1) ? { mode: 'pct', pct: 15 } : { mode: 'none' };
+        // CATERING_NO_TIPS_V1 (2026-10-02): rules.tips === false turns tipping off for a venue (Sunda asked).
+        tip = tipsOn() && (MENU.rules.tip_presets || []).indexOf(15) !== -1 ? { mode: 'pct', pct: 15 } : { mode: 'none' };
         render();
       })
       .catch(function () { app.innerHTML = '<div class="sheet msg">We could not load the catering menu. Please check your connection and refresh the page.</div>'; });
   }
+  function tipsOn() { return !!MENU && (MENU.rules || {}).tips !== false; }
   function unavailable() {
     app.innerHTML = '<div class="sheet msg"><h2>Online catering orders are not available</h2><p>Online catering orders are not available for this venue right now. Please contact the venue directly.</p></div>';
   }
@@ -253,11 +255,11 @@
       '</section>';
 
     h += '<section class="sheet panel" id="review"><h2>Your estimate</h2><div id="lines"></div>' +
-      '<div style="margin:14px 0 6px"><label class="f">Add a tip</label><div class="choice" id="tips">' +
+      (tipsOn() ? '<div style="margin:14px 0 6px"><label class="f">Add a tip</label><div class="choice" id="tips">' +
       (r.tip_presets || [0, 10, 15, 20]).map(function (p) { return '<button type="button" class="pill" data-p="' + p + '">' + (p ? p + '%' : 'No tip') + '</button>'; }).join('') +
       '<button type="button" class="pill" data-p="custom">Custom</button></div>' +
       '<div id="customTip" style="display:none;margin-top:8px;max-width:200px"><input class="t" id="tipAmt" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Tip amount ($)"></div>' +
-      '<div class="hint">' + (r.tip_base === 'food' ? 'Percent tips are figured on the food total.' : '') + '</div></div>' +
+      '<div class="hint">' + (r.tip_base === 'food' ? 'Percent tips are figured on the food total.' : '') + '</div></div>' : '') +
       '<table class="sum" id="sum"></table>' +
       '<p class="fine">This is an estimate. ' + esc(VINFO.name || 'The venue') + ' will confirm your order and final total and send payment details. Catering orders are paid in advance.</p>' +
       '<div class="err" id="err"></div>' +
@@ -316,7 +318,7 @@
         '<tr class="sub"><td>' + esc(r.packing_label || 'Packing fee') + '</td><td class="r">' + money(est.packing) + '</td></tr>' +
         '<tr class="sub"><td>' + (est.fulfillment === 'delivery' ? 'Delivery' : 'Pickup') + '</td><td class="r">' + money(est.delivery) + '</td></tr>' +
         '<tr class="sub"><td>' + esc(r.tax_label || 'Estimated sales tax') + '</td><td class="r">' + money(est.tax) + '</td></tr>' +
-        '<tr class="sub"><td>Tip' + (est.tip_mode === 'pct' ? ' (' + est.tip_pct + '%)' : '') + '</td><td class="r">' + money(est.tip) + '</td></tr>' +
+        (tipsOn() ? '<tr class="sub"><td>Tip' + (est.tip_mode === 'pct' ? ' (' + est.tip_pct + '%)' : '') + '</td><td class="r">' + money(est.tip) + '</td></tr>' : '') +
         '<tr class="tot"><td>Estimated total</td><td class="r">' + money(est.total) + '</td></tr>';
     }
     el('sum').innerHTML = rows;
