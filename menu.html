@@ -658,7 +658,9 @@ function showError(msg) {
 }
 function humanizeError(msg) {
   if (!msg) return 'Unknown error.';
-  if (/token not found|invalid token/i.test(msg)) return 'This menu link is no longer valid. Please contact the venue.';
+  // A link works once: submitting the form retires it. So the most likely reader of this message is a second person on
+  // the same event (a spouse, a colleague) opening the link after the first one sent the choices. Say that plainly.
+  if (/token not found|invalid token/i.test(msg)) return 'This menu link has already been used or is no longer active. If you or someone in your party already sent your menu choices, you are all set, and the events team will follow up with you. If not, please reply to the email this link came in.';
   if (/not in selectable status/i.test(msg)) return 'This event is no longer accepting menu changes. Please contact the venue.';
   // Both guest RPCs raise this when the venue's menu-selection switch is not 'on'. That is
   // exactly what the go-live rollback does, so without this branch a guest holding a live
