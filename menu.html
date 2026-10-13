@@ -100,6 +100,9 @@
     .diet-chip { font-size: 10px; background: #F1F5F9; color: #475569; padding: 1px 6px; border-radius: 4px; }
     .diet-chip.allergen { background: #FEF2F2; color: #B91C1C; }
 
+    .venue-logo { display: block; height: 96px; width: auto; max-width: 60%; margin: 0 0 14px; }
+    .theme-print .venue-logo { height: 120px; margin: 0 auto 16px; }
+
     /* ALACARTE_BUILDER_V1 (2026-10-12): a menu where every dish has its own price and the host orders by quantity. */
     .section-block-head { flex-wrap: wrap; gap: 6px; }
     .alc-suggest { font-size: 13px; color: #0F766E; background: #F0FDFA; border-radius: 6px; padding: 6px 10px; margin-bottom: 10px; }
@@ -412,6 +415,18 @@ function applyTheme(t) {
 
 function renderHeader() {
   document.getElementById('venue-name').textContent = ctx.venue.name;
+  // The venue's logo (venues.logo_url), centred above its name. https only; a logo that fails to load removes itself.
+  const logoUrl = String((ctx.venue && ctx.venue.logo_url) || '');
+  if (/^https:\/\/[^\s"'<>]+$/.test(logoUrl) && !document.getElementById('venue-logo')) {
+    const img = document.createElement('img');
+    img.id = 'venue-logo';
+    img.className = 'venue-logo';
+    img.alt = ctx.venue.name + ' logo';
+    img.src = logoUrl;
+    img.onerror = () => img.remove();
+    const card = document.getElementById('venue-name').parentNode;
+    card.insertBefore(img, card.firstChild);
+  }
   const b = ctx.booking;
   const summary = document.getElementById('event-summary');
   const fields = [
