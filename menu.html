@@ -100,6 +100,33 @@
     .diet-chip { font-size: 10px; background: #F1F5F9; color: #475569; padding: 1px 6px; border-radius: 4px; }
     .diet-chip.allergen { background: #FEF2F2; color: #B91C1C; }
 
+    /* ALACARTE_BUILDER_V1 (2026-10-12): a menu where every dish has its own price and the host orders by quantity. */
+    .section-block-head { flex-wrap: wrap; gap: 6px; }
+    .alc-suggest { font-size: 13px; color: #0F766E; background: #F0FDFA; border-radius: 6px; padding: 6px 10px; margin-bottom: 10px; }
+    .alc-row {
+      display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center;
+      padding: 10px 12px; border: 1px solid #E2E8F0; border-radius: 8px; margin-bottom: 6px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .alc-row.picked { border-color: var(--green, #15616D); background: #F0FDFA; }
+    .alc-row.readonly { grid-template-columns: 1fr; }
+    .alc-name { font-weight: 600; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+    .alc-name > span:first-child { flex: 1 1 120px; }
+    .alc-serving { font-weight: 400; font-size: 12px; color: var(--text-secondary, #64748B); }
+    .alc-price { font-weight: 700; margin-left: auto; white-space: nowrap; }
+    .alc-desc { font-size: 13px; color: var(--text-secondary, #64748B); margin-top: 2px; }
+    .alc-hint { font-size: 12px; color: #0F766E; margin-top: 3px; }
+    .alc-stepper { display: inline-flex; align-items: center; gap: 4px; }
+    .alc-stepper button {
+      width: 36px; height: 36px; border: 1px solid #CBD5E1; border-radius: 8px; background: #fff;
+      font-size: 18px; line-height: 1; cursor: pointer; color: #1E293B;
+    }
+    .alc-stepper button:hover { background: #F1F5F9; }
+    .alc-stepper input { width: 46px; height: 36px; padding: 0 4px; border: 1px solid #CBD5E1; border-radius: 8px; text-align: center; font-size: 15px; }
+    .alc-line { font-size: 12px; color: var(--text-secondary, #64748B); text-align: right; min-height: 15px; margin-top: 2px; }
+    details.alc-attable > summary { cursor: pointer; font-size: 13px; color: var(--green, #15616D); font-weight: 600; margin: 4px 0 8px; }
+    .alc-legend { font-size: 12px; color: var(--text-secondary, #64748B); margin-top: 14px; line-height: 1.5; }
+
     @media (max-width: 600px) {
       .menu-wrap { padding: 12px 8px 80px; }
       .menu-card { padding: 16px; border-radius: 8px; }
@@ -137,7 +164,7 @@
     </div>
 
     <div class="menu-card" id="sections-card" style="display:none">
-      <h2 style="font-family:var(--serif);font-size:22px;margin-bottom:6px">2. Customize your menu</h2>
+      <h2 style="font-family:var(--serif);font-size:22px;margin-bottom:6px" id="sections-title">2. Customize your menu</h2>
       <p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px" id="sections-help"></p>
       <div id="sections-host"></div>
     </div>
@@ -164,7 +191,7 @@
 
       <div class="total-bar">
         <div>
-          <div class="label">Estimated total before tax and service fees</div>
+          <div class="label" id="total-label">Estimated total before tax and service fees</div>
           <div class="amount" id="total-amount">$0</div>
           <div id="extras-note" class="hidden" style="color:var(--text-secondary);font-size:12px;margin-top:2px"></div>
         </div>
@@ -239,10 +266,11 @@ function renderMenus() {
   }
   host.innerHTML = ctx.menus.map(m => {
     const guests = ctx.booking.guest_count || m.min_guests;
-    const ppText = Number(m.price_per_person) === 0 ? 'À la carte' : `${fmtMoney(m.price_per_person)} / guest`;
+    const ppText = isAlc(m) ? 'Priced by the dish' : (Number(m.price_per_person) === 0 ? 'À la carte' : `${fmtMoney(m.price_per_person)} / guest`);
     const lineText = Number(m.price_per_person) === 0 ? '' : ` · est. ${fmtMoney(m.price_per_person * guests)} for ${guests} guests`;
     const courseText = m.course_count ? `${m.course_count} courses · ` : '';
-    const styleBadge = m.service_style === 'per_guest' ? ' · per-guest selections' : (m.sections && m.sections.length ? ' · choose options' : '');
+    const styleBadge = isAlc(m) ? ' · order by the dish'
+      : (m.service_style === 'per_guest' ? ' · per-guest selections' : (m.sections && m.sections.length ? ' · choose options' : ''));
     return `
       <label class="menu-option" data-id="${m.id}">
         <input type="radio" name="menu" value="${m.id}" />
@@ -282,6 +310,16 @@ function renderSections(menu) {
   const host = document.getElementById('sections-host');
   const help = document.getElementById('sections-help');
   const guests = ctx.booking.guest_count || 1;
+  document.getElementById('sections-title').textContent = isAlc(menu) ? '2. Choose for the table' : '2. Customize your menu';
+  if (isAlc(menu)) {
+    const atTable = menu.sections.filter(s => s.order_at_table).map(s => s.name.toLowerCase());
+    help.textContent = 'Tell us how many orders of each dish you would like. Every dish is priced on its own, and you can order as many or as few as you like.'
+      + (atTable.length ? ` Your guests order their ${atTable.join(' and ')} at the table, so those are shown for reference only.` : '');
+    host.innerHTML = menu.sections.map(s => alcSectionHtml(s, guests)).join('') + alcLegendHtml(menu);
+    menu.sections.forEach(s => wireAlcSection(s));
+    updateAllRules(menu);
+    return;
+  }
   help.textContent = menu.service_style === 'per_guest'
     ? `For each section, enter how many of each option your ${guests} guests want. Each section's totals must equal your guest count × the section's pick count.`
     : 'Pick the dishes for the whole table.';
@@ -289,6 +327,134 @@ function renderSections(menu) {
   host.innerHTML = menu.sections.map(s => sectionHtml(s, menu.service_style, guests)).join('');
   menu.sections.forEach(s => wireSection(s, menu.service_style, guests));
   updateAllRules(menu);
+}
+
+/* ---- ALACARTE_BUILDER_V1: a menu priced by the dish and ordered by quantity ------------------------------
+   Data it reads (all from get_menu_selection_context, nothing venue-specific is written here):
+     menu.service_style === 'a_la_carte'
+     section.order_at_table   shown for reference, nothing collected (the guests order it at the table)
+     section.min_choices      the least number of orders the host must choose in the section (0 = optional)
+     section.suggested_qty    the venue's ordering guide, [{min, max, qty}] by guest count: advice, never enforced
+     option.price / serving_note / pieces_per_order */
+function isAlc(m) { return !!m && m.service_style === 'a_la_carte'; }
+function sectionQty(s) { return Object.values(sectionPicks[s.id] || {}).reduce((a, b) => a + b, 0); }
+function suggestedQty(s, guests) {
+  const bands = Array.isArray(s.suggested_qty) ? s.suggested_qty : [];
+  const b = bands.find(x => guests >= Number(x.min) && guests <= Number(x.max));
+  const q = b ? Number(b.qty) : 0;
+  return q > 0 ? q : null;
+}
+function alcChips(o) {
+  return [
+    ...(o.dietary_tags || []).map(t => `<span class="diet-chip">${esc(tagLabel(t))}</span>`),
+    ...(o.allergen_tags || []).map(t => `<span class="diet-chip allergen">contains ${esc(tagLabel(t))}</span>`)
+  ].join('');
+}
+function alcSectionHtml(s, guests) {
+  const knownGuests = Number(ctx.booking.guest_count) > 0;
+  const sug = knownGuests ? suggestedQty(s, guests) : null;
+  const rows = s.options.map(o => {
+    const chips = alcChips(o);
+    const pieces = Number(o.pieces_per_order);
+    const hint = (!s.order_at_table && knownGuests && pieces > 0)
+      ? `<div class="alc-hint">For one piece per guest, order ${Math.ceil(guests / pieces)}.</div>` : '';
+    const body = `
+        <div>
+          <div class="alc-name">
+            <span>${esc(o.name)}</span>
+            ${o.serving_note ? `<span class="alc-serving">${esc(o.serving_note)}</span>` : ''}
+            ${o.price != null ? `<span class="alc-price">${fmtMoney(o.price)}</span>` : ''}
+          </div>
+          ${o.description ? `<div class="alc-desc">${esc(o.description)}</div>` : ''}
+          ${chips ? `<div class="dietary-chips">${chips}</div>` : ''}
+          ${hint}
+        </div>`;
+    if (s.order_at_table) return `<div class="alc-row readonly">${body}</div>`;
+    return `
+      <div class="alc-row" data-id="${o.id}">${body}
+        <div>
+          <div class="alc-stepper">
+            <button type="button" data-step="-1" aria-label="One fewer ${esc(o.name)}">&minus;</button>
+            <input type="number" inputmode="numeric" min="0" max="99" value="0" data-section="${s.id}" data-option="${o.id}" aria-label="Orders of ${esc(o.name)}" />
+            <button type="button" data-step="1" aria-label="One more ${esc(o.name)}">+</button>
+          </div>
+          <div class="alc-line" data-line-for="${o.id}"></div>
+        </div>
+      </div>`;
+  }).join('');
+
+  const suggest = (!s.order_at_table && sug)
+    ? `<div class="alc-suggest">For your ${guests} guests we suggest about ${sug} order${sug === 1 ? '' : 's'} in total from this section.</div>` : '';
+  const list = s.order_at_table
+    ? `<details class="alc-attable"><summary>See what your guests will choose from</summary>${rows}</details>`
+    : rows;
+  return `
+    <div class="section-block" data-section="${s.id}">
+      <div class="section-block-head">
+        <h3>${esc(s.name)}</h3>
+        <span class="section-rule" data-rule-for="${s.id}"></span>
+      </div>
+      ${s.notes ? `<div class="section-notes">${esc(s.notes)}</div>` : ''}
+      ${suggest}
+      ${list}
+    </div>`;
+}
+function alcLegendHtml(menu) {
+  const KNOWN = { GF: 'gluten free', DF: 'dairy free', V: 'vegan', VEG: 'vegetarian' };
+  const seen = new Set();
+  let raw = false;
+  for (const s of menu.sections) for (const o of s.options) {
+    (o.dietary_tags || []).forEach(t => { if (KNOWN[t]) seen.add(t); });
+    if (/\*/.test(o.name || '')) raw = true;
+  }
+  const parts = Object.keys(KNOWN).filter(k => seen.has(k)).map(k => `${k} ${KNOWN[k]}`);
+  if (!parts.length && !raw) return '';
+  return `<div class="alc-legend">${parts.join(' &middot; ')}${parts.length && raw ? '<br>' : ''}${raw ? '* May be served raw or undercooked.' : ''}</div>`;
+}
+function wireAlcSection(s) {
+  if (s.order_at_table) return;
+  const block = document.querySelector(`.section-block[data-section="${s.id}"]`);
+  if (!block) return;
+  block.querySelectorAll('.alc-row[data-id]').forEach(row => {
+    const input = row.querySelector('input[type="number"]');
+    const optId = input.dataset.option;
+    const opt = s.options.find(o => o.id === optId);
+    const apply = (qty) => {
+      qty = Math.max(0, Math.min(99, Math.floor(Number(qty) || 0)));
+      input.value = qty;
+      sectionPicks[s.id] = sectionPicks[s.id] || {};
+      if (qty > 0) sectionPicks[s.id][optId] = qty; else delete sectionPicks[s.id][optId];
+      row.classList.toggle('picked', qty > 0);
+      const line = row.querySelector('.alc-line');
+      if (line) line.textContent = (qty > 0 && opt && opt.price != null) ? fmtMoney(Number(opt.price) * qty) : '';
+      updateAllRules(currentMenu());
+      updateTotalAndButton();
+    };
+    row.querySelectorAll('button[data-step]').forEach(btn => {
+      btn.addEventListener('click', () => apply((parseInt(input.value || '0', 10) || 0) + Number(btn.dataset.step)));
+    });
+    input.addEventListener('change', () => apply(input.value));
+    input.addEventListener('input', () => { if (input.value !== '') apply(input.value); });
+  });
+}
+function updateAlcRules(menu) {
+  for (const s of menu.sections) {
+    const ruleEl = document.querySelector(`[data-rule-for="${s.id}"]`);
+    if (!ruleEl) continue;
+    if (s.order_at_table) { ruleEl.textContent = 'Ordered at the table'; ruleEl.className = 'section-rule'; continue; }
+    const total = sectionQty(s);
+    const min = Number(s.min_choices) || 0;
+    if (total === 0) {
+      ruleEl.textContent = min > 0 ? `Choose at least ${min}` : 'Optional';
+      ruleEl.className = 'section-rule';
+    } else if (total < min) {
+      ruleEl.textContent = `${total} chosen · at least ${min} needed`;
+      ruleEl.className = 'section-rule warn';
+    } else {
+      ruleEl.textContent = `${total} order${total === 1 ? '' : 's'} chosen ✓`;
+      ruleEl.className = 'section-rule ok';
+    }
+  }
 }
 
 function sectionHtml(s, style, guests) {
@@ -406,6 +572,7 @@ function wireSection(s, style, guests) {
 
 function updateAllRules(menu) {
   if (!menu) return;
+  if (isAlc(menu)) return updateAlcRules(menu);
   const guests = ctx.booking.guest_count || 1;
   for (const s of menu.sections) {
     const ruleEl = document.querySelector(`[data-rule-for="${s.id}"]`);
@@ -523,6 +690,10 @@ function onNotesInput(e) {
 function isAllSectionsValid(menu) {
   if (!menu) return false;
   if (!menu.sections || !menu.sections.length) return true;
+  if (isAlc(menu)) {
+    // Ordered by quantity: each section only needs its minimum (0 = optional). The guide is advice.
+    return menu.sections.every(s => s.order_at_table || s.all_included || sectionQty(s) >= (Number(s.min_choices) || 0));
+  }
   const guests = ctx.booking.guest_count || 1;
   for (const s of menu.sections) {
     if (s.all_included) continue;
@@ -544,7 +715,18 @@ function updateTotalAndButton() {
 
   const m = currentMenu();
   let extraSelections = 0;
-  if (m) {
+  let alcFood = 0;
+  if (isAlc(m)) {
+    // Price of each dish times how many orders. Nothing here is per person.
+    for (const s of m.sections || []) {
+      if (s.order_at_table) continue;
+      for (const [optId, qty] of Object.entries(sectionPicks[s.id] || {})) {
+        const opt = s.options.find(o => o.id === optId);
+        if (opt && opt.price != null) alcFood += Number(opt.price) * qty;
+      }
+    }
+    total += alcFood;
+  } else if (m) {
     total += Number(m.price_per_person) * guests;
     // Add per-option upcharges + per-section additional-selection charges
     for (const s of m.sections || []) {
@@ -567,7 +749,18 @@ function updateTotalAndButton() {
     }
   }
   const extrasNote = document.getElementById('extras-note');
-  if (extrasNote) {
+  const atTableNames = isAlc(m) ? (m.sections || []).filter(s => s.order_at_table).map(s => s.name.toLowerCase()) : [];
+  const totalLabel = document.getElementById('total-label');
+  if (totalLabel) {
+    totalLabel.textContent = atTableNames.length
+      ? `Estimated total for what you chose here, before ${atTableNames.join(' and ')} ordered at the table, tax and service fees`
+      : 'Estimated total before tax and service fees';
+  }
+  if (extrasNote && isAlc(m)) {
+    const known = Number(ctx.booking.guest_count) > 0;
+    extrasNote.classList.toggle('hidden', !(known && alcFood > 0));
+    extrasNote.textContent = (known && alcFood > 0) ? `About ${fmtMoney(Math.round(alcFood / guests))} per guest for the dishes chosen here` : '';
+  } else if (extrasNote) {
     extrasNote.classList.toggle('hidden', extraSelections === 0);
     extrasNote.textContent = extraSelections > 0
       ? `Includes ${extraSelections} additional selection${extraSelections === 1 ? '' : 's'}`
@@ -618,7 +811,7 @@ async function submitSelection() {
     return row;
   });
   const sectionArr = (m.sections || [])
-    .filter(s => !s.all_included)
+    .filter(s => !s.all_included && !s.order_at_table)
     .map(s => ({
       section_id: s.id,
       options: Object.entries(sectionPicks[s.id] || {}).map(([option_id, qty]) => ({ option_id, qty }))
@@ -666,6 +859,8 @@ function humanizeError(msg) {
   // exactly what the go-live rollback does, so without this branch a guest holding a live
   // link would be shown raw Postgres exception text the moment we roll back.
   if (/not enabled for this venue/i.test(msg)) return 'This menu link is not active right now. Please contact the venue.';
+  if (/menu not found or not eligible/i.test(msg)) return 'That menu is not available for this event any more. Please refresh this page and choose again, or reply to the email this link came in.';
+  if (/quantity out of range/i.test(msg)) return 'One of the quantities is too large. Please use a number from 1 to 99 for each dish.';
   if (/qty mismatch/i.test(msg)) return msg;
   return msg;
 }

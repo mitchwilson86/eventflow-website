@@ -167,6 +167,7 @@
               <button class="beo-add" onclick="openMenuPicker()" title="Pick from the venue's group menus (sections and prices come live from /menus, so menu updates apply automatically)">+ Add from menu</button>
               <button class="beo-add" id="beo-ai-btn" onclick="draftBeoWithAI()" title="Compiles everything known about this booking (details, email thread, menu picks) into draft line items you can edit">&#10024; Draft BEO with AI</button>
               <button class="beo-add" id="menu-link-btn" onclick="sendMenuLink()" title="Creates this guest's menu selection link. They are emailed automatically within the hour, and you can also paste the link into a reply yourself.">&#127860; Send menu link</button>
+              <button class="beo-add" id="on-request-btn" style="display:none" onclick="toggleOnRequestMenus()"></button>
 
               <!-- BEO_MENU_LOCK_V1 (2026-08-08): the drafter has always written dietary_notes and
                    billing_notes, and they went into beo_drafts and were never shown to anyone, so a
@@ -395,7 +396,57 @@ async function loadBooking(id) {
 }
 
 /* ═══ Render ═══════════════════════════════════════════════════ */
+/* ALACARTE_BUILDER_V1 (2026-10-12): some menus are shown to a guest only when they have been offered them
+   (menu_catalog.offer_mode = 'on_request'; Sunda: the Large Party A La Carte Menu). This button is the per-guest
+   switch, bookings.offer_on_request_menus. It changes what the guest's EXISTING menu link shows; it sends nothing.
+   Hidden when the venue has no such menu or the booking is not saved yet. */
+const onRequest = { venueId: null, names: [] };
+async function renderOnRequestBtn() {
+  const btn = document.getElementById('on-request-btn');
+  if (!btn) return;
+  btn.style.display = 'none';
+  if (!state.booking || !state.booking.id || !state.activeVenue) return;
+  try {
+    if (onRequest.venueId !== state.activeVenue.id) {
+      const sb = await getSupabase();
+      const { data, error } = await sb.from('menu_catalog').select('name').eq('venue_id', state.activeVenue.id).eq('offer_mode', 'on_request');
+      if (error) throw error;
+      onRequest.venueId = state.activeVenue.id;
+      onRequest.names = (data || []).map(m => m.name);
+    }
+    if (!onRequest.names.length) return;
+    const on = state.booking.offer_on_request_menus === true;
+    const label = onRequest.names.join(', ');
+    btn.textContent = on ? '✓ Offered: ' + label + ' (click to remove)' : '+ Offer the ' + label;
+    btn.title = on
+      ? 'This guest\'s menu link shows the ' + label + ' next to the group menus. Click to take it off their page again.'
+      : 'Adds the ' + label + ' to this guest\'s menu page, next to the group menus. Nothing is emailed: send or re-send their menu link yourself.';
+    btn.style.display = '';
+  } catch (e) { /* the button is a convenience: on any error it simply stays hidden */ }
+}
+async function toggleOnRequestMenus() {
+  if (!state.booking || !state.booking.id) return;
+  const next = !(state.booking.offer_on_request_menus === true);
+  const btn = document.getElementById('on-request-btn');
+  btn.disabled = true;
+  try {
+    const sb = await getSupabase();
+    const { data, error } = await sb.from('bookings').update({ offer_on_request_menus: next }).eq('id', state.booking.id).select('offer_on_request_menus').single();
+    if (error) throw error;
+    state.booking.offer_on_request_menus = data.offer_on_request_menus === true;
+    toast(state.booking.offer_on_request_menus
+      ? 'Done. This guest\'s menu page now also shows the ' + onRequest.names.join(', ') + '. Nothing was emailed.'
+      : 'Removed. This guest\'s menu page shows the group menus only.', 'success');
+  } catch (e) {
+    toast('Could not change it: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    renderOnRequestBtn();
+  }
+}
+
 function renderAll() {
+  renderOnRequestBtn();
   renderStatusPipeline();
   renderForm();
   renderBeoItems();
