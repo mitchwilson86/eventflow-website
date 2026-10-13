@@ -117,7 +117,11 @@
     .alc-ctrl { grid-area: ctrl; justify-self: end; }
     .alc-name { font-weight: 600; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
     .alc-serving { font-weight: 400; font-size: 12px; color: var(--text-secondary, #64748B); }
-    .alc-price { grid-area: price; font-weight: 700; white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
+    /* The price is exactly as tall as the quantity box (36px) and carries the same 17px of space the box has under
+       it for the line total, so the price and the box always sit on one line. */
+    .alc-price { grid-area: price; font-weight: 700; white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums;
+      height: 36px; line-height: 36px; margin-bottom: 17px; }
+    .alc-row.readonly .alc-price { margin-bottom: 0; }
     .alc-desc { font-size: 13px; color: var(--text-secondary, #64748B); margin-top: 2px; }
     .alc-hint { font-size: 12px; color: #0F766E; margin-top: 3px; }
     .alc-stepper { display: inline-flex; align-items: center; gap: 4px; }
@@ -127,15 +131,15 @@
     }
     .alc-stepper button:hover { background: #F1F5F9; }
     .alc-stepper input { width: 46px; height: 36px; padding: 0 4px; border: 1px solid #CBD5E1; border-radius: 8px; text-align: center; font-size: 15px; }
-    .alc-line { font-size: 12px; color: var(--text-secondary, #64748B); text-align: right; min-height: 15px; margin-top: 2px; }
+    .alc-line { font-size: 12px; color: var(--text-secondary, #64748B); text-align: right; height: 15px; line-height: 15px; margin-top: 2px; }
     details.alc-attable > summary { cursor: pointer; font-size: 13px; color: var(--green, #15616D); font-weight: 600; margin: 4px 0 8px; }
     .alc-legend { font-size: 12px; color: var(--text-secondary, #64748B); margin-top: 14px; line-height: 1.5; }
 
     @media (max-width: 600px) {
-      /* Phones: dish and price on the first line (price always at the right edge), details and quantity below. */
-      .alc-row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "main price" "meta ctrl"; align-items: start; row-gap: 6px; }
-      .alc-row.readonly { grid-template-columns: minmax(0, 1fr) auto; }
-      .alc-ctrl { align-self: end; }
+      /* Phones: dish and details on top, then one line with the price right beside the quantity box. */
+      .alc-row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "main main" "meta meta" "price ctrl"; align-items: start; row-gap: 6px; }
+      .alc-row.readonly { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "main price" "meta meta"; }
+      .alc-row.readonly .alc-price { height: auto; line-height: inherit; }
       .menu-wrap { padding: 12px 8px 80px; }
       .menu-card { padding: 16px; border-radius: 8px; }
     }
