@@ -143,6 +143,115 @@
       .menu-wrap { padding: 12px 8px 80px; }
       .menu-card { padding: 16px; border-radius: 8px; }
     }
+
+    /* MENU_PAGE_THEME_V1 (2026-10-12): the printed-menu look. Switched on per venue by venues.menu_page_theme
+       ({style:'print', colours, fonts}); applyTheme() sets the --pm-* variables and the body class. A venue with no
+       theme keeps the standard look above, untouched. The device list comes from the venue's printed menus: white
+       page, one thin ink border, caps headings in the heading font, accent-coloured section titles and dietary marks,
+       hairline rules, a small star divider. */
+    body.theme-print {
+      background: #fff !important; color: var(--pm-ink);
+      font-family: var(--pm-body); --serif: var(--pm-head); --green: var(--pm-ink);
+      --text-primary: var(--pm-ink); --text-secondary: var(--pm-muted); --red: var(--pm-accent);
+    }
+    .theme-print .menu-wrap { max-width: 860px; }
+    .theme-print .menu-card {
+      border: 1.5px solid var(--pm-ink); border-radius: 0; box-shadow: none; padding: 30px 30px 26px; margin-bottom: 18px;
+    }
+    .theme-print .pm-brand {
+      text-align: center; font-family: var(--pm-head); font-size: 11px; letter-spacing: 0.44em; padding-left: 0.44em;
+      text-transform: uppercase; color: var(--pm-ink);
+    }
+    .theme-print .pm-divider { display: flex; align-items: center; gap: 14px; margin: 16px 0 6px; color: var(--pm-accent); font-size: 10px; line-height: 1; }
+    .theme-print .pm-divider::before, .theme-print .pm-divider::after { content: ""; flex: 1; height: 1px; background: var(--pm-rule); }
+    .theme-print #venue-name {
+      text-align: center; font-weight: 600; font-size: 30px !important; letter-spacing: 0.07em; text-transform: uppercase;
+      color: var(--pm-ink); line-height: 1.2; margin: 8px 0 4px !important;
+    }
+    .theme-print #venue-name + p { text-align: center; font-style: italic; color: var(--pm-muted2) !important; }
+    .theme-print .event-summary { text-align: center; }
+    .theme-print .event-summary div { font-size: 14px; color: var(--pm-ink); }
+    .theme-print .event-summary div strong { font-family: var(--pm-head); font-weight: 400; font-size: 10px; letter-spacing: 0.2em; color: var(--pm-accent); }
+    .theme-print .menu-card > h2 {
+      text-align: center; font-weight: 600; font-size: 17px !important; letter-spacing: 0.26em; padding-left: 0.26em;
+      text-transform: uppercase; color: var(--pm-accent); margin-bottom: 8px !important;
+    }
+    .theme-print .menu-card > h2 + p { text-align: center; font-style: italic; color: var(--pm-muted2) !important; font-size: 14px !important; }
+    .theme-print a { color: var(--pm-accent); }
+
+    .theme-print .menu-option, .theme-print .upsell-option, .theme-print .dish-option,
+    .theme-print .alc-row, .theme-print .pg-row { border: 1px solid var(--pm-hair); border-radius: 0; background: #fff; }
+    .theme-print .menu-option:hover, .theme-print .upsell-option:hover, .theme-print .dish-option:hover { border-color: var(--pm-rule); }
+    .theme-print .menu-option.selected, .theme-print .dish-option.selected, .theme-print .upsell-option.checked,
+    .theme-print .alc-row.picked { border-color: var(--pm-ink); background: var(--pm-tint); box-shadow: inset 3px 0 0 var(--pm-ink); }
+    .theme-print .menu-option-title, .theme-print .upsell-option-title, .theme-print .dish-option-title,
+    .theme-print .alc-name > span:first-child, .theme-print .pg-name {
+      font-family: var(--pm-head); font-weight: 500; font-size: 15px; letter-spacing: 0.075em; text-transform: uppercase; color: var(--pm-ink);
+    }
+    .theme-print .menu-option-price, .theme-print .upsell-option-price, .theme-print .alc-price {
+      font-family: var(--pm-head); font-weight: 500; letter-spacing: 0.04em; color: var(--pm-ink); text-transform: none;
+    }
+    .theme-print .alc-price { font-size: 16px; }
+    .theme-print .menu-option-meta, .theme-print .upsell-option-meta, .theme-print .dish-option-meta,
+    .theme-print .alc-desc, .theme-print .pg-desc { color: var(--pm-muted); font-size: 14px; line-height: 1.4; }
+    .theme-print .alc-serving { font-style: italic; color: var(--pm-muted2); font-size: 13px; }
+    .theme-print .alc-hint { font-style: italic; color: var(--pm-muted2); font-size: 13px; }
+    .theme-print .alc-line { color: var(--pm-muted2); }
+
+    /* dietary marks: small accent caps after the dish, as printed (no grey pills) */
+    .theme-print .dietary-chips { gap: 4px 12px; }
+    .theme-print .diet-chip, .theme-print .diet-chip.allergen {
+      background: none; padding: 0; border-radius: 0; font-family: var(--pm-head); font-size: 11px; letter-spacing: 0.13em;
+      text-transform: uppercase; color: var(--pm-accent);
+    }
+
+    .theme-print .section-block { border-bottom: 1px solid var(--pm-rule); padding: 22px 0; }
+    .theme-print .section-block:last-child { border-bottom: none; }
+    .theme-print .section-block-head { justify-content: center; flex-direction: column; align-items: center; gap: 8px; }
+    .theme-print .section-block-head h3 {
+      font-family: var(--pm-head); font-weight: 600; font-size: 16px; letter-spacing: 0.3em; padding-left: 0.3em;
+      text-transform: uppercase; color: var(--pm-accent);
+    }
+    .theme-print .section-notes { text-align: center; font-style: italic; color: var(--pm-muted2); font-size: 14px; margin: 6px 0 12px; }
+    .theme-print .section-rule, .theme-print .section-rule.ok, .theme-print .section-rule.warn {
+      background: none; border: 1px solid var(--pm-rule); border-radius: 0; color: var(--pm-ink);
+      font-family: var(--pm-head); font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; padding: 4px 10px;
+    }
+    .theme-print .section-rule.ok { border-color: var(--pm-ink); background: var(--pm-ink); color: #fff; }
+    .theme-print .section-rule.warn { border-color: var(--pm-accent); color: var(--pm-accent); }
+    .theme-print .alc-suggest {
+      background: none; border-top: 1px solid var(--pm-rule); border-bottom: 1px solid var(--pm-rule); border-radius: 0;
+      text-align: center; color: var(--pm-ink); font-family: var(--pm-head); font-size: 14px; letter-spacing: 0.02em; padding: 9px 8px; margin-bottom: 14px;
+    }
+    .theme-print details.alc-attable > summary { text-align: center; color: var(--pm-accent); font-family: var(--pm-head); font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; font-size: 11.5px; margin: 6px 0 12px; }
+    .theme-print .alc-legend { text-align: center; font-family: var(--pm-head); font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--pm-accent); border-top: 1px solid var(--pm-rule); padding-top: 14px; }
+    .theme-print .upsell-category-label, .theme-print .section-label { font-family: var(--pm-head); font-weight: 500; letter-spacing: 0.26em; color: var(--pm-ink); text-align: center; margin: 20px 0 8px; }
+
+    .theme-print .alc-stepper button, .theme-print .alc-stepper input, .theme-print .pg-row input[type="number"],
+    .theme-print .upsell-qty input, .theme-print textarea, .theme-print input.guest-input {
+      border: 1px solid var(--pm-rule) !important; border-radius: 0 !important; color: var(--pm-ink); font-family: var(--pm-body);
+    }
+    .theme-print .alc-stepper button { color: var(--pm-ink); }
+    .theme-print .alc-stepper button:hover { background: var(--pm-tint); }
+    .theme-print .alc-row.picked .alc-stepper input { border-color: var(--pm-ink) !important; font-weight: 700; }
+    .theme-print input[type="radio"], .theme-print input[type="checkbox"] { accent-color: var(--pm-ink); }
+    .theme-print .flag-notice { background: none; border: 1px solid var(--pm-rule); border-left: 3px solid var(--pm-accent); border-radius: 0; color: var(--pm-ink); }
+
+    .theme-print .total-bar { border-top: 1.5px solid var(--pm-ink); border-radius: 0; margin: 24px -30px -26px; padding: 16px 30px; }
+    .theme-print .total-bar .label { font-family: var(--pm-head); font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--pm-muted2); }
+    .theme-print .total-bar .amount { font-family: var(--pm-head); font-weight: 600; color: var(--pm-ink); letter-spacing: 0.02em; }
+    .theme-print .btn.primary {
+      background: var(--pm-ink); border: 1.5px solid var(--pm-ink); color: #fff; border-radius: 0;
+      font-family: var(--pm-head); font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; font-size: 12.5px; padding: 13px 20px;
+    }
+    .theme-print .btn.primary:disabled { background: #fff; color: var(--pm-rule); border-color: var(--pm-rule); }
+    .theme-print #already-submitted { text-align: center; }
+    .theme-print #already-submitted h2 { font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--pm-ink); font-size: 20px; }
+    @media (max-width: 600px) {
+      .theme-print .menu-card { padding: 22px 16px 20px; }
+      .theme-print .total-bar { margin: 20px -16px -20px; padding: 14px 16px; flex-direction: column; align-items: stretch; gap: 12px; text-align: center; }
+      .theme-print #venue-name { font-size: 24px !important; }
+    }
   </style>
 </head>
 <body style="background:#E2E8F0">
@@ -237,6 +346,7 @@ async function boot() {
     const { data, error } = await sb.rpc('get_menu_selection_context', { p_token: token });
     if (error) return showError(humanizeError(error.message));
     ctx = data;
+    applyTheme(ctx.venue && ctx.venue.theme);
 
     document.getElementById('loader').style.display = 'none';
     document.getElementById('content').style.display = 'block';
@@ -253,6 +363,51 @@ async function boot() {
   } catch (err) {
     showError(err.message || String(err));
   }
+}
+
+/* MENU_PAGE_THEME_V1: put on the venue's own look (venues.menu_page_theme). Every value is checked before use: a
+   colour must be a hex colour, a font name letters and spaces, and the font query a short list of safe characters
+   sent only to fonts.googleapis.com. Anything else, or no theme at all, leaves the standard look in place. */
+function applyTheme(t) {
+  try {
+    if (!t || t.style !== 'print') return;
+    const hex = (v, d) => (/^#[0-9a-fA-F]{6}$/.test(String(v || '')) ? v : d);
+    const font = (v, d) => (/^[A-Za-z][A-Za-z ]{0,39}$/.test(String(v || '')) ? '"' + v + '", ' + d : d);
+    const ink = hex(t.ink, '#1E293B');
+    const root = document.documentElement.style;
+    root.setProperty('--pm-ink', ink);
+    root.setProperty('--pm-accent', hex(t.accent, ink));
+    root.setProperty('--pm-muted', hex(t.muted, '#475569'));
+    root.setProperty('--pm-muted2', hex(t.muted2, hex(t.muted, '#64748B')));
+    root.setProperty('--pm-rule', hex(t.rule, '#94A3B8'));
+    root.setProperty('--pm-hair', hex(t.hair, '#E2E8F0'));
+    // a very light wash of the ink colour, for the row a guest has picked
+    const n = parseInt(ink.slice(1), 16);
+    const mix = (c) => Math.round(255 - (255 - c) * 0.06);
+    root.setProperty('--pm-tint', 'rgb(' + mix(n >> 16) + ',' + mix((n >> 8) & 255) + ',' + mix(n & 255) + ')');
+    root.setProperty('--pm-head', font(t.heading_font, '"Century Gothic", "Segoe UI", Arial, sans-serif'));
+    root.setProperty('--pm-body', font(t.body_font, '"Segoe UI", Arial, sans-serif'));
+    if (/^[A-Za-z0-9:;,@&=+ ]{1,200}$/.test(String(t.font_query || ''))) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://fonts.googleapis.com/css2?' + String(t.font_query).replace(/ /g, '+') + '&display=swap';
+      document.head.appendChild(link);
+    }
+    document.body.classList.add('theme-print');
+    // the printed menus open with the venue name in spaced caps over a star rule
+    const h1 = document.getElementById('venue-name');
+    if (h1 && !document.querySelector('.pm-brand')) {
+      const brand = document.createElement('div');
+      brand.className = 'pm-brand';
+      brand.textContent = 'Private events';
+      h1.parentNode.insertBefore(brand, h1);
+      const div = document.createElement('div');
+      div.className = 'pm-divider';
+      div.textContent = '✦';
+      const sub = h1.nextElementSibling;
+      (sub || h1).insertAdjacentElement('afterend', div);
+    }
+  } catch (e) { /* the look is decoration: on any error the standard page still works */ }
 }
 
 function renderHeader() {
