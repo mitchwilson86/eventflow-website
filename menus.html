@@ -408,6 +408,14 @@ function renderSectionHtml(s) {
 }
 
 function renderOptionHtml(o) {
+  /* ALACARTE_ADMIN_PRICE_V1 (2026-10-12): on a menu priced by the dish the number box is the dish's own price per order.
+     Shown only when the backend RETURNS a price field, so an older backend can never silently drop a save. */
+  const __menu = (typeof currentMenus !== 'undefined' && Array.isArray(currentMenus)) ? currentMenus.find(m => m.id === currentMenuId) : null;
+  const __alc = !!(__menu && __menu.service_style === 'a_la_carte');
+  const __priceBox = (__alc && Object.prototype.hasOwnProperty.call(o, 'price'))
+    ? `<input class="option-upcharge" type="number" step="0.01" min="0" data-of="price" value="${o.price == null ? '' : o.price}" title="Price of one order ($)" />`
+    : (__alc ? `<span class="option-upcharge" style="font-size:11px;color:var(--text-muted);text-align:center" title="Dish prices for this menu are set by EventFlow for now">price set by EventFlow</span>`
+             : `<input class="option-upcharge" type="number" step="0.01" min="0" data-of="upcharge_per_person" value="${o.upcharge_per_person||0}" title="Upcharge per person ($)" />`);
   const dietary = DIETARY_TAGS.map(t => {
     const sel = (o.dietary_tags || []).indexOf(t) !== -1;
     return `<span class="tag-chip dietary ${sel?'selected':''}" data-tag="${t}" data-kind="dietary">${tagLabel(t)}</span>`;
@@ -429,7 +437,7 @@ function renderOptionHtml(o) {
           <strong style="font-size:10px;color:var(--text-secondary);align-self:center;">Allergens:</strong>${allergens}
         </div>
       </div>
-      <input class="option-upcharge" type="number" step="0.01" min="0" data-of="upcharge_per_person" value="${o.upcharge_per_person||0}" title="Upcharge per person ($)" />
+      ${__priceBox}
       <button class="btn btn-ghost btn-danger" data-act="delete-option">✕</button>
     </div>
   `;

@@ -534,9 +534,12 @@ function suggestedQty(s, guests) {
   const q = b ? Number(b.qty) : 0;
   return q > 0 ? q : null;
 }
+/* ALACARTE_ADMIN_PRICE_V1: tags are stored in the admin page's vocabulary (gluten_free ...) so editing a dish there
+   cannot wipe them; a menu priced by the dish prints the short marks its printed menu uses, with the legend below. */
+const ALC_MARKS = { gluten_free: 'GF', dairy_free: 'DF', vegan: 'V', vegetarian: 'VEG', GF: 'GF', DF: 'DF', V: 'V', VEG: 'VEG' };
 function alcChips(o) {
   return [
-    ...(o.dietary_tags || []).map(t => `<span class="diet-chip">${esc(tagLabel(t))}</span>`),
+    ...(o.dietary_tags || []).map(t => `<span class="diet-chip">${esc(ALC_MARKS[t] || tagLabel(t))}</span>`),
     ...(o.allergen_tags || []).map(t => `<span class="diet-chip allergen">contains ${esc(tagLabel(t))}</span>`)
   ].join('');
 }
@@ -596,7 +599,7 @@ function alcLegendHtml(menu) {
   const seen = new Set();
   let raw = false;
   for (const s of menu.sections) for (const o of s.options) {
-    (o.dietary_tags || []).forEach(t => { if (KNOWN[t]) seen.add(t); });
+    (o.dietary_tags || []).forEach(t => { const k = ALC_MARKS[t]; if (k && KNOWN[k]) seen.add(k); });
     if (/\*/.test(o.name || '')) raw = true;
   }
   const parts = Object.keys(KNOWN).filter(k => seen.has(k)).map(k => `${k} ${KNOWN[k]}`);

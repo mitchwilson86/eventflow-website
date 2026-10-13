@@ -546,8 +546,9 @@ async function openMenuPicker() {
     if (!menuPicker.menus) {
       const sb = await getSupabase();
       const { data, error } = await sb.from('menu_catalog')
-        .select('id,name,price_per_person,sort_order, menu_section(id,name,position,min_choices,max_choices,all_included,notes,additional_price_per_person, menu_section_option(id,name,description,position,dietary_tags,upcharge_per_person,is_active))')
-        .eq('venue_id', state.activeVenue.id).eq('is_active', true);
+        .select('id,name,price_per_person,sort_order,service_style,offer_mode,is_active, menu_section(id,name,position,min_choices,max_choices,all_included,notes,additional_price_per_person,order_at_table, menu_section_option(id,name,description,position,dietary_tags,upcharge_per_person,is_active,price,serving_note))')
+        /* ALACARTE_PICKER_V1: a menu offered per guest (offer_mode on_request) is listed whatever its is_active says. */
+        .eq('venue_id', state.activeVenue.id).or('is_active.eq.true,offer_mode.eq.on_request');
       if (error) throw error;
       // client-side sort (nested ordering is unreliable through PostgREST)
       menuPicker.menus = (data || [])
@@ -590,6 +591,29 @@ function renderMenuPicker() {
   menuPicker.picks = {};
   document.getElementById('mp-price').textContent = Number(menu.price_per_person) > 0 ? '$' + Number(menu.price_per_person) + ' per person' : '';
   document.getElementById('mp-hint').textContent = '';
+  /* ALACARTE_PICKER_V1 (2026-10-12): a menu priced by the dish. Type how many orders of each dish; each is added at its
+     own price. Sections the guests order at the table are listed for reference and never added. */
+  if (menu.service_style === 'a_la_carte') {
+    document.getElementById('mp-price').textContent = 'priced by the dish';
+    document.getElementById('mp-sections').innerHTML = menu.menu_section.map(s => {
+      const opts = s.menu_section_option.filter(o => o.is_active !== false);
+      if (s.order_at_table) {
+        return `<div style="margin-top:10px"><strong>${esc(s.name)}</strong> <span style="color:var(--text-secondary);font-size:12px">ordered at the table, not added here</span>
+          <div style="font-size:13px;color:var(--text-secondary)">${opts.map(o => esc(o.name) + (o.price != null ? ' $' + Number(o.price) : '')).join(' · ')}</div></div>`;
+      }
+      return `<div style="margin-top:10px">
+        <strong>${esc(s.name)}</strong> <span style="color:var(--text-secondary);font-size:12px">: number of orders of each</span>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:4px 14px;margin-top:4px">
+          ${opts.map(o => `
+            <label style="font-size:13px;display:flex;gap:6px;align-items:center">
+              <input type="number" min="0" max="99" value="0" style="width:54px" oninput="mpAlcQty('${s.id}','${o.id}',this.value)" />
+              <span>${esc(o.name)}${o.serving_note ? ' <span style="color:var(--text-secondary)">(' + esc(o.serving_note) + ')</span>' : ''}${o.price != null ? ' <span style="color:var(--text-secondary)">$' + Number(o.price) + '</span>' : ''}</span>
+            </label>`).join('')}
+        </div>
+      </div>`;
+    }).join('');
+    return;
+  }
   document.getElementById('mp-sections').innerHTML = menu.menu_section.map(s => {
     const addl = mpAddlPrice(s);
     if (s.all_included) {
@@ -612,6 +636,13 @@ function renderMenuPicker() {
   }).join('');
 }
 
+/* ALACARTE_PICKER_V1: quantities for a menu priced by the dish, kept as picks['alc:<section>'] = { optionId: qty }. */
+function mpAlcQty(sectionId, optionId, value) {
+  const q = Math.max(0, Math.min(99, Math.floor(Number(value) || 0)));
+  const m = (menuPicker.picks['alc:' + sectionId] = menuPicker.picks['alc:' + sectionId] || {});
+  if (q > 0) m[optionId] = q; else delete m[optionId];
+}
+
 function mpToggle(sectionId, optionId, on) {
   const arr = (menuPicker.picks[sectionId] = menuPicker.picks[sectionId] || []);
   const i = arr.indexOf(optionId);
@@ -632,6 +663,23 @@ function addMenuSelectionsToBeo() {
   const gc = Number(state.booking.guest_count) || 1;
   const problems = [];
   const newItems = [];
+  if (menu.service_style === 'a_la_carte') {
+    /* ALACARTE_PICKER_V1: one line per dish, quantity = orders, price = the dish's own price. */
+    for (const s of menu.menu_section) {
+      if (s.order_at_table) continue;
+      const q = menuPicker.picks['alc:' + s.id] || {};
+      for (const o of s.menu_section_option) {
+        if (!q[o.id]) continue;
+        newItems.push({ category: 'food', name: s.name + ': ' + o.name, description: '[menu] ' + menu.name + (o.serving_note ? ', ' + o.serving_note : ''), quantity: q[o.id], unit: 'order', unit_price: Number(o.price) || 0, taxable: true, service_chargeable: true });
+      }
+    }
+    if (!newItems.length) { toast('Type a number of orders next to at least one dish first.', 'info'); return; }
+    for (const it of newItems) { it.sort_order = state.items.length; state.items.push(it); }
+    renderBeoItems(); renderTotals();
+    document.getElementById('menu-picker').style.display = 'none';
+    toast('Added ' + newItems.length + ' dish line' + (newItems.length === 1 ? '' : 's') + ' from the ' + menu.name + '. Mains are ordered at the table and are not included. Review, then Save.', 'success');
+    return;
+  }
   // package line
   if (Number(menu.price_per_person) > 0) {
     newItems.push({ category: 'food', name: menu.name, description: '[menu] package price', quantity: gc, unit: 'pp', unit_price: Number(menu.price_per_person), taxable: true, service_chargeable: true });
