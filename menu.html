@@ -103,17 +103,21 @@
     /* ALACARTE_BUILDER_V1 (2026-10-12): a menu where every dish has its own price and the host orders by quantity. */
     .section-block-head { flex-wrap: wrap; gap: 6px; }
     .alc-suggest { font-size: 13px; color: #0F766E; background: #F0FDFA; border-radius: 6px; padding: 6px 10px; margin-bottom: 10px; }
+    /* Three columns so every price sits in the same place: dish | price | quantity. */
     .alc-row {
-      display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center;
+      display: grid; grid-template-columns: minmax(0, 1fr) 64px 132px; column-gap: 12px; row-gap: 2px;
+      grid-template-areas: "main price ctrl" "meta price ctrl"; align-items: center;
       padding: 10px 12px; border: 1px solid #E2E8F0; border-radius: 8px; margin-bottom: 6px;
       transition: border-color 0.15s, background 0.15s;
     }
     .alc-row.picked { border-color: var(--green, #15616D); background: #F0FDFA; }
-    .alc-row.readonly { grid-template-columns: 1fr; }
-    .alc-name { font-weight: 600; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
-    .alc-name > span:first-child { flex: 1 1 120px; }
+    .alc-row.readonly { grid-template-columns: minmax(0, 1fr) 64px; grid-template-areas: "main price" "meta price"; }
+    .alc-main { grid-area: main; }
+    .alc-meta { grid-area: meta; }
+    .alc-ctrl { grid-area: ctrl; justify-self: end; }
+    .alc-name { font-weight: 600; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
     .alc-serving { font-weight: 400; font-size: 12px; color: var(--text-secondary, #64748B); }
-    .alc-price { font-weight: 700; margin-left: auto; white-space: nowrap; }
+    .alc-price { grid-area: price; font-weight: 700; white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
     .alc-desc { font-size: 13px; color: var(--text-secondary, #64748B); margin-top: 2px; }
     .alc-hint { font-size: 12px; color: #0F766E; margin-top: 3px; }
     .alc-stepper { display: inline-flex; align-items: center; gap: 4px; }
@@ -128,6 +132,10 @@
     .alc-legend { font-size: 12px; color: var(--text-secondary, #64748B); margin-top: 14px; line-height: 1.5; }
 
     @media (max-width: 600px) {
+      /* Phones: dish and price on the first line (price always at the right edge), details and quantity below. */
+      .alc-row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "main price" "meta ctrl"; align-items: start; row-gap: 6px; }
+      .alc-row.readonly { grid-template-columns: minmax(0, 1fr) auto; }
+      .alc-ctrl { align-self: end; }
       .menu-wrap { padding: 12px 8px 80px; }
       .menu-card { padding: 16px; border-radius: 8px; }
     }
@@ -359,12 +367,14 @@ function alcSectionHtml(s, guests) {
     const hint = (!s.order_at_table && knownGuests && pieces > 0)
       ? `<div class="alc-hint">For one piece per guest, order ${Math.ceil(guests / pieces)}.</div>` : '';
     const body = `
-        <div>
+        <div class="alc-main">
           <div class="alc-name">
             <span>${esc(o.name)}</span>
             ${o.serving_note ? `<span class="alc-serving">${esc(o.serving_note)}</span>` : ''}
-            ${o.price != null ? `<span class="alc-price">${fmtMoney(o.price)}</span>` : ''}
           </div>
+        </div>
+        <div class="alc-price">${o.price != null ? fmtMoney(o.price) : ''}</div>
+        <div class="alc-meta">
           ${o.description ? `<div class="alc-desc">${esc(o.description)}</div>` : ''}
           ${chips ? `<div class="dietary-chips">${chips}</div>` : ''}
           ${hint}
@@ -372,7 +382,7 @@ function alcSectionHtml(s, guests) {
     if (s.order_at_table) return `<div class="alc-row readonly">${body}</div>`;
     return `
       <div class="alc-row" data-id="${o.id}">${body}
-        <div>
+        <div class="alc-ctrl">
           <div class="alc-stepper">
             <button type="button" data-step="-1" aria-label="One fewer ${esc(o.name)}">&minus;</button>
             <input type="number" inputmode="numeric" min="0" max="99" value="0" data-section="${s.id}" data-option="${o.id}" aria-label="Orders of ${esc(o.name)}" />
