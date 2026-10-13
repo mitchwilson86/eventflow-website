@@ -417,10 +417,10 @@ async function renderOnRequestBtn() {
     if (!onRequest.names.length) return;
     const on = state.booking.offer_on_request_menus === true;
     const label = onRequest.names.join(', ');
-    btn.textContent = on ? '✓ Offered: ' + label + ' (click to remove)' : '+ Offer the ' + label;
+    btn.textContent = on ? '✓ Menu page shows the ' + label + ' only (click to go back to the group menus)' : '+ Switch this guest to the ' + label;
     btn.title = on
-      ? 'This guest\'s menu link shows the ' + label + ' next to the group menus. Click to take it off their page again.'
-      : 'Adds the ' + label + ' to this guest\'s menu page, next to the group menus. Nothing is emailed: send or re-send their menu link yourself.';
+      ? 'This guest\'s menu link shows the ' + label + ' ONLY, instead of the group menus (ON_REQUEST_ONLY_V1). Click to go back to the group menus.'
+      : 'Switches this guest\'s menu page to the ' + label + ' ONLY, instead of the group menus. Nothing is emailed: send or re-send their menu link yourself.';
     btn.style.display = '';
   } catch (e) { /* the button is a convenience: on any error it simply stays hidden */ }
 }
@@ -435,8 +435,8 @@ async function toggleOnRequestMenus() {
     if (error) throw error;
     state.booking.offer_on_request_menus = data.offer_on_request_menus === true;
     toast(state.booking.offer_on_request_menus
-      ? 'Done. This guest\'s menu page now also shows the ' + onRequest.names.join(', ') + '. Nothing was emailed.'
-      : 'Removed. This guest\'s menu page shows the group menus only.', 'success');
+      ? 'Done. This guest\'s menu page now shows the ' + onRequest.names.join(', ') + ' only. Nothing was emailed.'
+      : 'Done. This guest\'s menu page is back to the group menus.', 'success');
   } catch (e) {
     toast('Could not change it: ' + e.message, 'error');
   } finally {

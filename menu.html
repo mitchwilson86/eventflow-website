@@ -362,6 +362,14 @@ async function boot() {
     renderHeader();
     renderMenus();
     renderUpsells();
+    // ON_REQUEST_ONLY_V1: a guest who was offered one menu (a la carte) has nothing to choose between, so open it.
+    if (ctx.menus.length === 1) {
+      const only = document.querySelector('#menu-options .menu-option');
+      if (only) only.click();
+      const h = document.querySelector('#menu-options').parentNode;
+      h.querySelector('h2').textContent = '1. Your menu';
+      h.querySelector('p').textContent = 'This is the menu for your event.';
+    }
     document.getElementById('additional-notes').addEventListener('input', onNotesInput);
   } catch (err) {
     showError(err.message || String(err));
