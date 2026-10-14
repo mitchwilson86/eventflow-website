@@ -87,6 +87,11 @@ window.EF_SHELL = (function () {
       if (window.history && history.replaceState) history.replaceState(null, '', window.location.pathname + window.location.search);
     } catch (e) {}
   })();
+  // A sign-in link opened in a tab that already shows the same page only changes the #hash (the browser does not
+  // reload), so nothing would read it: reload, and the capture above runs on the fresh page.
+  window.addEventListener('hashchange', function () {
+    if (/[#&]st=/.test(window.location.hash || '')) window.location.reload();
+  });
   // The newest usable link session, preferring the venue the page is about. Expired ones are dropped.
   function linkSession(slugHint) {
     try {
