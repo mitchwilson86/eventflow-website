@@ -46,6 +46,25 @@
       cursor:pointer; color:var(--text-primary); text-decoration:none; }
     .ev-btn:hover { border-color:var(--text-muted); }
     .ev-tidy { color:var(--text-secondary); font-size:0.9rem; line-height:1.5; }
+    /* EVENT_NOTES_V1 — notes and moves */
+    .ev-card.handling { border-left:4px solid #3b82f6; }
+    .ev-card.closed { opacity:0.75; }
+    .ev-flag { display:inline-block; margin-left:6px; font-size:0.7rem; font-weight:700; border-radius:8px; padding:1px 7px; vertical-align:middle; }
+    .ev-flag.due { background:#fee2e2; color:#b91c1c; } .ev-flag.newact { background:#e0e7ff; color:#3730a3; }
+    .ev-notes { margin-top:8px; border-top:1px dashed var(--border); padding-top:6px; }
+    .ev-note { font-size:0.86rem; color:var(--text-secondary); margin-top:4px; white-space:pre-wrap; word-break:break-word; }
+    .ev-note b { color:var(--text-primary); font-weight:600; }
+    .ev-note-form { margin-top:10px; padding:10px; border:1px solid var(--border); border-radius:8px; background:var(--bg-inset, #f8fafc); }
+    .ev-note-form textarea { width:100%; box-sizing:border-box; min-height:70px; padding:8px 10px; border:1px solid var(--border); border-radius:6px; font:inherit; font-size:0.9rem; resize:vertical; }
+    .ev-moves { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+    .ev-move { border:1px solid var(--border); background:#fff; border-radius:999px; padding:4px 11px; font:inherit; font-size:0.82rem; cursor:pointer; color:var(--text-secondary); }
+    .ev-move.on { background:var(--navy, #1e3a8a); border-color:var(--navy, #1e3a8a); color:#fff; }
+    .ev-fu { margin-top:8px; font-size:0.85rem; color:var(--text-secondary); display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .ev-fu input { padding:5px 8px; border:1px solid var(--border); border-radius:6px; font:inherit; font-size:0.85rem; }
+    .ev-form-actions { margin-top:10px; display:flex; gap:8px; align-items:center; }
+    .ev-save { border:none; background:var(--navy, #1e3a8a); color:#fff; border-radius:6px; padding:6px 14px; font:inherit; font-weight:600; font-size:0.85rem; cursor:pointer; }
+    .ev-save:disabled { opacity:0.6; cursor:default; }
+    .ev-form-msg { font-size:0.82rem; color:#b91c1c; }
     .ev-empty { color:var(--text-muted); padding:18px 4px; }
     .link-form { margin-top:4px; }
     .link-form input { margin-bottom:10px; width:100%; box-sizing:border-box; }
@@ -151,8 +170,16 @@ const SECTIONS = [
   { key: 'in_progress', label: 'In progress', cls: '' },
   { key: 'coming_up', label: 'Booked, next 30 days', cls: 'booked' },
   { key: 'gone_quiet', label: 'Gone quiet', cls: 'quiet' },
-  { key: 'all', label: 'All', cls: '' }
+  { key: 'closed', label: 'Closed', cls: 'quiet' },
+  { key: 'all', label: 'All open', cls: '' }
 ];
+const MOVES = [
+  { status: '', label: 'Leave it where it is' },
+  { status: 'in_progress', label: 'In progress' },
+  { status: 'needs_you', label: 'Needs you' },
+  { status: 'closed', label: 'Closed (not happening)' }
+];
+let openForm = '';   // the item key whose note form is open
 
 function esc(s) { const d = document.createElement('div'); d.textContent = (s == null ? '' : String(s)); return d.innerHTML; }
 function fmtDay(d) {
@@ -205,8 +232,9 @@ window.addEventListener('load', function () {
   EF_SHELL.boot({ onClient: onClientReady });
 });
 
-function loadEvents(slug) {
-  EF_SHELL.setState('ev-list', 'loading');
+function loadEvents(slug, keepPlace) {
+  // After a save the list reloads in place (no skeleton flash, same tab, same scroll).
+  if (!keepPlace) EF_SHELL.setState('ev-list', 'loading');
   EF_SHELL.api({ action: 'get_events', client_slug: slug }).then(function (data) {
     if (!data || data.error || data.success !== true) throw new Error((data && data.error) || 'empty response');
     if (!data.ready) {
@@ -217,7 +245,7 @@ function loadEvents(slug) {
     EV = { items: data.items || [], counts: data.counts || {}, tidy: data.tidy || [], run_at: data.run_at || '' };
     document.getElementById('ev-updated').textContent = EV.run_at ? 'Updated ' + relTime(EV.run_at) : '';
     if (!SECTIONS.some(function (s) { return s.key === activeTab; })) activeTab = 'needs_you';
-    if (activeTab === 'needs_you' && !(EV.counts.needs_you > 0)) activeTab = 'all';
+    if (!keepPlace && activeTab === 'needs_you' && !(EV.counts.needs_you > 0)) activeTab = 'all';
     renderTabs();
     renderList();
     renderTidy();
@@ -230,7 +258,8 @@ function loadEvents(slug) {
 function renderTabs() {
   const c = EV.counts || {};
   document.getElementById('ev-tabs').innerHTML = SECTIONS.map(function (s) {
-    const n = s.key === 'all' ? EV.items.length : (c[s.key] || 0);
+    const n = s.key === 'all' ? EV.items.filter(function (it) { return it.section !== 'closed'; }).length : (c[s.key] || 0);
+    if (s.key === 'closed' && !n && activeTab !== 'closed') return '';
     return '<button type="button" class="ev-tab' + (s.key === activeTab ? ' active' : '') + (s.key === 'needs_you' && n ? ' you' : '') + '" data-tab="' + s.key + '">' +
       esc(s.label) + '<b>' + n + '</b></button>';
   }).join('');
@@ -248,19 +277,92 @@ function facts(it) {
   return f.map(esc).join(' &middot; ');
 }
 
+function noteDate(iso) {
+  const t = new Date(iso);
+  return isNaN(t.getTime()) ? '' : t.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Chicago' });
+}
+const MOVE_WORDS = { in_progress: 'moved it to In progress', needs_you: 'moved it to Needs you', closed: 'closed it' };
+function notesHtml(it) {
+  const ns = it.notes || [];
+  if (!ns.length) return '';
+  return '<div class="ev-notes">' + ns.slice(0, 3).map(function (n) {
+    const bits = [];
+    if (MOVE_WORDS[n.status]) bits.push(MOVE_WORDS[n.status]);
+    if (n.follow_up) bits.push('follow up ' + fmtDay(n.follow_up));
+    return '<div class="ev-note"><b>' + esc(n.by) + '</b> &middot; ' + esc(noteDate(n.at)) + (bits.length ? ' (' + esc(bits.join(', ')) + ')' : '') +
+      (n.note ? ': ' + esc(n.note) : '') + '</div>';
+  }).join('') + (ns.length > 3 ? '<div class="ev-note">+ ' + (ns.length - 3) + ' earlier</div>' : '') + '</div>';
+}
+function formHtml(it) {
+  if (openForm !== it.key) return '';
+  return '<div class="ev-note-form" data-form="' + esc(it.key) + '">' +
+    '<textarea maxlength="1000" placeholder="What happened? e.g. Called Carmen, sending the contract Friday" aria-label="Note"></textarea>' +
+    '<div class="ev-moves" role="radiogroup" aria-label="Move this event">' + MOVES.map(function (m, k) {
+      return '<button type="button" class="ev-move' + (k === 0 ? ' on' : '') + '" data-status="' + m.status + '">' + esc(m.label) + '</button>';
+    }).join('') + '</div>' +
+    '<div class="ev-fu"><label>Follow up on (optional)</label><input type="date" aria-label="Follow-up date" min="' + new Date().toISOString().slice(0, 10) + '" /></div>' +
+    '<div class="ev-form-actions"><button type="button" class="ev-save">Save</button><button type="button" class="ev-btn ev-cancel">Cancel</button><span class="ev-form-msg"></span></div>' +
+    '<div class="attn-meta" style="margin-top:6px;">A move stays until the guest writes again or the event changes in Tripleseat. A follow-up date brings it back to Needs you that day.</div>' +
+    '</div>';
+}
+
 function cardHtml(it, i) {
   const you = it.owner === 'you';
   const first = String(it.name || '').split(/\s+/)[0] || 'guest';
   const actions = [];
+  actions.push('<button type="button" class="ev-btn" data-note="' + i + '">Add a note or move</button>');
   if (it.thread_id) actions.push('<button type="button" class="ev-btn" data-conv="' + i + '">View conversation</button>');
   if (it.email && /@/.test(it.email)) actions.push('<a class="ev-btn" href="mailto:' + esc(it.email) + '">Email ' + esc(first) + '</a>');
-  return '<div class="ev-card ' + (you ? 'you' : it.owner === 'booked' ? 'booked' : '') + '">' +
-    '<div class="ev-name">' + esc(it.name) + (it.is_new ? '<span class="ev-new">NEW</span>' : '') + '</div>' +
+  const flag = it.note_flag === 'follow_up_due' ? '<span class="ev-flag due">FOLLOW-UP DUE</span>'
+    : it.note_flag === 'activity_since_note' ? '<span class="ev-flag newact">NEW SINCE YOUR NOTE</span>' : '';
+  const cls = you ? 'you' : it.owner === 'booked' ? 'booked' : it.owner === 'handling' ? 'handling' : it.owner === 'closed' ? 'closed' : '';
+  return '<div class="ev-card ' + cls + '">' +
+    '<div class="ev-name">' + esc(it.name) + (it.is_new ? '<span class="ev-new">NEW</span>' : '') + flag + '</div>' +
     (facts(it) ? '<div class="ev-facts">' + facts(it) + '</div>' : '') +
     '<div class="ev-stage"><strong>' + esc(it.stage) + '.</strong> ' + esc(it.detail || '') + '</div>' +
     '<div class="ev-next' + (you ? ' you' : '') + '">Next: ' + esc(it.next || '') + '</div>' +
-    (actions.length ? '<div class="ev-actions">' + actions.join('') + '</div>' : '') +
+    notesHtml(it) +
+    '<div class="ev-actions">' + actions.join('') + '</div>' +
+    formHtml(it) +
     '</div>';
+}
+
+function wireForms(el) {
+  el.querySelectorAll('[data-note]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      const it = EV.items[Number(b.getAttribute('data-note'))];
+      openForm = openForm === it.key ? '' : it.key;
+      renderList();
+      const ta = document.querySelector('.ev-note-form textarea');
+      if (ta) ta.focus();
+    });
+  });
+  el.querySelectorAll('.ev-note-form').forEach(function (f) {
+    let status = '';
+    f.querySelectorAll('.ev-move').forEach(function (m) {
+      m.addEventListener('click', function () {
+        status = m.getAttribute('data-status');
+        f.querySelectorAll('.ev-move').forEach(function (x) { x.classList.toggle('on', x === m); });
+      });
+    });
+    f.querySelector('.ev-cancel').addEventListener('click', function () { openForm = ''; renderList(); });
+    f.querySelector('.ev-save').addEventListener('click', function () {
+      const note = f.querySelector('textarea').value.trim();
+      const fu = f.querySelector('input[type=date]').value || '';
+      const msg = f.querySelector('.ev-form-msg');
+      if (!note && !status && !fu) { msg.textContent = 'Write a note or choose where the event goes.'; return; }
+      const btn = f.querySelector('.ev-save');
+      btn.disabled = true; msg.textContent = '';
+      EF_SHELL.api({ action: 'save_event_note', client_slug: (currentClient || {}).slug, item_key: f.getAttribute('data-form'), note: note, status: status, follow_up_date: fu })
+        .then(function (res) {
+          if (!res || res.success !== true) throw new Error((res && res.error) || 'Could not save.');
+          openForm = '';
+          EF_SHELL.toast('Saved.', 'success');
+          loadEvents((currentClient || {}).slug, true);
+        })
+        .catch(function (err) { btn.disabled = false; msg.textContent = err.message || 'Could not save. Please try again.'; });
+    });
+  });
 }
 
 function renderList() {
@@ -270,7 +372,7 @@ function renderList() {
     return [it.name, it.company, it.email, it.date, fmtDay(it.date), it.stage, it.room].join(' ').toLowerCase().indexOf(q) !== -1;
   };
   const el = document.getElementById('ev-list');
-  const groups = (activeTab === 'all' ? SECTIONS.filter(function (s) { return s.key !== 'all'; }) : SECTIONS.filter(function (s) { return s.key === activeTab; }));
+  const groups = (activeTab === 'all' ? SECTIONS.filter(function (s) { return s.key !== 'all' && s.key !== 'closed'; }) : SECTIONS.filter(function (s) { return s.key === activeTab; }));
   let html = '';
   groups.forEach(function (s) {
     const list = EV.items.map(function (it, i) { return { it: it, i: i }; }).filter(function (x) { return x.it.section === s.key && match(x.it); });
@@ -286,6 +388,7 @@ function renderList() {
   el.querySelectorAll('[data-conv]').forEach(function (b) {
     b.addEventListener('click', function () { openDrawer(EV.items[Number(b.getAttribute('data-conv'))]); });
   });
+  wireForms(el);
 }
 
 function renderTidy() {
