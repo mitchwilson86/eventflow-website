@@ -59,6 +59,12 @@
     .drawer-scrim { position:fixed; inset:0; background:rgba(15,23,42,0.25); z-index:60; display:none; }
     .drawer-scrim.open { display:block; }
     .src-footnote { color:var(--text-muted); font-size:0.8rem; margin-top:10px; }
+    /* EVENTS_RECAP_V1 — the "Your events" card */
+    .ev-open-btn { display:inline-block; margin-top:12px; padding:9px 16px; border-radius:8px; background:var(--navy, #1e3a8a); color:#fff !important; font-weight:600; font-size:0.9rem; }
+    .ev-top-item { padding:8px 2px; border-bottom:1px solid var(--border); font-size:0.9rem; }
+    .ev-top-item:last-child { border-bottom:none; }
+    .ev-top-item .who { font-weight:600; }
+    .ev-top-item .what { color:#b91c1c; font-size:0.85rem; margin-top:2px; }
     /* ASK_EVENTFLOW_V1 — the question box */
     .ask-form { display:flex; gap:8px; margin-top:0.8rem; }
     .ask-form input { flex:1; min-width:0; padding:10px 12px; border:1px solid var(--border); border-radius:8px; font:inherit; font-size:0.95rem; }
@@ -85,7 +91,9 @@
       var q = new URLSearchParams(location.search);
       if (q.get('demo') === '1') sessionStorage.setItem('ef_demo', '1');
       if (q.get('demo') === '0') sessionStorage.removeItem('ef_demo');
-      if (sessionStorage.getItem('ef_user_email') || sessionStorage.getItem('ef_demo') === '1') {
+      var link = /[#&]st=/.test(location.hash || '');  // MAGIC_LINK_SHELL_V1: an emailed sign-in link counts too
+      if (!link) for (var i = 0; i < localStorage.length; i++) { if ((localStorage.key(i) || '').indexOf('ef_vf_token_') === 0) { link = true; break; } }
+      if (sessionStorage.getItem('ef_user_email') || sessionStorage.getItem('ef_demo') === '1' || link) {
         var s = document.createElement('style');
         s.textContent = '#login-screen{display:none !important}';
         document.head.appendChild(s);
@@ -171,6 +179,14 @@
           <div class="src-footnote" id="src-footnote" style="display:none;"></div>
         </div>
 
+        <!-- Row 1a: your events (EVENTS_RECAP_V1). Hidden until the recap snapshot answers. -->
+        <div class="panel" style="margin-top:1.5rem;display:none;" id="events-panel">
+          <h3>Your events <span id="events-updated" style="font-weight:normal;color:var(--text-muted);font-size:0.85em;"></span></h3>
+          <div class="stat-grid" style="margin-top:0.8rem;" id="events-counts"></div>
+          <div id="events-top" style="margin-top:0.6rem;"></div>
+          <a href="/events" id="events-open" class="ev-open-btn">Open Events &rsaquo;</a>
+        </div>
+
         <!-- Row 1b: Ask EventFlow (ASK_EVENTFLOW_V1) -->
         <div class="panel" style="margin-top:1.5rem;" id="ask-panel">
           <h3>Ask EventFlow <span style="font-weight:normal;color:var(--text-muted);font-size:0.85em;">plain-English questions about your own inquiry data</span></h3>
@@ -248,7 +264,35 @@ window.addEventListener('load', function () {
 
 function renderDashboard(client) {
   loadOverview(client.slug);
+  loadEventsCard(client.slug);
   loadConversations(client.slug);
+}
+
+/* ── EVENTS_RECAP_V1: the "Your events" card, a doorway to /events ─────── */
+function loadEventsCard(slug) {
+  if (isDemo()) return;
+  EF_SHELL.api({ action: 'get_events', client_slug: slug }).then(function (data) {
+    // An Apps Script without get_events answers {updated:[]} with no success flag: keep the card hidden.
+    if (!data || data.success !== true || !data.ready) return;
+    const c = data.counts || {};
+    const items = data.items || [];
+    document.getElementById('events-updated').textContent = data.run_at ? 'updated ' + relTime(data.run_at) : '';
+    const tile = function (n, label, tab) {
+      return '<a class="stat-item" style="text-decoration:none;color:inherit;" href="/events?tab=' + tab + '">' +
+        '<div class="stat-val"' + (tab === 'needs_you' && n ? ' style="color:#b91c1c;"' : '') + '>' + (n || 0) + '</div><div class="stat-label">' + esc(label) + '</div></a>';
+    };
+    document.getElementById('events-counts').innerHTML =
+      tile(c.needs_you, 'Need you', 'needs_you') + tile(c.in_progress, 'In progress', 'in_progress') +
+      tile(c.coming_up, 'Booked, next 30 days', 'coming_up') + tile(c.gone_quiet, 'Gone quiet', 'gone_quiet');
+    const top = items.filter(function (it) { return it.section === 'needs_you'; }).slice(0, 3);
+    document.getElementById('events-top').innerHTML = top.map(function (it) {
+      return '<div class="ev-top-item"><span class="who">' + esc(it.name) + '</span>' +
+        (it.date ? ' <span style="color:var(--text-muted);">' + esc(new Date(it.date + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })) + '</span>' : '') +
+        '<div class="what">' + esc(it.next) + '</div></div>';
+    }).join('');
+    document.getElementById('events-open').textContent = (c.needs_you ? 'See all ' + c.needs_you + ' that need you' : 'Open Events') + ' ›';
+    document.getElementById('events-panel').style.display = 'block';
+  }).catch(function (err) { console.warn('Events card load failed:', err); });
 }
 
 /* ── helpers ─────────────────────────────────────────────────── */

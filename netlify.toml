@@ -17,6 +17,12 @@
   to = "/dashboard.html"
   status = 200
 
+# EVENTS_RECAP_V1 (2026-10-14): every open event, where it stands and the next step.
+[[redirects]]
+  from = "/events"
+  to = "/events.html"
+  status = 200
+
 [[redirects]]
   from = "/admin"
   to = "/admin.html"

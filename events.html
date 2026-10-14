@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EventFlow — Events</title>
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="/favicon.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <meta name="description" content="Every open event at your venue, where it stands, and the next step for you.">
+  <link rel="canonical" href="https://eventflowsales.com/events">
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/eventflow-shared.css" />
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="/eventflow-admin.js" defer></script>
+  <script src="/ef-venue-picker.js" defer></script>
+  <script src="/ef-shell.js" defer></script>
+  <style>
+    /* EVENTS_RECAP_V1 (2026-10-14) — page-local styles only; tokens come from eventflow-shared.css */
+    .ev-summary { display:flex; flex-wrap:wrap; gap:10px; margin-top:0.6rem; }
+    .ev-tab { border:1px solid var(--border); background:#fff; border-radius:999px; padding:6px 14px; font:inherit; font-size:0.9rem;
+      cursor:pointer; color:var(--text-secondary); }
+    .ev-tab b { color:var(--text-primary); margin-left:4px; }
+    .ev-tab.active { background:var(--navy, #1e3a8a); border-color:var(--navy, #1e3a8a); color:#fff; }
+    .ev-tab.active b { color:#fff; }
+    .ev-tab.you { border-color:#fca5a5; }
+    .ev-tools { display:flex; gap:10px; align-items:center; margin-top:12px; flex-wrap:wrap; }
+    .ev-tools input { flex:1; min-width:180px; padding:9px 12px; border:1px solid var(--border); border-radius:8px; font:inherit; font-size:0.92rem; }
+    .ev-updated { color:var(--text-muted); font-size:0.85rem; }
+    .ev-section-title { margin:22px 0 4px; font-size:1rem; font-weight:700; }
+    .ev-section-title.you { color:#b91c1c; } .ev-section-title.booked { color:#15803d; } .ev-section-title.quiet { color:var(--text-muted); }
+    .ev-card { border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-top:10px; background:#fff; }
+    .ev-card.you { border-left:4px solid #ef4444; }
+    .ev-card.booked { border-left:4px solid #22c55e; }
+    .ev-name { font-weight:700; font-size:1rem; }
+    .ev-new { display:inline-block; margin-left:6px; font-size:0.7rem; font-weight:700; background:#fef3c7; color:#92400e; border-radius:8px; padding:1px 7px; vertical-align:middle; }
+    .ev-facts { color:var(--text-secondary); font-size:0.88rem; margin-top:2px; }
+    .ev-stage { margin-top:6px; font-size:0.92rem; line-height:1.45; }
+    .ev-next { margin-top:5px; font-size:0.92rem; color:var(--text-secondary); }
+    .ev-next.you { color:#b91c1c; font-weight:600; }
+    .ev-actions { margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; }
+    .ev-btn { border:1px solid var(--border); background:var(--bg-inset, #f8fafc); border-radius:6px; padding:5px 10px; font:inherit; font-size:0.82rem;
+      cursor:pointer; color:var(--text-primary); text-decoration:none; }
+    .ev-btn:hover { border-color:var(--text-muted); }
+    .ev-tidy { color:var(--text-secondary); font-size:0.9rem; line-height:1.5; }
+    .ev-empty { color:var(--text-muted); padding:18px 4px; }
+    .link-form { margin-top:4px; }
+    .link-form input { margin-bottom:10px; width:100%; box-sizing:border-box; }
+    .link-msg { font-size:13px; color:var(--login-text-dim); margin-top:10px; text-align:center; }
+    .conv-drawer { position:fixed; top:0; right:0; height:100%; width:min(500px, 94vw); background:#fff;
+      box-shadow:-8px 0 30px rgba(15,23,42,0.18); transform:translateX(105%); transition:transform 0.22s ease; z-index:70; display:flex; flex-direction:column; }
+    .conv-drawer.open { transform:translateX(0); }
+    .conv-drawer-head { padding:16px 18px; border-bottom:1px solid var(--border); display:flex; gap:10px; align-items:flex-start; }
+    .conv-drawer-body { padding:16px 18px; overflow-y:auto; flex:1; }
+    .conv-turn { border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:14px; }
+    .conv-turn h5 { margin:0 0 4px; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-muted); }
+    .conv-turn .reply-text { white-space:pre-wrap; font-size:0.88rem; }
+    .drawer-close { margin-left:auto; border:none; background:transparent; font-size:1.3rem; cursor:pointer; color:var(--text-muted); }
+    .drawer-scrim { position:fixed; inset:0; background:rgba(15,23,42,0.25); z-index:60; display:none; }
+    .drawer-scrim.open { display:block; }
+    .chip { display:inline-block; border-radius:999px; padding:2px 9px; font-size:0.75rem; font-weight:600; margin-right:4px; }
+    .chip.esc { background:#fee2e2; color:#b91c1c; } .chip.hold { background:#fef3c7; color:#92400e; }
+    .attn-meta { color:var(--text-muted); font-size:0.8rem; }
+  </style>
+</head>
+<body>
+<script>
+  // Preflight: hide the sign-in screen before first paint when a session, or an emailed sign-in link, exists.
+  (function(){
+    try {
+      var has = !!sessionStorage.getItem('ef_user_email') || /[#&]st=/.test(location.hash || '');
+      if (!has) for (var i = 0; i < localStorage.length; i++) { if ((localStorage.key(i) || '').indexOf('ef_vf_token_') === 0) { has = true; break; } }
+      if (has) {
+        var s = document.createElement('style');
+        s.textContent = '#login-screen{display:none !important}';
+        document.head.appendChild(s);
+      }
+    } catch(e) {}
+  })();
+</script>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="logo">EventFlow</div>
+    <div class="subtitle">Events</div>
+    <div class="login-divider">Sign in with Google</div>
+    <div id="google-signin-btn"></div>
+    <div class="login-divider">Or get a sign-in link by email</div>
+    <form class="link-form" id="link-form" onsubmit="return askForLink(event)">
+      <input type="email" id="link-email" placeholder="you@yourvenue.com" autocomplete="email" required aria-label="Your work email" />
+      <button type="submit" id="link-btn">Email me a sign-in link</button>
+      <div class="link-msg" id="link-msg"></div>
+    </form>
+    <div class="login-error" id="login-error">Access denied. Your account is not authorized for any venue.</div>
+    <div class="login-session-msg" id="session-msg">Signing you in...</div>
+  </div>
+</div>
+
+<div id="dashboard">
+  <div class="app-layout">
+    <div id="sidebar-host"></div>
+    <div class="main-content">
+      <div class="top-bar">
+        <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()">&#9776;</button>
+        <span class="page-title">Events</span>
+        <div></div>
+      </div>
+      <div class="dash-body">
+        <div class="panel">
+          <h3>Every open event <span class="ev-updated" id="ev-updated"></span></h3>
+          <div class="ev-summary" id="ev-tabs"></div>
+          <div class="ev-tools">
+            <input type="search" id="ev-search" placeholder="Search a guest, company or date" aria-label="Search events" oninput="renderList()" />
+          </div>
+          <div id="ev-list"></div>
+        </div>
+        <div class="panel" style="margin-top:1.5rem;display:none;" id="ev-tidy-panel">
+          <h3>Tidy up in Tripleseat</h3>
+          <div class="ev-tidy" id="ev-tidy"></div>
+        </div>
+        <div class="src-footnote" style="color:var(--text-muted);font-size:0.8rem;margin-top:12px;">
+          The same list is emailed to the events manager every morning at 10. It updates at 7am, 10am, 1pm, 4pm and 7pm.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="drawer-scrim" id="drawer-scrim" onclick="closeDrawer()"></div>
+<div class="conv-drawer" id="conv-drawer" aria-hidden="true">
+  <div class="conv-drawer-head">
+    <div><div class="ev-name" id="drawer-guest"></div><div class="attn-meta" id="drawer-sub"></div></div>
+    <button class="drawer-close" onclick="closeDrawer()" aria-label="Close">&times;</button>
+  </div>
+  <div class="conv-drawer-body" id="drawer-body"></div>
+</div>
+
+<script>
+/* ═══ EVENTS_RECAP_V1 — reads the newest recap snapshot (Apps Script get_events). The page never
+   recomputes anything, so it always says exactly what the morning email said (or the latest refresh). ═══ */
+let currentClient = null;
+let EV = { items: [], counts: {}, tidy: [], run_at: '' };
+let activeTab = 'needs_you';
+
+const SECTIONS = [
+  { key: 'needs_you', label: 'Needs you', cls: 'you' },
+  { key: 'in_progress', label: 'In progress', cls: '' },
+  { key: 'coming_up', label: 'Booked, next 30 days', cls: 'booked' },
+  { key: 'gone_quiet', label: 'Gone quiet', cls: 'quiet' },
+  { key: 'all', label: 'All', cls: '' }
+];
+
+function esc(s) { const d = document.createElement('div'); d.textContent = (s == null ? '' : String(s)); return d.innerHTML; }
+function fmtDay(d) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d || '')) return '';
+  const dt = new Date(d + 'T12:00:00Z');
+  const o = { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' };
+  if (dt.getUTCFullYear() !== new Date().getFullYear()) o.year = 'numeric';
+  return dt.toLocaleDateString('en-US', o);
+}
+function relTime(iso) {
+  const t = new Date(iso).getTime();
+  if (!t) return '';
+  const diff = Math.floor((Date.now() - t) / 1000);
+  if (diff < 90) return 'just now';
+  if (diff < 3600) return Math.floor(diff / 60) + ' min ago';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+  return new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+}
+
+function pageSlug() {
+  try { const q = new URLSearchParams(location.search).get('client'); if (q) return q; } catch (e) {}
+  try { if (window.EF_VENUE_PICKER) return EF_VENUE_PICKER.getActive() || ''; } catch (e) {}
+  return '';
+}
+function askForLink(ev) {
+  ev.preventDefault();
+  const email = (document.getElementById('link-email').value || '').trim();
+  const msg = document.getElementById('link-msg');
+  const slug = pageSlug();
+  if (!slug) { msg.textContent = 'Open this page from the button in your morning events email, or sign in with Google.'; return false; }
+  document.getElementById('link-btn').disabled = true;
+  EF_SHELL.requestLink(slug, email, 'events').then(function () {
+    msg.textContent = 'If that address has access, a sign-in link is on its way. It can take a minute to arrive.';
+  }).catch(function () {
+    msg.textContent = 'Something went wrong. Please try again in a minute.';
+  }).then(function () { document.getElementById('link-btn').disabled = false; });
+  return false;
+}
+
+function onClientReady(client) {
+  currentClient = client;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  EF_SHELL.mountSidebar('events', { venueName: client.venue });
+  loadEvents(client.slug);
+}
+
+window.addEventListener('load', function () {
+  try { if (new URLSearchParams(location.search).get('tab')) activeTab = new URLSearchParams(location.search).get('tab'); } catch (e) {}
+  EF_SHELL.boot({ onClient: onClientReady });
+});
+
+function loadEvents(slug) {
+  EF_SHELL.setState('ev-list', 'loading');
+  EF_SHELL.api({ action: 'get_events', client_slug: slug }).then(function (data) {
+    if (!data || data.error || data.success !== true) throw new Error((data && data.error) || 'empty response');
+    if (!data.ready) {
+      EF_SHELL.setState('ev-list', 'empty', { message: 'Your first events list is being prepared. Check back after the next update.' });
+      document.getElementById('ev-tabs').innerHTML = '';
+      return;
+    }
+    EV = { items: data.items || [], counts: data.counts || {}, tidy: data.tidy || [], run_at: data.run_at || '' };
+    document.getElementById('ev-updated').textContent = EV.run_at ? 'Updated ' + relTime(EV.run_at) : '';
+    if (!SECTIONS.some(function (s) { return s.key === activeTab; })) activeTab = 'needs_you';
+    if (activeTab === 'needs_you' && !(EV.counts.needs_you > 0)) activeTab = 'all';
+    renderTabs();
+    renderList();
+    renderTidy();
+  }).catch(function (err) {
+    EF_SHELL.setState('ev-list', 'error', { message: 'Could not load your events.', retry: function () { loadEvents(slug); } });
+    console.warn('Events load failed:', err);
+  });
+}
+
+function renderTabs() {
+  const c = EV.counts || {};
+  document.getElementById('ev-tabs').innerHTML = SECTIONS.map(function (s) {
+    const n = s.key === 'all' ? EV.items.length : (c[s.key] || 0);
+    return '<button type="button" class="ev-tab' + (s.key === activeTab ? ' active' : '') + (s.key === 'needs_you' && n ? ' you' : '') + '" data-tab="' + s.key + '">' +
+      esc(s.label) + '<b>' + n + '</b></button>';
+  }).join('');
+  document.querySelectorAll('.ev-tab').forEach(function (b) {
+    b.addEventListener('click', function () { activeTab = b.getAttribute('data-tab'); renderTabs(); renderList(); });
+  });
+}
+
+function facts(it) {
+  const f = [];
+  if (it.date) f.push(fmtDay(it.date));
+  if (it.guests) f.push(it.guests + ' guests');
+  if (it.room) f.push(it.room);
+  if (it.company && it.company.toLowerCase() !== String(it.name || '').toLowerCase()) f.push(it.company);
+  return f.map(esc).join(' &middot; ');
+}
+
+function cardHtml(it, i) {
+  const you = it.owner === 'you';
+  const first = String(it.name || '').split(/\s+/)[0] || 'guest';
+  const actions = [];
+  if (it.thread_id) actions.push('<button type="button" class="ev-btn" data-conv="' + i + '">View conversation</button>');
+  if (it.email && /@/.test(it.email)) actions.push('<a class="ev-btn" href="mailto:' + esc(it.email) + '">Email ' + esc(first) + '</a>');
+  return '<div class="ev-card ' + (you ? 'you' : it.owner === 'booked' ? 'booked' : '') + '">' +
+    '<div class="ev-name">' + esc(it.name) + (it.is_new ? '<span class="ev-new">NEW</span>' : '') + '</div>' +
+    (facts(it) ? '<div class="ev-facts">' + facts(it) + '</div>' : '') +
+    '<div class="ev-stage"><strong>' + esc(it.stage) + '.</strong> ' + esc(it.detail || '') + '</div>' +
+    '<div class="ev-next' + (you ? ' you' : '') + '">Next: ' + esc(it.next || '') + '</div>' +
+    (actions.length ? '<div class="ev-actions">' + actions.join('') + '</div>' : '') +
+    '</div>';
+}
+
+function renderList() {
+  const q = (document.getElementById('ev-search').value || '').trim().toLowerCase();
+  const match = function (it) {
+    if (!q) return true;
+    return [it.name, it.company, it.email, it.date, fmtDay(it.date), it.stage, it.room].join(' ').toLowerCase().indexOf(q) !== -1;
+  };
+  const el = document.getElementById('ev-list');
+  const groups = (activeTab === 'all' ? SECTIONS.filter(function (s) { return s.key !== 'all'; }) : SECTIONS.filter(function (s) { return s.key === activeTab; }));
+  let html = '';
+  groups.forEach(function (s) {
+    const list = EV.items.map(function (it, i) { return { it: it, i: i }; }).filter(function (x) { return x.it.section === s.key && match(x.it); });
+    if (!list.length) return;
+    if (activeTab === 'all') html += '<div class="ev-section-title ' + s.cls + '">' + esc(s.label) + ' (' + list.length + ')</div>';
+    html += list.map(function (x) { return cardHtml(x.it, x.i); }).join('');
+  });
+  if (!html) {
+    el.innerHTML = '<div class="ev-empty">' + (q ? 'No events match "' + esc(q) + '".' : activeTab === 'needs_you' ? 'Nothing needs you right now.' : 'Nothing here right now.') + '</div>';
+    return;
+  }
+  el.innerHTML = html;
+  el.querySelectorAll('[data-conv]').forEach(function (b) {
+    b.addEventListener('click', function () { openDrawer(EV.items[Number(b.getAttribute('data-conv'))]); });
+  });
+}
+
+function renderTidy() {
+  const p = document.getElementById('ev-tidy-panel');
+  if (!EV.tidy.length) { p.style.display = 'none'; return; }
+  p.style.display = 'block';
+  document.getElementById('ev-tidy').innerHTML = 'These leads are still open in Tripleseat, but their date has passed: ' +
+    EV.tidy.map(function (t) { return '<strong>' + esc(t.name) + '</strong> (' + esc(fmtDay(t.date)) + ')'; }).join(', ') +
+    '. Convert or turn them down so Tripleseat\'s numbers stay right.';
+}
+
+function openDrawer(it) {
+  if (!it || !it.thread_id) return;
+  document.getElementById('drawer-guest').textContent = it.name || 'Conversation';
+  document.getElementById('drawer-sub').textContent = [fmtDay(it.date), it.guests ? it.guests + ' guests' : ''].filter(Boolean).join(' · ');
+  document.getElementById('conv-drawer').classList.add('open');
+  document.getElementById('drawer-scrim').classList.add('open');
+  const body = document.getElementById('drawer-body');
+  EF_SHELL.setState(body, 'loading');
+  EF_SHELL.api({ action: 'get_conversation', client_slug: (currentClient || {}).slug, thread_id: it.thread_id }).then(function (data) {
+    if (!data || data.error || !data.success) throw new Error((data && data.error) || 'empty response');
+    const turns = data.turns || [];
+    if (!turns.length) { EF_SHELL.setState(body, 'empty', { message: 'No messages recorded on this conversation.' }); return; }
+    body.innerHTML = turns.map(function (t) {
+      const flags = [];
+      if (t.escalated) flags.push('<span class="chip esc">Handed off</span>');
+      if (t.hold_intent) flags.push('<span class="chip hold">Hold</span>');
+      const reply = t.reply ? '<h5 style="margin-top:10px;">Assistant replied</h5><div class="reply-text">' + esc(t.reply) + '</div>'
+        : (t.reply_draft ? '<h5 style="margin-top:10px;">Draft (not sent)</h5><div class="reply-text">' + esc(t.reply_draft) + '</div>' : '');
+      return '<div class="conv-turn"><div class="attn-meta">' + esc(relTime(t.at)) + (flags.length ? ' &nbsp;' + flags.join('') : '') + '</div>' +
+        (t.summary ? '<h5 style="margin-top:8px;">Guest</h5><div class="reply-text">' + esc(t.summary) + '</div>' : '') + reply + '</div>';
+    }).join('');
+  }).catch(function (err) {
+    EF_SHELL.setState(body, 'error', { message: 'Could not load this conversation.', retry: function () { openDrawer(it); } });
+    console.warn('Conversation load failed:', err);
+  });
+}
+function closeDrawer() {
+  document.getElementById('conv-drawer').classList.remove('open');
+  document.getElementById('drawer-scrim').classList.remove('open');
+}
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeDrawer(); });
+</script>
+</body>
+</html>

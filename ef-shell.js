@@ -37,7 +37,8 @@ window.EF_SHELL = (function () {
 
   var NAV = [
     { key: 'dashboard',    href: '/dashboard',    label: 'Dashboard',    icon: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>' },
-    { key: 'bookings',     href: '/bookings',     label: 'Bookings',     icon: '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>' },
+    { key: 'events',       href: '/events',       label: 'Events',       icon: '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>' },
+    { key: 'bookings',   href: '/bookings',     label: 'Bookings',     icon: '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>' },
     { key: 'beo',          href: '/booking',      label: 'BEO',          icon: '<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="14" y2="15"/>' },
     { key: 'venue',        href: '/venue',        label: 'Venue',        icon: '<path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/>' },
     { key: 'menus',        href: '/menus',        label: 'Menus',        icon: '<path d="M3 6h18M3 12h18M3 18h18"/>' },
@@ -51,6 +52,63 @@ window.EF_SHELL = (function () {
     var d = document.createElement('div');
     d.textContent = (s == null) ? '' : String(s);
     return d.innerHTML;
+  }
+
+  /* ── Email sign-in links (MAGIC_LINK_SHELL_V1, 2026-10-14) ───
+   * People without Google sign-in (the events manager is on Microsoft 365) sign in with an
+   * emailed link: /<page>?client=<slug>#st=<token> (the daily events recap carries one; the
+   * Events page's "email me a link" form sends one). The token is kept per venue in
+   * localStorage ef_vf_token_<slug>, the same key /venue has used since July, the #st= part is
+   * stripped from the address bar, and api() sends it as session_token whenever there is no
+   * Google token. Apps Script verifies the token AND the venue access on every call; the email
+   * read from the token here is only used to show who is signed in and to pick the venue.
+   * A Google session always wins over a link. */
+  function _b64urlJson(s) {
+    try {
+      s = String(s || '').replace(/-/g, '+').replace(/_/g, '/');
+      while (s.length % 4) s += '=';
+      return JSON.parse(atob(s));
+    } catch (e) { return null; }
+  }
+  function _urlClient() {
+    try { return new URLSearchParams(window.location.search).get('client') || ''; } catch (e) { return ''; }
+  }
+  function _googleToken() {
+    try { return sessionStorage.getItem('ef_id_token') || ''; } catch (e) { return ''; }
+  }
+  (function captureLinkToken() {
+    try {
+      var m = (window.location.hash || '').match(/[#&]st=([^&]+)/);
+      if (!m) return;
+      var tok = decodeURIComponent(m[1]);
+      var p = _b64urlJson(tok.split('.')[0]);
+      var slug = _urlClient() || (p && p.c) || '';
+      if (slug && p && p.e) localStorage.setItem('ef_vf_token_' + slug, tok);
+      if (window.history && history.replaceState) history.replaceState(null, '', window.location.pathname + window.location.search);
+    } catch (e) {}
+  })();
+  // The newest usable link session, preferring the venue the page is about. Expired ones are dropped.
+  function linkSession(slugHint) {
+    try {
+      var want = 'ef_vf_token_' + (slugHint || _urlClient() || (window.EF_VENUE_PICKER && EF_VENUE_PICKER.getActive ? EF_VENUE_PICKER.getActive() : '') || '');
+      var keys = [];
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf('ef_vf_token_') === 0) keys.push(k);
+      }
+      keys.sort(function (a, b) { return (b === want ? 1 : 0) - (a === want ? 1 : 0); });
+      for (var j = 0; j < keys.length; j++) {
+        var tok = localStorage.getItem(keys[j]) || '';
+        var p = _b64urlJson(tok.split('.')[0]);
+        if (p && p.e && p.x && Date.now() < p.x) return { token: tok, email: String(p.e).toLowerCase(), slug: keys[j].slice(12) };
+        if (p && p.x && Date.now() >= p.x) localStorage.removeItem(keys[j]);
+      }
+    } catch (e) {}
+    return null;
+  }
+  // Ask for a sign-in link by email (Apps Script request_link; it only ever sends one to an address with access).
+  function requestLink(slug, email, page) {
+    return api({ action: 'request_link', client_slug: slug, email: email, page: page || '' });
   }
 
   function signedInEmail(fallback) {
@@ -116,6 +174,7 @@ window.EF_SHELL = (function () {
       sessionStorage.removeItem('ef_id_token');
       sessionStorage.removeItem('ef_id_token_exp');
       sessionStorage.removeItem('ef_admin_email');
+      sessionStorage.removeItem('ef_auth_kind');
     } catch (e) {}
     try {
       // Magic-link venue sessions (ef_vf_token_<slug>) end on sign-out too.
@@ -152,7 +211,8 @@ window.EF_SHELL = (function () {
   var _clientsPromise = null;
   var _clientsAuthed = false;
   function _haveToken() {
-    try { return !!sessionStorage.getItem('ef_id_token'); } catch (e) { return false; }
+    // MAGIC_LINK_SHELL_V1: an emailed sign-in link counts as signed in too.
+    return !!_googleToken() || !!linkSession();
   }
   function loadClients() {
     var tok = _haveToken();
@@ -219,6 +279,35 @@ window.EF_SHELL = (function () {
   function boot(opts) {
     opts = opts || {};
     var firedSlug = '';
+
+    // MAGIC_LINK_SHELL_V1: no Google session but a usable emailed link -> sign in with the link.
+    var link = _googleToken() ? null : linkSession();
+    if (link) {
+      try {
+        if (sessionStorage.getItem('ef_auth_kind') === 'link' || !sessionStorage.getItem('ef_user_email')) {
+          sessionStorage.setItem('ef_user_email', link.email);
+          sessionStorage.setItem('ef_auth_kind', 'link');
+        }
+      } catch (e) {}
+    }
+    // The link no longer works (expired, or the address lost access): forget it and show the sign-in screen.
+    function linkFailed() {
+      try {
+        localStorage.removeItem('ef_vf_token_' + link.slug);
+        sessionStorage.removeItem('ef_user_email');
+        sessionStorage.removeItem('ef_auth_kind');
+      } catch (e) {}
+      Array.prototype.forEach.call(document.querySelectorAll('style'), function (s) {
+        if (/#login-screen\s*\{\s*display:\s*none/.test(s.textContent || '')) s.remove();
+      });
+      var ls = document.getElementById('login-screen');
+      if (ls) ls.style.display = '';
+      var errEl = document.getElementById('login-error');
+      if (errEl) {
+        errEl.textContent = 'Your sign-in link has expired or no longer has access. Ask for a new one below, or sign in with Google.';
+        errEl.style.display = 'block';
+      }
+    }
 
     function resolve(email) {
       if (!email) return null;
@@ -298,6 +387,7 @@ window.EF_SHELL = (function () {
       if (!email) return;
       var client = resolve(email);
       if (client) fire(client);
+      else if (link && !_googleToken()) linkFailed();
       renderPicker();
     });
   }
@@ -352,6 +442,11 @@ window.EF_SHELL = (function () {
         var t = sessionStorage.getItem('ef_id_token');
         if (t) payload.id_token = t;
       } catch (e) {}
+    }
+    // MAGIC_LINK_SHELL_V1: no Google token -> the emailed sign-in link (for this venue when there is one).
+    if (!payload.id_token && !payload.session_token) {
+      var ls = linkSession(payload.client_slug);
+      if (ls) payload.session_token = ls.token;
     }
     return fetch(CONFIG.DATA_URL, {
       method: 'POST',
@@ -416,6 +511,8 @@ window.EF_SHELL = (function () {
     toggleSidebar: toggleSidebar,
     signOut: signOut,
     api: api,
+    linkSession: linkSession,
+    requestLink: requestLink,
     getJson: getJson,
     demoActive: demoActive,
     setState: setState,
