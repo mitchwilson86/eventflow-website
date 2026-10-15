@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Review a suggestion</title>
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="/favicon.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/eventflow-shared.css" />
+  <link rel="stylesheet" href="/bookings.css" />
+  <script src="/bookings-shared.js"></script>
+  <style>
+    body { background: var(--bg-page); }
+    .rv-wrap { max-width: 640px; margin: 0 auto; padding: 32px 16px 80px; }
+    .rv-brand { font-family: 'DM Serif Display', Georgia, serif; font-size: 22px; color: var(--teal); text-align: center; margin-bottom: 20px; }
+    .rv-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .rv-eyebrow { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 8px; }
+    .rv-title { font-size: 21px; font-weight: 600; color: var(--text-primary); line-height: 1.35; margin: 0 0 16px 0; }
+    .rv-row { margin: 0 0 12px 0; font-size: 15px; line-height: 1.55; color: var(--text-primary); }
+    .rv-row strong { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); font-weight: 600; margin-bottom: 2px; }
+    .rv-status { border-radius: 10px; padding: 16px 18px; margin: 0 0 18px 0; }
+    .rv-status h2 { font-family: 'DM Serif Display', Georgia, serif; font-size: 24px; font-weight: 400; margin: 0 0 6px 0; color: var(--text-primary); }
+    .rv-status p { margin: 0; font-size: 15px; line-height: 1.55; color: var(--text-secondary); }
+    .rv-status.approved { background: var(--teal-bg); border: 1px solid var(--teal); }
+    .rv-status.rejected { background: var(--bg-inset); border: 1px solid var(--border-hover); }
+    .rv-status.not_now { background: var(--orange-bg); border: 1px solid var(--orange); }
+    .rv-status.closed { background: var(--bg-inset); border: 1px solid var(--border); }
+    .rv-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+    .rv-actions .btn { padding: 10px 18px; font-size: 15px; }
+    .rv-btn-approve { background: var(--teal); color: #fff; border: 1px solid var(--teal); }
+    .rv-hint { font-size: 13px; color: var(--text-secondary); margin-top: 10px; line-height: 1.5; }
+    details.rv-exact { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 12px; }
+    details.rv-exact summary { cursor: pointer; font-size: 14px; color: var(--text-secondary); }
+    details.rv-exact pre { white-space: pre-wrap; font-family: inherit; font-size: 14px; background: var(--bg-inset); border-radius: 8px; padding: 12px 14px; margin: 10px 0 0 0; color: var(--text-primary); }
+    .rv-err { color: var(--red); font-size: 14px; margin-top: 10px; display: none; }
+    .rv-loader { text-align: center; color: var(--text-secondary); padding: 48px 0; font-size: 14px; }
+  </style>
+</head>
+<body>
+<div class="rv-wrap">
+  <div class="rv-brand">EventFlow</div>
+  <div class="rv-loader" id="loader">Opening the suggestion...</div>
+
+  <div class="rv-card" id="error" style="display:none">
+    <div class="rv-status closed">
+      <h2>We could not open this link</h2>
+      <p id="error-msg"></p>
+    </div>
+  </div>
+
+  <div class="rv-card" id="content" style="display:none">
+    <div class="rv-status" id="status" style="display:none">
+      <h2 id="status-title"></h2>
+      <p id="status-body"></p>
+    </div>
+    <div class="rv-eyebrow" id="eyebrow">Suggestion for the AI assistant</div>
+    <p class="rv-title" id="title"></p>
+    <p class="rv-row" id="row-noticed" style="display:none"><strong>What we noticed</strong><span id="noticed"></span></p>
+    <p class="rv-row" id="row-example" style="display:none"><strong>Example</strong><span id="example"></span></p>
+    <p class="rv-row" id="row-change" style="display:none"><strong>What would change</strong><span id="change"></span></p>
+    <details class="rv-exact" id="exact-box" style="display:none">
+      <summary>Exact wording that would be added</summary>
+      <pre id="exact"></pre>
+    </details>
+    <div class="rv-actions" id="actions">
+      <button class="btn rv-btn-approve" id="btn-approve" onclick="decide('approve')">Approve</button>
+      <button class="btn" id="btn-reject" onclick="decide('reject')">Reject</button>
+      <button class="btn" id="btn-not_now" onclick="decide('not_now')">Not now</button>
+      <button class="btn" id="btn-undo" onclick="decide('undo')" style="display:none">Undo</button>
+    </div>
+    <div class="rv-err" id="decide-error"></div>
+    <p class="rv-hint" id="hint">Approving does not change the assistant right away. It goes on your to-do list in Obsidian and is built and tested in the next monthly update.</p>
+  </div>
+</div>
+
+<script>
+/* AI_REVIEW_V1 (2026-10-15). Public, token-gated page for the weekly AI review email. Possession of the link is the
+   credential (same posture as gap.html). The email's buttons open this page with ?t=<token>&d=approve|reject|not_now;
+   the choice is recorded HERE, by script, never by the link itself, so a link scanner fetching the URL changes nothing.
+   Both RPCs are SECURITY DEFINER over an RLS-denied table; decide_ai_suggestion also tells the Obsidian sync. */
+var params = new URLSearchParams(window.location.search);
+var token = params.get('t') || params.get('token') || '';
+var wanted = (params.get('d') || '').toLowerCase();
+var ctx = null;
+var busy = false;
+
+window.addEventListener('load', boot);
+
+async function boot() {
+  if (!token) return showError('This link is missing its code. Please open it again from the weekly review email.');
+  try {
+    var sb = await getSupabase();
+    var res = await sb.rpc('get_ai_suggestion', { p_token: token });
+    if (res.error) return showError(humanizeError(res.error.message));
+    ctx = res.data || {};
+    render();
+    var map = { approve: 'approved', reject: 'rejected', not_now: 'not_now' };
+    if (map[wanted] && ctx.status !== map[wanted] && ctx.status !== 'built' && ctx.status !== 'superseded') {
+      await decide(wanted);
+    }
+  } catch (err) {
+    showError(humanizeError((err && err.message) || String(err)));
+  }
+}
+
+function setText(id, value, rowId) {
+  var v = String(value || '').trim();
+  document.getElementById(id).textContent = v;
+  if (rowId) document.getElementById(rowId).style.display = v ? 'block' : 'none';
+}
+
+function render() {
+  document.getElementById('loader').style.display = 'none';
+  document.getElementById('error').style.display = 'none';
+  document.getElementById('content').style.display = 'block';
+  document.getElementById('eyebrow').textContent = ctx.kind === 'knowledge' ? 'Suggestion: something the assistant needs to know' : 'Suggestion: how the assistant writes';
+  setText('title', ctx.title);
+  setText('noticed', ctx.what_we_noticed, 'row-noticed');
+  setText('example', ctx.example, 'row-example');
+  setText('change', ctx.change_plain, 'row-change');
+  if (String(ctx.exact_wording || '').trim()) {
+    document.getElementById('exact').textContent = ctx.exact_wording;
+    document.getElementById('exact-box').style.display = 'block';
+  }
+  renderStatus();
+}
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  try { return new Date(iso).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'America/Chicago' }); }
+  catch (e) { return ''; }
+}
+
+function renderStatus() {
+  var box = document.getElementById('status');
+  var s = ctx.status;
+  var title = '', body = '';
+  box.className = 'rv-status';
+  if (s === 'approved') {
+    box.classList.add('approved');
+    title = 'Approved';
+    body = 'It is on your to-do list in Obsidian, in the AI Improvement Queue. It will be built and tested in the next monthly update.';
+  } else if (s === 'rejected') {
+    box.classList.add('rejected');
+    title = 'Rejected';
+    body = 'Got it. The weekly review will not suggest this again.';
+  } else if (s === 'not_now') {
+    box.classList.add('not_now');
+    title = 'Saved for later';
+    body = 'It will be back in your weekly review email next Sunday.';
+  } else if (s === 'built') {
+    box.classList.add('closed');
+    title = 'Already built';
+    body = 'This change is already part of the assistant, so there is nothing left to decide.';
+  } else if (s === 'superseded') {
+    box.classList.add('closed');
+    title = 'Replaced';
+    body = 'A newer suggestion replaced this one, so there is nothing left to decide here.';
+  }
+  box.style.display = title ? 'block' : 'none';
+  document.getElementById('status-title').textContent = title;
+  document.getElementById('status-body').textContent = body;
+
+  var locked = s === 'built' || s === 'superseded';
+  document.getElementById('actions').style.display = locked ? 'none' : 'flex';
+  document.getElementById('hint').style.display = locked ? 'none' : 'block';
+  ['approve', 'reject', 'not_now'].forEach(function (d) {
+    var map = { approve: 'approved', reject: 'rejected', not_now: 'not_now' };
+    document.getElementById('btn-' + d).style.display = (s === map[d]) ? 'none' : 'inline-block';
+  });
+  document.getElementById('btn-undo').style.display = (s === 'approved' || s === 'rejected' || s === 'not_now') ? 'inline-block' : 'none';
+  var labels = { approve: s === 'pending' ? 'Approve' : 'Approve instead', reject: s === 'pending' ? 'Reject' : 'Reject instead', not_now: s === 'pending' ? 'Not now' : 'Not now instead' };
+  Object.keys(labels).forEach(function (d) { document.getElementById('btn-' + d).textContent = labels[d]; });
+}
+
+async function decide(d) {
+  if (busy) return;
+  busy = true;
+  var errEl = document.getElementById('decide-error');
+  errEl.style.display = 'none';
+  var buttons = document.querySelectorAll('#actions .btn');
+  buttons.forEach(function (b) { b.disabled = true; });
+  try {
+    var sb = await getSupabase();
+    var res = await sb.rpc('decide_ai_suggestion', { p_token: token, p_decision: d });
+    if (res.error) throw res.error;
+    var data = res.data || {};
+    if (data.ok !== true) throw new Error('Unexpected response');
+    ctx.status = data.status;
+    ctx.decided_at = data.decided_at;
+    ctx.snoozed_until = data.snoozed_until;
+    renderStatus();
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, '', window.location.pathname + '?t=' + encodeURIComponent(token));
+    }
+  } catch (err) {
+    errEl.textContent = humanizeError((err && err.message) || String(err));
+    errEl.style.display = 'block';
+  } finally {
+    buttons.forEach(function (b) { b.disabled = false; });
+    busy = false;
+  }
+}
+
+function showError(msg) {
+  document.getElementById('loader').style.display = 'none';
+  document.getElementById('content').style.display = 'none';
+  document.getElementById('error').style.display = 'block';
+  document.getElementById('error-msg').textContent = msg;
+}
+
+/* A raw Postgres exception must never reach the page. Everything the two RPCs can raise is mapped here. */
+function humanizeError(msg) {
+  if (!msg) return 'Something went wrong. Please try again in a moment.';
+  if (/token expired/i.test(msg)) return 'This link has expired. The suggestion will be in a newer weekly review email.';
+  if (/token not found|invalid token/i.test(msg)) return 'This link is not valid. It may have been copied incompletely. Please open it again from the email.';
+  if (/invalid decision/i.test(msg)) return 'That choice was not recognised. Please use the buttons below.';
+  if (/Failed to fetch|NetworkError|network/i.test(msg)) return 'We could not reach the server. Please check your connection and try again.';
+  return 'Something went wrong. Please try again in a moment.';
+}
+</script>
+</body>
+</html>
