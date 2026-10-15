@@ -95,6 +95,11 @@
   status = 200
 
 [[redirects]]
+  from = "/social"
+  to = "/social.html"
+  status = 200
+
+[[redirects]]
   from = "/unsubscribe"
   to = "/unsubscribe.html"
   status = 200

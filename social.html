@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Review a post</title>
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="/favicon.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/eventflow-shared.css" />
+  <link rel="stylesheet" href="/bookings.css" />
+  <script src="/bookings-shared.js"></script>
+  <style>
+    body { background: var(--bg-page); }
+    .sp-wrap { max-width: 680px; margin: 0 auto; padding: 32px 16px 80px; }
+    .sp-brand { font-family: 'DM Serif Display', Georgia, serif; font-size: 22px; color: var(--teal); text-align: center; margin-bottom: 20px; }
+    .sp-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .sp-preview { background: var(--orange-bg); border: 1px solid var(--orange); border-radius: 10px; padding: 12px 16px; font-size: 14px; line-height: 1.5; color: var(--text-primary); margin-bottom: 16px; }
+    .sp-eyebrow { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 8px; }
+    .sp-title { font-size: 21px; font-weight: 600; color: var(--text-primary); line-height: 1.35; margin: 0 0 6px 0; }
+    .sp-when { font-size: 14px; color: var(--text-secondary); margin: 0 0 16px 0; }
+    .sp-status { border-radius: 10px; padding: 16px 18px; margin: 0 0 18px 0; }
+    .sp-status h2 { font-family: 'DM Serif Display', Georgia, serif; font-size: 24px; font-weight: 400; margin: 0 0 6px 0; color: var(--text-primary); }
+    .sp-status p { margin: 0; font-size: 15px; line-height: 1.55; color: var(--text-secondary); }
+    .sp-status a { color: var(--teal); }
+    .sp-status.good { background: var(--teal-bg); border: 1px solid var(--teal); }
+    .sp-status.neutral { background: var(--bg-inset); border: 1px solid var(--border-hover); }
+    .sp-status.warn { background: var(--orange-bg); border: 1px solid var(--orange); }
+    .sp-platform { border: 1px solid var(--border); border-radius: 10px; margin: 0 0 12px 0; overflow: hidden; }
+    .sp-platform h3 { margin: 0; padding: 8px 14px; font-size: 13px; font-weight: 600; background: var(--bg-inset); color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+    .sp-platform .sp-text { white-space: pre-wrap; font-size: 15px; line-height: 1.6; color: var(--text-primary); padding: 12px 14px; margin: 0; }
+    .sp-platform textarea { width: 100%; box-sizing: border-box; border: 0; border-top: 1px solid var(--border); padding: 12px 14px; font-family: inherit; font-size: 15px; line-height: 1.6; min-height: 180px; resize: vertical; color: var(--text-primary); background: var(--bg-card); }
+    .sp-count { font-size: 12px; color: var(--text-secondary); padding: 4px 14px 8px; text-align: right; }
+    .sp-count.over { color: var(--red); font-weight: 600; }
+    .sp-row { margin: 0 0 12px 0; font-size: 15px; line-height: 1.55; color: var(--text-primary); }
+    .sp-row strong { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); font-weight: 600; margin-bottom: 2px; }
+    details.sp-numbers { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 12px; }
+    details.sp-numbers summary { cursor: pointer; font-size: 14px; color: var(--text-secondary); }
+    details.sp-numbers ul { margin: 8px 0 0 0; padding-left: 20px; font-size: 14px; line-height: 1.6; color: var(--text-primary); }
+    .sp-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+    .sp-actions .btn { padding: 10px 18px; font-size: 15px; }
+    .sp-btn-approve { background: var(--teal); color: #fff; border: 1px solid var(--teal); }
+    .sp-edit-field { margin: 0 0 14px 0; }
+    .sp-edit-field label { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); font-weight: 600; margin-bottom: 4px; }
+    .sp-edit-field input { width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 15px; color: var(--text-primary); background: var(--bg-card); }
+    .sp-inline { display: flex; gap: 10px; flex-wrap: wrap; }
+    .sp-inline input { flex: 1 1 140px; width: auto; }
+    .sp-hint { font-size: 13px; color: var(--text-secondary); margin-top: 10px; line-height: 1.5; }
+    .sp-err { color: var(--red); font-size: 14px; margin-top: 10px; display: none; line-height: 1.5; }
+    .sp-loader { text-align: center; color: var(--text-secondary); padding: 48px 0; font-size: 14px; }
+  </style>
+</head>
+<body>
+<div class="sp-wrap">
+  <div class="sp-brand">EventFlow</div>
+  <div class="sp-loader" id="loader">Opening the post...</div>
+
+  <div class="sp-card" id="error" style="display:none">
+    <div class="sp-status neutral">
+      <h2>We could not open this link</h2>
+      <p id="error-msg"></p>
+    </div>
+  </div>
+
+  <div id="content" style="display:none">
+    <div class="sp-preview" id="preview-banner" style="display:none">
+      <strong>Preview mode.</strong> Approving only marks this post. Nothing is sent to Publer and nothing is posted while EventFlow's social posts are in preview.
+    </div>
+    <div class="sp-card">
+      <div class="sp-status" id="status" style="display:none">
+        <h2 id="status-title"></h2>
+        <p id="status-body"></p>
+      </div>
+      <div class="sp-eyebrow" id="eyebrow"></div>
+      <p class="sp-title" id="title"></p>
+      <p class="sp-when" id="when"></p>
+
+      <div id="view-mode">
+        <div id="platforms"></div>
+        <p class="sp-row" id="row-media" style="display:none"><strong>Picture or video</strong><span id="media"></span></p>
+        <p class="sp-row" id="row-visual" style="display:none"><strong>Visual idea</strong><span id="visual"></span></p>
+        <details class="sp-numbers" id="numbers-box" style="display:none">
+          <summary>Where each number comes from</summary>
+          <ul id="numbers"></ul>
+        </details>
+        <div class="sp-actions" id="actions">
+          <button class="btn sp-btn-approve" id="btn-approve" onclick="decide('approve')">Approve</button>
+          <button class="btn" id="btn-edit" onclick="openEditor()">Edit</button>
+          <button class="btn" id="btn-skip" onclick="decide('skip')">Skip</button>
+          <button class="btn" id="btn-undo" onclick="decide('undo')" style="display:none">Undo</button>
+        </div>
+      </div>
+
+      <div id="edit-mode" style="display:none">
+        <div id="edit-platforms"></div>
+        <div class="sp-edit-field">
+          <label for="edit-date">When it goes out (Central time)</label>
+          <div class="sp-inline">
+            <input type="date" id="edit-date" />
+            <input type="time" id="edit-time" step="300" />
+          </div>
+        </div>
+        <div class="sp-edit-field" id="edit-image-row">
+          <label for="edit-image">Your own picture (optional): paste a link that starts with https://</label>
+          <input type="url" id="edit-image" placeholder="https://..." />
+        </div>
+        <div class="sp-actions">
+          <button class="btn sp-btn-approve" id="btn-save" onclick="saveEdit()">Save and approve</button>
+          <button class="btn" onclick="closeEditor()">Cancel</button>
+        </div>
+      </div>
+
+      <div class="sp-err" id="decide-error"></div>
+      <p class="sp-hint" id="hint">Approve sends it to the posting queue for its planned time. Edit lets you change the words or the time first. Skip removes it. You can undo until it is posted.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+/* SOCIAL_V1 (2026-10-15). Public, token-gated page for the Monday "This week's posts" email. Possession of the link is
+   the credential (same posture as review.html / gap.html). The email's buttons open this page with
+   ?t=<token>&d=approve|skip|edit; approve and skip are recorded HERE, by script, never by the link itself, so a link
+   scanner fetching the URL changes nothing. Both RPCs (get_social_post / decide_social_post) are SECURITY DEFINER over
+   RLS-denied tables; every rule (7-day expiry, locked states, the no-long-dash rule, length limits, time range) is
+   enforced in SQL, the checks here only explain them early. */
+var params = new URLSearchParams(window.location.search);
+var token = params.get('t') || params.get('token') || '';
+var wanted = (params.get('d') || '').toLowerCase();
+var ctx = null;
+var busy = false;
+var LABELS = { linkedin_personal: 'Your LinkedIn', linkedin_page: 'EventFlow LinkedIn page', instagram: 'Instagram', tiktok: 'TikTok (you finish it in the TikTok app)' };
+var LIMITS = { linkedin_personal: 3000, linkedin_page: 3000, instagram: 2200, tiktok: 2200 };
+var PILLARS = { proof: 'Proof post', show: 'Show it working', teach: 'Teaching post', founder: 'Founder story', talking: 'Talking video clip' };
+var EM = String.fromCharCode(8212), EN = String.fromCharCode(8211);
+
+window.addEventListener('load', boot);
+
+async function boot() {
+  if (!token) return showError('This link is missing its code. Please open it again from the "This week\'s posts" email.');
+  try {
+    var sb = await getSupabase();
+    var res = await sb.rpc('get_social_post', { p_token: token });
+    if (res.error) return showError(humanizeError(res.error.message));
+    ctx = res.data || {};
+    render();
+    var map = { approve: 'approved', skip: 'skipped' };
+    if (map[wanted] && ctx.status !== map[wanted] && isOpen()) {
+      await decide(wanted);
+    } else if (wanted === 'edit' && canEdit()) {
+      openEditor();
+    }
+  } catch (err) {
+    showError(humanizeError((err && err.message) || String(err)));
+  }
+}
+
+function isOpen() { return !ctx.expired && ['posted', 'publishing', 'expired'].indexOf(ctx.status) === -1; }
+function canEdit() { return isOpen() && ctx.status !== 'scheduled'; }
+
+function fmtWhen(iso) {
+  if (!iso) return '';
+  try {
+    return new Date(iso).toLocaleString('en-US', { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Chicago' }) + ' (Central)';
+  } catch (e) { return ''; }
+}
+
+function render() {
+  document.getElementById('loader').style.display = 'none';
+  document.getElementById('error').style.display = 'none';
+  document.getElementById('content').style.display = 'block';
+  document.getElementById('preview-banner').style.display = ctx.mode === 'preview' ? 'block' : 'none';
+  document.getElementById('eyebrow').textContent = PILLARS[ctx.pillar] || 'Post';
+  document.getElementById('title').textContent = ctx.title || '';
+  document.getElementById('when').textContent = ctx.scheduled_for ? 'Planned for ' + fmtWhen(ctx.scheduled_for) : '';
+  var box = document.getElementById('platforms');
+  box.innerHTML = '';
+  (ctx.platforms || []).forEach(function (p) {
+    var wrap = document.createElement('div'); wrap.className = 'sp-platform';
+    var h = document.createElement('h3'); h.textContent = LABELS[p] || p; wrap.appendChild(h);
+    var t = document.createElement('p'); t.className = 'sp-text'; t.textContent = (ctx.body_by_platform || {})[p] || ''; wrap.appendChild(t);
+    box.appendChild(wrap);
+  });
+  var m = ctx.media || {};
+  var mediaEl = document.getElementById('media');
+  mediaEl.innerHTML = '';
+  if (m.type === 'video' || m.type === 'image') {
+    var label = (m.type === 'video' ? 'Video clip' : 'Picture') + (m.name ? ': ' + m.name : '');
+    var link = m.web_url || m.url;
+    if (link) { var a = document.createElement('a'); a.href = link; a.target = '_blank'; a.rel = 'noopener'; a.textContent = label; mediaEl.appendChild(a); }
+    else mediaEl.textContent = label;
+  }
+  document.getElementById('row-media').style.display = mediaEl.textContent ? 'block' : 'none';
+  document.getElementById('visual').textContent = ctx.visual_note || '';
+  document.getElementById('row-visual').style.display = (ctx.visual_note && m.type !== 'video') ? 'block' : 'none';
+  var nums = document.getElementById('numbers');
+  nums.innerHTML = '';
+  (ctx.numbers_used || []).forEach(function (n) {
+    var li = document.createElement('li');
+    li.textContent = String(n.value) + ': ' + (n.label || n.source || '');
+    nums.appendChild(li);
+  });
+  document.getElementById('numbers-box').style.display = (ctx.numbers_used || []).length ? 'block' : 'none';
+  renderStatus();
+}
+
+function renderStatus() {
+  var box = document.getElementById('status');
+  var s = ctx.expired ? 'expired' : ctx.status;
+  var preview = ctx.mode === 'preview' || ctx.mode === 'off';
+  var title = '', body = '', cls = 'neutral';
+  if (s === 'approved') {
+    cls = 'good'; title = 'Approved';
+    body = preview ? 'Marked as approved. In preview nothing is sent to Publer, so it will not be posted.'
+                   : 'It goes into the posting queue for ' + fmtWhen(ctx.scheduled_for) + '. You can undo until it is posted.';
+  } else if (s === 'publishing') {
+    cls = 'good'; title = 'Being sent to Publer';
+    body = 'Give it a minute. You can undo once Publer has it.';
+  } else if (s === 'scheduled') {
+    cls = 'good'; title = 'Scheduled';
+    body = 'Publer will post it on ' + fmtWhen(ctx.scheduled_for) + '. Undo takes it back out of Publer.';
+  } else if (s === 'posted') {
+    cls = 'good'; title = 'Posted';
+    body = ctx.posted_url ? '' : 'It is live.';
+  } else if (s === 'skipped') {
+    title = 'Skipped'; body = 'It will not be posted. Changed your mind? Use Undo.';
+  } else if (s === 'expired') {
+    title = 'This draft expired'; body = 'Drafts are kept for 7 days so they do not pile up. Next Monday brings a fresh set.';
+  } else if (s === 'failed') {
+    cls = 'warn'; title = 'Publer did not accept this post';
+    body = 'You got an email with the text ready to copy and paste. You can also fix it here and approve it again.' + (ctx.error ? ' What Publer said: ' + ctx.error : '');
+  }
+  box.className = 'sp-status ' + cls;
+  box.style.display = title ? 'block' : 'none';
+  document.getElementById('status-title').textContent = title;
+  document.getElementById('status-body').textContent = body;
+  if (s === 'posted' && ctx.posted_url) {
+    var a = document.createElement('a'); a.href = ctx.posted_url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'See it on the platform';
+    document.getElementById('status-body').appendChild(a);
+  }
+  var open = isOpen();
+  document.getElementById('actions').style.display = open ? 'flex' : 'none';
+  document.getElementById('hint').style.display = open ? 'block' : 'none';
+  document.getElementById('btn-approve').style.display = (s === 'approved' || s === 'scheduled') ? 'none' : 'inline-block';
+  document.getElementById('btn-approve').textContent = (s === 'skipped' || s === 'failed') ? 'Approve instead' : 'Approve';
+  document.getElementById('btn-edit').style.display = canEdit() ? 'inline-block' : 'none';
+  document.getElementById('btn-skip').style.display = s === 'skipped' ? 'none' : 'inline-block';
+  document.getElementById('btn-skip').textContent = s === 'drafted' ? 'Skip' : 'Skip instead';
+  document.getElementById('btn-undo').style.display = (s === 'approved' || s === 'skipped' || s === 'scheduled' || s === 'failed') ? 'inline-block' : 'none';
+}
+
+/* Central-time wall clock -> ISO (UTC). Two passes settle the DST edges; same idea as ops-api zonedToUtc. */
+function ctToIso(date, time) {
+  var d = date.split('-').map(Number), t = time.split(':').map(Number);
+  var target = Date.UTC(d[0], d[1] - 1, d[2], t[0], t[1]);
+  var guess = target;
+  for (var i = 0; i < 2; i++) {
+    var parts = {};
+    new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+      .formatToParts(new Date(guess)).forEach(function (x) { if (x.type !== 'literal') parts[x.type] = Number(x.value); });
+    guess += target - Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour % 24, parts.minute);
+  }
+  return new Date(guess).toISOString();
+}
+function isoToCt(iso) {
+  var parts = {};
+  new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+    .formatToParts(new Date(iso)).forEach(function (x) { if (x.type !== 'literal') parts[x.type] = x.value; });
+  return { date: parts.year + '-' + parts.month + '-' + parts.day, time: (parts.hour === '24' ? '00' : parts.hour) + ':' + parts.minute };
+}
+
+function openEditor() {
+  if (!canEdit()) return;
+  var box = document.getElementById('edit-platforms');
+  box.innerHTML = '';
+  (ctx.platforms || []).forEach(function (p) {
+    var wrap = document.createElement('div'); wrap.className = 'sp-platform';
+    var h = document.createElement('h3'); h.textContent = LABELS[p] || p; wrap.appendChild(h);
+    var ta = document.createElement('textarea'); ta.id = 'edit-' + p; ta.value = (ctx.body_by_platform || {})[p] || ''; wrap.appendChild(ta);
+    var c = document.createElement('div'); c.className = 'sp-count'; c.id = 'count-' + p; wrap.appendChild(c);
+    ta.addEventListener('input', function () { updateCount(p); });
+    box.appendChild(wrap);
+    updateCount(p);
+  });
+  if (ctx.scheduled_for) { var w = isoToCt(ctx.scheduled_for); document.getElementById('edit-date').value = w.date; document.getElementById('edit-time').value = w.time; }
+  var m = ctx.media || {};
+  document.getElementById('edit-image-row').style.display = m.type === 'video' ? 'none' : 'block';
+  document.getElementById('edit-image').value = (m.type === 'image' && m.url) ? m.url : '';
+  document.getElementById('view-mode').style.display = 'none';
+  document.getElementById('edit-mode').style.display = 'block';
+  document.getElementById('hint').style.display = 'none';
+  document.getElementById('decide-error').style.display = 'none';
+}
+function closeEditor() {
+  document.getElementById('edit-mode').style.display = 'none';
+  document.getElementById('view-mode').style.display = 'block';
+  document.getElementById('decide-error').style.display = 'none';
+  renderStatus();
+}
+function updateCount(p) {
+  var v = document.getElementById('edit-' + p).value;
+  var el = document.getElementById('count-' + p);
+  var over = v.length > LIMITS[p];
+  el.textContent = v.length + ' / ' + LIMITS[p] + ' characters' + (v.indexOf(EM) !== -1 || v.indexOf(EN) !== -1 ? '  (has a long dash: please use a comma or period)' : '');
+  el.className = 'sp-count' + (over || v.indexOf(EM) !== -1 || v.indexOf(EN) !== -1 ? ' over' : '');
+}
+
+async function saveEdit() {
+  var errEl = document.getElementById('decide-error');
+  errEl.style.display = 'none';
+  var edits = { body_by_platform: {} };
+  for (var i = 0; i < (ctx.platforms || []).length; i++) {
+    var p = ctx.platforms[i];
+    var v = document.getElementById('edit-' + p).value.trim();
+    if (!v) return showDecideError('The ' + (LABELS[p] || p) + ' text is empty.');
+    if (v.indexOf(EM) !== -1 || v.indexOf(EN) !== -1) return showDecideError('The ' + (LABELS[p] || p) + ' text has a long dash. Please use a comma or a period instead.');
+    if (v.length > LIMITS[p]) return showDecideError('The ' + (LABELS[p] || p) + ' text is longer than ' + LIMITS[p] + ' characters.');
+    edits.body_by_platform[p] = v;
+  }
+  var date = document.getElementById('edit-date').value, time = document.getElementById('edit-time').value;
+  if (date && time) edits.scheduled_for = ctToIso(date, time);
+  if (document.getElementById('edit-image-row').style.display !== 'none') edits.image_url = document.getElementById('edit-image').value.trim();
+  var ok = await decide('edit', edits);
+  if (ok) closeEditor();
+}
+
+function showDecideError(msg) {
+  var errEl = document.getElementById('decide-error');
+  errEl.textContent = msg;
+  errEl.style.display = 'block';
+  return false;
+}
+
+async function decide(d, edits) {
+  if (busy) return false;
+  busy = true;
+  document.getElementById('decide-error').style.display = 'none';
+  var buttons = document.querySelectorAll('.sp-actions .btn');
+  buttons.forEach(function (b) { b.disabled = true; });
+  try {
+    var sb = await getSupabase();
+    var res = await sb.rpc('decide_social_post', { p_token: token, p_decision: d, p_edits: edits || null });
+    if (res.error) throw res.error;
+    var data = res.data || {};
+    if (data.ok !== true) throw new Error('Unexpected response');
+    ctx = data;
+    render();
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, '', window.location.pathname + '?t=' + encodeURIComponent(token));
+    }
+    return true;
+  } catch (err) {
+    showDecideError(humanizeError((err && err.message) || String(err)));
+    return false;
+  } finally {
+    buttons.forEach(function (b) { b.disabled = false; });
+    busy = false;
+  }
+}
+
+function showError(msg) {
+  document.getElementById('loader').style.display = 'none';
+  document.getElementById('content').style.display = 'none';
+  document.getElementById('error').style.display = 'block';
+  document.getElementById('error-msg').textContent = msg;
+}
+
+/* A raw Postgres exception must never reach the page. Everything the two RPCs can raise is mapped here. */
+function humanizeError(msg) {
+  if (!msg) return 'Something went wrong. Please try again in a moment.';
+  if (/token expired/i.test(msg)) return 'This link has expired. The post will be in a newer email.';
+  if (/token not found|invalid token/i.test(msg)) return 'This link is not valid. It may have been copied incompletely. Please open it again from the email.';
+  if (/invalid decision/i.test(msg)) return 'That choice was not recognised. Please use the buttons below.';
+  if (/long dash/i.test(msg)) return 'The text has a long dash. Please use a comma or a period instead.';
+  if (/too long/i.test(msg)) return 'The text is longer than that platform allows. Please shorten it.';
+  if (/empty text/i.test(msg)) return 'One of the texts is empty.';
+  if (/out of range|bad time/i.test(msg)) return 'Please pick a time at least 15 minutes from now and within the next 6 weeks.';
+  if (/bad image link/i.test(msg)) return 'The picture link must start with https:// and point straight at the picture.';
+  if (/keeps its video/i.test(msg)) return 'A video clip post keeps its video; a picture cannot replace it.';
+  if (/unknown platform/i.test(msg)) return 'That platform is not part of this post.';
+  if (/Failed to fetch|NetworkError|network/i.test(msg)) return 'We could not reach the server. Please check your connection and try again.';
+  return 'Something went wrong. Please try again in a moment.';
+}
+</script>
+</body>
+</html>
