@@ -83,6 +83,28 @@
     .chip { display:inline-block; border-radius:999px; padding:2px 9px; font-size:0.75rem; font-weight:600; margin-right:4px; }
     .chip.esc { background:#fee2e2; color:#b91c1c; } .chip.hold { background:#fef3c7; color:#92400e; }
     .attn-meta { color:var(--text-muted); font-size:0.8rem; }
+    /* GUEST_STOPS_V1 (2026-10-16) — the venue's own stop buttons; hidden unless the venue's switch is on (or preview, admins) */
+    .ev-btn.stop { border-color:#fdba74; color:#9a3412; }
+    .ev-btn:disabled { opacity:0.55; cursor:default; }
+    .ev-stop { margin-top:8px; padding:7px 10px; border-radius:8px; background:#fff7ed; border:1px solid #fed7aa; font-size:0.86rem; color:#7c2d12; line-height:1.45; }
+    .ev-stop.handoff { background:#f1f5f9; border-color:#cbd5e1; color:#334155; }
+    .ev-stop .attn-meta { color:inherit; opacity:0.85; }
+    .ev-stop-form { margin-top:10px; padding:10px; border:1px solid #fed7aa; border-radius:8px; background:#fffbeb; }
+    .ev-stop-opt { display:flex; gap:8px; align-items:flex-start; padding:6px 0; cursor:pointer; font-size:0.9rem; }
+    .ev-stop-opt input { margin-top:3px; flex:none; }
+    .ev-stop-opt small { display:block; color:var(--text-muted); font-size:0.8rem; margin-top:1px; }
+    .ev-stop-extra { margin:2px 0 6px 24px; font-size:0.85rem; color:var(--text-secondary); display:none; align-items:center; gap:8px; flex-wrap:wrap; }
+    .ev-stop-extra.on { display:flex; }
+    .ev-stop-extra input[type=date] { padding:5px 8px; border:1px solid var(--border); border-radius:6px; font:inherit; font-size:0.85rem; }
+    .ev-reason { width:100%; box-sizing:border-box; margin-top:8px; padding:7px 9px; border:1px solid var(--border); border-radius:6px; font:inherit; font-size:0.88rem; }
+    .ev-gs-bar { margin:8px 0 4px; }
+    .ev-gs-row { display:flex; gap:10px; align-items:center; justify-content:flex-end; flex-wrap:wrap; }
+    .ev-pause-btn { border:1px solid #fca5a5; background:#fff; color:#b91c1c; border-radius:6px; padding:5px 11px; font:inherit; font-size:0.82rem; font-weight:600; cursor:pointer; }
+    .ev-pause-bar { padding:10px 12px; border-radius:8px; background:#fee2e2; border:1px solid #fca5a5; color:#7f1d1d; font-size:0.9rem; line-height:1.45; }
+    .ev-pause-form { margin-top:8px; padding:10px; border:1px solid #fca5a5; border-radius:8px; background:#fff1f2; font-size:0.88rem; color:#7f1d1d; }
+    .ev-preview-note { padding:8px 10px; border-radius:8px; background:#fef3c7; color:#92400e; font-size:0.85rem; margin-bottom:6px; }
+    .ev-closed-stop { margin-top:8px; font-size:0.85rem; color:#9a3412; display:none; gap:6px; align-items:center; }
+    .ev-closed-stop.on { display:flex; }
   </style>
 </head>
 <body>
@@ -131,6 +153,7 @@
       <div class="dash-body">
         <div class="panel">
           <h3>Every open event <span class="ev-updated" id="ev-updated"></span></h3>
+          <div class="ev-gs-bar" id="ev-gs-bar"></div>
           <div class="ev-summary" id="ev-tabs"></div>
           <div class="ev-tools">
             <input type="search" id="ev-search" placeholder="Search a guest, company or date" aria-label="Search events" oninput="renderList()" />
@@ -171,6 +194,7 @@ const SECTIONS = [
   { key: 'coming_up', label: 'Booked, next 30 days', cls: 'booked' },
   { key: 'gone_quiet', label: 'Gone quiet', cls: 'quiet' },
   { key: 'closed', label: 'Closed', cls: 'quiet' },
+  { key: 'stopped', label: 'Emails stopped', cls: 'quiet' },
   { key: 'all', label: 'All open', cls: '' }
 ];
 const MOVES = [
@@ -180,6 +204,21 @@ const MOVES = [
   { status: 'closed', label: 'Closed (not happening)' }
 ];
 let openForm = '';   // the item key whose note form is open
+/* GUEST_STOPS_V1 (2026-10-16): the stop buttons. GS comes from get_events (guest_stops); visible is false unless the
+   venue's switch is on (or preview, for admins), and then nothing below draws a single button. */
+let GS = { visible: false, mode: 'off', paused: null, is_admin: false };
+let openStop = '';   // the item key whose stop panel is open
+let stopPreset = ''; // the option pre-selected when the panel opens
+let pauseForm = false;
+let deepLinkDone = false;
+const STOP_OPTIONS = [
+  { mode: 'pause_checkins', label: 'Pause check-ins until a date', help: 'Replies, holds and the thank-you keep going. Check-ins start again on the date you pick.' },
+  { mode: 'manager_handling', label: "I'm handling the booking", help: 'The assistant stops answering this guest; their emails come to you. One soft check-in in 7 days, then the thank-you after the event.' },
+  { mode: 'closed', label: 'Closed: they went elsewhere', help: 'Stops everything about this inquiry. Ends by itself after the event date.' },
+  { mode: 'stop_all', label: 'Stop all emails', help: 'Nothing from EventFlow at all, marketing and the thank-you included. Lasts until you undo it.' }
+];
+function isoToday() { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
+function isoPlus(n) { const d = new Date(Date.now() + n * 864e5); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
 
 function esc(s) { const d = document.createElement('div'); d.textContent = (s == null ? '' : String(s)); return d.innerHTML; }
 function fmtDay(d) {
@@ -243,12 +282,17 @@ function loadEvents(slug, keepPlace) {
       return;
     }
     EV = { items: data.items || [], counts: data.counts || {}, tidy: data.tidy || [], run_at: data.run_at || '' };
+    GS = (data.guest_stops && data.guest_stops.visible === true) ? data.guest_stops : { visible: false, mode: 'off', paused: null, is_admin: false };
     document.getElementById('ev-updated').textContent = EV.run_at ? 'Updated ' + relTime(EV.run_at) : '';
     if (!SECTIONS.some(function (s) { return s.key === activeTab; })) activeTab = 'needs_you';
+    if (activeTab === 'stopped' && !GS.visible) activeTab = 'needs_you';
     if (!keepPlace && activeTab === 'needs_you' && !(EV.counts.needs_you > 0)) activeTab = 'all';
+    const focusKey = deepLinkDone ? '' : applyDeepLink();
+    renderGsBar();
     renderTabs();
     renderList();
     renderTidy();
+    if (focusKey) scrollToCard(focusKey);
   }).catch(function (err) {
     EF_SHELL.setState('ev-list', 'error', { message: 'Could not load your events.', retry: function () { loadEvents(slug); } });
     console.warn('Events load failed:', err);
@@ -258,8 +302,10 @@ function loadEvents(slug, keepPlace) {
 function renderTabs() {
   const c = EV.counts || {};
   document.getElementById('ev-tabs').innerHTML = SECTIONS.map(function (s) {
-    const n = s.key === 'all' ? EV.items.filter(function (it) { return it.section !== 'closed'; }).length : (c[s.key] || 0);
+    const n = s.key === 'all' ? EV.items.filter(function (it) { return it.section !== 'closed'; }).length
+      : s.key === 'stopped' ? EV.items.filter(function (it) { return !!it.stop; }).length : (c[s.key] || 0);
     if (s.key === 'closed' && !n && activeTab !== 'closed') return '';
+    if (s.key === 'stopped' && (!GS.visible || (!n && activeTab !== 'stopped'))) return '';
     return '<button type="button" class="ev-tab' + (s.key === activeTab ? ' active' : '') + (s.key === 'needs_you' && n ? ' you' : '') + '" data-tab="' + s.key + '">' +
       esc(s.label) + '<b>' + n + '</b></button>';
   }).join('');
@@ -300,6 +346,7 @@ function formHtml(it) {
     '<div class="ev-moves" role="radiogroup" aria-label="Move this event">' + MOVES.map(function (m, k) {
       return '<button type="button" class="ev-move' + (k === 0 ? ' on' : '') + '" data-status="' + m.status + '">' + esc(m.label) + '</button>';
     }).join('') + '</div>' +
+    (GS.visible && it.stop_emails && !it.stop ? '<label class="ev-closed-stop"><input type="checkbox" checked /> Also stop EventFlow\'s emails to this guest</label>' : '') +
     '<div class="ev-fu"><label>Follow up on (optional)</label><input type="date" aria-label="Follow-up date" min="' + new Date().toISOString().slice(0, 10) + '" /></div>' +
     '<div class="ev-form-actions"><button type="button" class="ev-save">Save</button><button type="button" class="ev-btn ev-cancel">Cancel</button><span class="ev-form-msg"></span></div>' +
     '<div class="attn-meta" style="margin-top:6px;">A move stays until the guest writes again or the event changes in Tripleseat. A follow-up date brings it back to Needs you that day.</div>' +
@@ -313,18 +360,215 @@ function cardHtml(it, i) {
   actions.push('<button type="button" class="ev-btn" data-note="' + i + '">Add a note or move</button>');
   if (it.thread_id) actions.push('<button type="button" class="ev-btn" data-conv="' + i + '">View conversation</button>');
   if (it.email && /@/.test(it.email)) actions.push('<a class="ev-btn" href="mailto:' + esc(it.email) + '">Email ' + esc(first) + '</a>');
+  if (GS.visible) {
+    if (it.stop && it.stop.handed_off) {
+      actions.push('<button type="button" class="ev-btn stop" data-handback="' + i + '">Hand back to the assistant</button>');
+      actions.push('<button type="button" class="ev-btn stop" data-stop="' + i + '" data-preset="manager_handling">Switch to "I\'m handling the booking"</button>');
+    } else if (it.stop) {
+      actions.push('<button type="button" class="ev-btn stop" data-stop="' + i + '">Change</button>');
+      actions.push('<button type="button" class="ev-btn stop" data-undo="' + i + '">Undo</button>');
+    } else {
+      actions.push('<button type="button" class="ev-btn stop" data-stop="' + i + '"' + (it.stop_emails ? '' : ' disabled title="No guest email on this event, so there is nothing to stop"') + '>Stop emails</button>');
+    }
+  }
   const flag = it.note_flag === 'follow_up_due' ? '<span class="ev-flag due">FOLLOW-UP DUE</span>'
     : it.note_flag === 'activity_since_note' ? '<span class="ev-flag newact">NEW SINCE YOUR NOTE</span>' : '';
   const cls = you ? 'you' : it.owner === 'booked' ? 'booked' : it.owner === 'handling' ? 'handling' : it.owner === 'closed' ? 'closed' : '';
-  return '<div class="ev-card ' + cls + '">' +
+  return '<div class="ev-card ' + cls + '" data-card="' + esc(it.key) + '">' +
     '<div class="ev-name">' + esc(it.name) + (it.is_new ? '<span class="ev-new">NEW</span>' : '') + flag + '</div>' +
     (facts(it) ? '<div class="ev-facts">' + facts(it) + '</div>' : '') +
     '<div class="ev-stage"><strong>' + esc(it.stage) + '.</strong> ' + esc(it.detail || '') + '</div>' +
     '<div class="ev-next' + (you ? ' you' : '') + '">Next: ' + esc(it.next || '') + '</div>' +
     notesHtml(it) +
+    stopBadgeHtml(it) +
     '<div class="ev-actions">' + actions.join('') + '</div>' +
     formHtml(it) +
+    stopFormHtml(it) +
     '</div>';
+}
+
+/* ═══ GUEST_STOPS_V1: the stop badge, the stop panel, the venue pause bar ═══ */
+function stopBadgeHtml(it) {
+  const s = it.stop;
+  if (!GS.visible || !s) return '';
+  if (s.handed_off) {
+    return '<div class="ev-stop handoff"><b>Handed off: all emails stopped.</b> EventFlow stopped emailing this guest when it handed them to you. ' +
+      'Their emails come to you.</div>';
+  }
+  let what = '';
+  if (s.mode === 'pause_checkins') what = '<b>Check-ins paused</b> until ' + esc(fmtDay(s.until)) + '. Replies and holds keep going.';
+  else if (s.mode === 'manager_handling') {
+    what = '<b>You\'re handling the booking.</b> The assistant isn\'t answering; their emails come to you. ';
+    if (s.soft_sent) what += 'The one soft check-in went out ' + esc(noteDate(s.soft_sent)) + '.';
+    else if (s.soft_skip) what += 'The soft check-in was skipped (' + esc(s.soft_skip) + ').';
+    else if (s.soft_due) what += 'One soft check-in around ' + esc(noteDate(s.soft_due)) + '.';
+    if (s.until) what += ' Ends after ' + esc(fmtDay(s.until)) + '.';
+  } else if (s.mode === 'closed') what = '<b>Closed: they went elsewhere.</b> Emails stopped' + (s.until ? ' until ' + esc(fmtDay(s.until)) : '') +
+    (s.no_seasonal ? ', holiday nudge included.' : '. The holiday nudge can still go.');
+  else what = '<b>All emails stopped</b> until someone presses Undo.';
+  return '<div class="ev-stop">' + what + '<div class="attn-meta">' + esc(s.by) + (s.at ? ' &middot; ' + esc(noteDate(s.at)) : '') +
+    (s.reason ? ' &middot; ' + esc(s.reason) : '') + '</div></div>';
+}
+
+function stopFormHtml(it) {
+  if (!GS.visible || openStop !== it.key) return '';
+  const cur = it.stop && !it.stop.handed_off ? it.stop.mode : '';
+  const pick = stopPreset || cur || '';
+  const curUntil = it.stop && it.stop.mode === 'pause_checkins' && it.stop.until ? it.stop.until : isoPlus(14);
+  return '<div class="ev-stop-form" data-stopform="' + esc(it.key) + '">' +
+    (it.stop && it.stop.handed_off ? '<div class="attn-meta" style="margin-bottom:6px;">This guest was handed off, so all emails are already stopped. Choosing an option replaces that.</div>' : '') +
+    STOP_OPTIONS.map(function (o) {
+      const extra = o.mode === 'pause_checkins'
+        ? '<div class="ev-stop-extra' + (pick === o.mode ? ' on' : '') + '" data-extra="pause_checkins">Start check-ins again on <input type="date" min="' + isoToday() + '" max="' + isoPlus(90) + '" value="' + esc(curUntil) + '" aria-label="Date check-ins start again" /></div>'
+        : o.mode === 'closed'
+          ? '<div class="ev-stop-extra' + (pick === o.mode ? ' on' : '') + '" data-extra="closed"><label><input type="checkbox" class="ev-noseason"' + (it.stop && it.stop.no_seasonal ? ' checked' : '') + ' /> No holiday nudge either</label></div>'
+          : '';
+      return '<label class="ev-stop-opt"><input type="radio" name="gs-' + esc(it.key) + '" value="' + o.mode + '"' + (pick === o.mode ? ' checked' : '') + ' />' +
+        '<span>' + esc(o.label) + '<small>' + esc(o.help) + '</small></span></label>' + extra;
+    }).join('') +
+    '<input type="text" class="ev-reason" maxlength="200" placeholder="Why? One line, e.g. Budget gets approved in January" aria-label="Reason" value="' + esc(it.stop && !it.stop.handed_off ? it.stop.reason : '') + '" />' +
+    '<div class="ev-form-actions"><button type="button" class="ev-save">Save</button><button type="button" class="ev-btn ev-cancel">Cancel</button><span class="ev-form-msg"></span></div>' +
+    '</div>';
+}
+
+function wireStops(el) {
+  el.querySelectorAll('[data-stop]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      const it = EV.items[Number(b.getAttribute('data-stop'))];
+      stopPreset = b.getAttribute('data-preset') || '';
+      openStop = openStop === it.key && !stopPreset ? '' : it.key;
+      openForm = '';
+      renderList();
+    });
+  });
+  el.querySelectorAll('[data-undo], [data-handback]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      const handBack = b.hasAttribute('data-handback');
+      const it = EV.items[Number(b.getAttribute(handBack ? 'data-handback' : 'data-undo'))];
+      const ok = window.confirm(handBack
+        ? 'Hand ' + it.name + ' back to the assistant? EventFlow will answer their emails again and pick up check-ins.'
+        : 'Undo the stop for ' + it.name + '? EventFlow goes back to normal for this guest.');
+      if (!ok) return;
+      b.disabled = true;
+      EF_SHELL.api({ action: 'end_guest_stop', client_slug: (currentClient || {}).slug, item_key: it.key, hand_back: handBack })
+        .then(function (res) {
+          if (!res || res.success !== true) throw new Error((res && res.error) || 'Could not undo.');
+          EF_SHELL.toast(handBack ? 'Handed back to the assistant.' : 'Stop removed.', 'success');
+          loadEvents((currentClient || {}).slug, true);
+        })
+        .catch(function (err) { b.disabled = false; EF_SHELL.toast(err.message || 'Could not undo. Please try again.', 'error'); });
+    });
+  });
+  el.querySelectorAll('.ev-stop-form').forEach(function (f) {
+    const key = f.getAttribute('data-stopform');
+    f.querySelectorAll('input[type=radio]').forEach(function (r) {
+      r.addEventListener('change', function () {
+        f.querySelectorAll('.ev-stop-extra').forEach(function (x) { x.classList.toggle('on', x.getAttribute('data-extra') === r.value); });
+      });
+    });
+    f.querySelector('.ev-cancel').addEventListener('click', function () { openStop = ''; stopPreset = ''; renderList(); });
+    f.querySelector('.ev-save').addEventListener('click', function () {
+      const msg = f.querySelector('.ev-form-msg');
+      const picked = f.querySelector('input[type=radio]:checked');
+      const reason = (f.querySelector('.ev-reason').value || '').trim();
+      if (!picked) { msg.textContent = 'Choose one of the four options.'; return; }
+      if (!reason) { msg.textContent = 'Add a short reason (one line).'; return; }
+      const payload = { action: 'set_guest_stop', client_slug: (currentClient || {}).slug, item_key: key, mode: picked.value, reason: reason };
+      if (picked.value === 'pause_checkins') {
+        payload.until_date = (f.querySelector('[data-extra=pause_checkins] input[type=date]').value || '');
+        if (!payload.until_date) { msg.textContent = 'Pick the date check-ins should start again.'; return; }
+      }
+      if (picked.value === 'closed') payload.no_seasonal = !!f.querySelector('.ev-noseason').checked;
+      const btn = f.querySelector('.ev-save');
+      btn.disabled = true; msg.textContent = '';
+      EF_SHELL.api(payload).then(function (res) {
+        if (!res || res.success !== true) throw new Error((res && res.error) || 'Could not save.');
+        openStop = ''; stopPreset = '';
+        EF_SHELL.toast(res.preview ? 'Saved (preview: EventFlow does not act on it yet).' : 'Saved. EventFlow will follow this from now on.', 'success');
+        loadEvents((currentClient || {}).slug, true);
+      }).catch(function (err) { btn.disabled = false; msg.textContent = err.message || 'Could not save. Please try again.'; });
+    });
+  });
+}
+
+function renderGsBar() {
+  const bar = document.getElementById('ev-gs-bar');
+  if (!GS.visible) { bar.innerHTML = ''; return; }
+  let html = GS.mode === 'preview' ? '<div class="ev-preview-note">Preview: only admins see the stop buttons, and EventFlow does not act on them yet.</div>' : '';
+  if (GS.paused) {
+    html += '<div class="ev-pause-bar"><b>All guest emails are paused</b> since ' + esc(relTime(GS.paused.at)) + ' (by ' + esc(GS.paused.by) + ': ' + esc(GS.paused.reason) + '). ' +
+      'Guest emails that arrive are forwarded to the events manager. Only Mitchell can restart them.' +
+      (GS.is_admin ? ' <button type="button" class="ev-pause-btn" id="gs-restart" style="margin-left:6px;">Restart guest emails</button>' : '') + '</div>';
+  } else {
+    html += '<div class="ev-gs-row"><button type="button" class="ev-pause-btn" id="gs-pause">Pause all guest emails</button></div>';
+    if (pauseForm) {
+      html += '<div class="ev-pause-form">This stops every email EventFlow sends to guests, for the whole venue, until Mitchell restarts it. ' +
+        'Guest emails that arrive are forwarded to the events manager so nothing is lost.' +
+        '<input type="text" class="ev-reason" id="gs-pause-reason" maxlength="200" placeholder="Why? e.g. A wrong price went out" aria-label="Reason for the pause" />' +
+        '<div class="ev-form-actions"><button type="button" class="ev-save" id="gs-pause-go" style="background:#b91c1c;">Pause everything</button>' +
+        '<button type="button" class="ev-btn" id="gs-pause-cancel">Cancel</button><span class="ev-form-msg" id="gs-pause-msg"></span></div></div>';
+    }
+  }
+  bar.innerHTML = html;
+  const slug = (currentClient || {}).slug;
+  const pauseBtn = document.getElementById('gs-pause');
+  if (pauseBtn) pauseBtn.addEventListener('click', function () { pauseForm = !pauseForm; renderGsBar(); const r = document.getElementById('gs-pause-reason'); if (r) r.focus(); });
+  const cancel = document.getElementById('gs-pause-cancel');
+  if (cancel) cancel.addEventListener('click', function () { pauseForm = false; renderGsBar(); });
+  const go = document.getElementById('gs-pause-go');
+  if (go) go.addEventListener('click', function () {
+    const reason = (document.getElementById('gs-pause-reason').value || '').trim();
+    const msg = document.getElementById('gs-pause-msg');
+    if (!reason) { msg.textContent = 'Add a short reason so Mitchell knows what happened.'; return; }
+    if (!window.confirm('Pause ALL guest emails for the whole venue? Only Mitchell can restart them.')) return;
+    go.disabled = true; msg.textContent = '';
+    EF_SHELL.api({ action: 'set_venue_pause', client_slug: slug, reason: reason }).then(function (res) {
+      if (!res || res.success !== true) throw new Error((res && res.error) || 'Could not pause.');
+      pauseForm = false;
+      EF_SHELL.toast('All guest emails are paused. Mitchell has been emailed.', 'success');
+      try { sessionStorage.removeItem('ef_gs_state_' + slug); } catch (e) {}
+      loadEvents(slug, true);
+    }).catch(function (err) { go.disabled = false; msg.textContent = err.message || 'Could not pause. Please try again.'; });
+  });
+  const restart = document.getElementById('gs-restart');
+  if (restart) restart.addEventListener('click', function () {
+    restart.disabled = true;
+    EF_SHELL.api({ action: 'resume_check', client_slug: slug }).then(function (chk) {
+      if (!chk || chk.success !== true) throw new Error((chk && chk.error) || 'Could not read the checklist.');
+      if (!chk.paused) { loadEvents(slug, true); return; }
+      const c = chk.check || {};
+      const n = function (v) { return v == null ? '?' : v; };
+      const ok = window.confirm('Restart guest emails?\n\n' +
+        '- Guest emails forwarded to the manager during the pause: ' + n(c.forwarded) + ' (they stay with the manager)\n' +
+        '- Courtesy holds kept for the manager: ' + n(c.holds_kept) + '\n' +
+        '- Soft check-ins now due: ' + n(c.soft_checkins_due) + '\n' +
+        '- Campaign emails waiting to send: ' + n(c.campaign_emails_queued) + '\n\n' + (chk.note || ''));
+      if (!ok) { restart.disabled = false; return; }
+      return EF_SHELL.api({ action: 'resume_venue', client_slug: slug }).then(function (res) {
+        if (!res || res.success !== true) throw new Error((res && res.error) || 'Could not restart.');
+        EF_SHELL.toast('Guest emails are back on.', 'success');
+        try { sessionStorage.removeItem('ef_gs_state_' + slug); } catch (e) {}
+        loadEvents(slug, true);
+      });
+    }).catch(function (err) { restart.disabled = false; EF_SHELL.toast(err.message || 'Could not restart. Please try again.', 'error'); });
+  });
+}
+
+/* ?focus=<key>&stop=1 (the "Stop emails" link in the 10am email): show that card, with its stop panel open. */
+function applyDeepLink() {
+  deepLinkDone = true;
+  let focus = '', stop = false;
+  try { const q = new URLSearchParams(location.search); focus = q.get('focus') || ''; stop = q.get('stop') === '1'; } catch (e) { return ''; }
+  if (!focus) return '';
+  const it = EV.items.find(function (x) { return x.key === focus || (x.alias_keys || []).indexOf(focus) !== -1; });
+  if (!it) { EF_SHELL.toast('That event is no longer on the list.', 'error'); return ''; }
+  activeTab = it.section === 'closed' ? 'closed' : 'all';
+  if (stop && GS.visible) { openStop = it.key; stopPreset = ''; }
+  return it.key;
+}
+function scrollToCard(key) {
+  const el = Array.prototype.find.call(document.querySelectorAll('.ev-card'), function (c) { return c.getAttribute('data-card') === key; });
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function wireForms(el) {
@@ -332,6 +576,7 @@ function wireForms(el) {
     b.addEventListener('click', function () {
       const it = EV.items[Number(b.getAttribute('data-note'))];
       openForm = openForm === it.key ? '' : it.key;
+      openStop = '';
       renderList();
       const ta = document.querySelector('.ev-note-form textarea');
       if (ta) ta.focus();
@@ -343,6 +588,8 @@ function wireForms(el) {
       m.addEventListener('click', function () {
         status = m.getAttribute('data-status');
         f.querySelectorAll('.ev-move').forEach(function (x) { x.classList.toggle('on', x === m); });
+        const cs = f.querySelector('.ev-closed-stop');
+        if (cs) cs.classList.toggle('on', status === 'closed');
       });
     });
     f.querySelector('.ev-cancel').addEventListener('click', function () { openForm = ''; renderList(); });
@@ -353,12 +600,22 @@ function wireForms(el) {
       if (!note && !status && !fu) { msg.textContent = 'Write a note or choose where the event goes.'; return; }
       const btn = f.querySelector('.ev-save');
       btn.disabled = true; msg.textContent = '';
-      EF_SHELL.api({ action: 'save_event_note', client_slug: (currentClient || {}).slug, item_key: f.getAttribute('data-form'), note: note, status: status, follow_up_date: fu })
+      const cs = f.querySelector('.ev-closed-stop input');
+      const alsoStop = status === 'closed' && !!cs && cs.checked;
+      const slug = (currentClient || {}).slug, key = f.getAttribute('data-form');
+      EF_SHELL.api({ action: 'save_event_note', client_slug: slug, item_key: key, note: note, status: status, follow_up_date: fu })
         .then(function (res) {
           if (!res || res.success !== true) throw new Error((res && res.error) || 'Could not save.');
+          if (!alsoStop) return { stopped: false };
+          // GUEST_STOPS_V1: "Closed" also stops EventFlow's emails (the note was just saved, so no second note).
+          return EF_SHELL.api({ action: 'set_guest_stop', client_slug: slug, item_key: key, mode: 'closed', reason: (note || 'Closed (not happening)').slice(0, 200), no_note: true })
+            .then(function (r2) { return { stopped: !!(r2 && r2.success === true), err: r2 && r2.error }; });
+        })
+        .then(function (out) {
           openForm = '';
-          EF_SHELL.toast('Saved.', 'success');
-          loadEvents((currentClient || {}).slug, true);
+          if (alsoStop && !out.stopped) EF_SHELL.toast('Saved the note, but the emails could not be stopped: ' + (out.err || 'try Stop emails on the card'), 'error');
+          else EF_SHELL.toast(alsoStop ? 'Saved. Emails to this guest are stopped.' : 'Saved.', 'success');
+          loadEvents(slug, true);
         })
         .catch(function (err) { btn.disabled = false; msg.textContent = err.message || 'Could not save. Please try again.'; });
     });
@@ -372,10 +629,11 @@ function renderList() {
     return [it.name, it.company, it.email, it.date, fmtDay(it.date), it.stage, it.room].join(' ').toLowerCase().indexOf(q) !== -1;
   };
   const el = document.getElementById('ev-list');
-  const groups = (activeTab === 'all' ? SECTIONS.filter(function (s) { return s.key !== 'all' && s.key !== 'closed'; }) : SECTIONS.filter(function (s) { return s.key === activeTab; }));
+  const groups = (activeTab === 'all' ? SECTIONS.filter(function (s) { return s.key !== 'all' && s.key !== 'closed' && s.key !== 'stopped'; }) : SECTIONS.filter(function (s) { return s.key === activeTab; }));
   let html = '';
   groups.forEach(function (s) {
-    const list = EV.items.map(function (it, i) { return { it: it, i: i }; }).filter(function (x) { return x.it.section === s.key && match(x.it); });
+    const inGroup = s.key === 'stopped' ? function (it) { return !!it.stop; } : function (it) { return it.section === s.key; };
+    const list = EV.items.map(function (it, i) { return { it: it, i: i }; }).filter(function (x) { return inGroup(x.it) && match(x.it); });
     if (!list.length) return;
     if (activeTab === 'all') html += '<div class="ev-section-title ' + s.cls + '">' + esc(s.label) + ' (' + list.length + ')</div>';
     html += list.map(function (x) { return cardHtml(x.it, x.i); }).join('');
@@ -389,6 +647,7 @@ function renderList() {
     b.addEventListener('click', function () { openDrawer(EV.items[Number(b.getAttribute('data-conv'))]); });
   });
   wireForms(el);
+  if (GS.visible) wireStops(el);
 }
 
 function renderTidy() {

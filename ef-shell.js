@@ -341,6 +341,7 @@ window.EF_SHELL = (function () {
       if (typeof opts.onClient === 'function') opts.onClient(client);
       renderPicker();
       if (window.EF_ADMIN) EF_ADMIN.showAdminNav();
+      pauseBanner(client.slug);
     }
 
     function handleCredential(response) {
@@ -501,6 +502,34 @@ window.EF_SHELL = (function () {
       t.style.opacity = '0';
       setTimeout(function () { t.remove(); }, 300);
     }, 3800);
+  }
+
+  /* GUEST_STOPS_V1 (2026-10-16): a red banner on every shell page while the venue's guest emails are paused (the
+     emergency pause on the Events page). One light call per page, cached 2 minutes; nothing at all unless the venue's
+     stop buttons are visible to this person. The Events page draws its own bar, so it is skipped there. */
+  function pauseBanner(slug) {
+    try {
+      if (!slug || demoActive() || /\/events(\.html)?$/.test(location.pathname)) return;
+      var key = 'ef_gs_state_' + slug, cached = null;
+      try { cached = JSON.parse(sessionStorage.getItem(key) || 'null'); } catch (e) { cached = null; }
+      var draw = function (st) {
+        if (!st || st.visible !== true || !st.paused) return;
+        var host = document.querySelector('.dash-body') || document.querySelector('.main-content');
+        if (!host || document.getElementById('ef-pause-banner')) return;
+        var d = document.createElement('div');
+        d.id = 'ef-pause-banner';
+        d.setAttribute('role', 'alert');
+        d.style.cssText = 'margin:0 0 14px;padding:10px 12px;border-radius:8px;background:#fee2e2;border:1px solid #fca5a5;color:#7f1d1d;font-size:0.9rem;line-height:1.45;';
+        d.innerHTML = '<b>All guest emails are paused</b> (by ' + esc(st.paused.by) + ': ' + esc(st.paused.reason) + '). ' +
+          'Guest emails that arrive go to the events manager. <a href="/events?client=' + encodeURIComponent(slug) + '" style="color:#7f1d1d;font-weight:600;">Open the Events page</a>';
+        host.insertBefore(d, host.firstChild);
+      };
+      if (cached && cached.st && Date.now() - cached.t < 120000) { draw(cached.st); return; }
+      api({ action: 'guest_stops_state', client_slug: slug }).then(function (st) {
+        try { sessionStorage.setItem(key, JSON.stringify({ t: Date.now(), st: st })); } catch (e) {}
+        draw(st);
+      }).catch(function () { /* no banner on a failed read */ });
+    } catch (e) { /* never break a page over the banner */ }
   }
 
   return {
