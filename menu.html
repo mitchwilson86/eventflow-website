@@ -332,7 +332,12 @@
 <script>
 const FLAG_REGEX = /(wine|sommelier|pairing|tasting menu|chef'?s table|custom menu|bespoke)/i;
 
-const token = new URLSearchParams(window.location.search).get('token') || '';
+/* MENU_TOKEN_TRIM_V1 (2026-10-19): a mail client or link scanner can carry a stray character onto the link (Alysse Brunner's
+   link reached this page one character too long and read "already used"). Tokens are letters and digits only, so use the
+   first run of token characters and ignore anything around it. */
+const tokenRaw = new URLSearchParams(window.location.search).get('token') || '';
+const tokenRun = tokenRaw.match(/[A-Za-z0-9_-]{16,}/);
+const token = tokenRun ? tokenRun[0] : tokenRaw.trim();
 let ctx = null;
 let selectedMenuId = null;
 let selectedUpsells = {};        // { upsell_id: qty }
