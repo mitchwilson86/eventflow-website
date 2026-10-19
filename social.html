@@ -52,6 +52,8 @@
     .sp-hint { font-size: 13px; color: var(--text-secondary); margin-top: 10px; line-height: 1.5; }
     .sp-err { color: var(--red); font-size: 14px; margin-top: 10px; display: none; line-height: 1.5; }
     .sp-loader { text-align: center; color: var(--text-secondary); padding: 48px 0; font-size: 14px; }
+    .sp-pic { display: block; width: 100%; max-width: 320px; height: auto; border: 1px solid var(--border); border-radius: 10px; margin-top: 6px; }
+    .sp-pic-note { display: block; font-size: 13px; color: var(--text-secondary); margin-top: 6px; }
   </style>
 </head>
 <body>
@@ -105,7 +107,7 @@
           </div>
         </div>
         <div class="sp-edit-field" id="edit-image-row">
-          <label for="edit-image">Your own picture (optional): paste a link that starts with https://</label>
+          <label for="edit-image" id="edit-image-label">Your own picture (optional): paste a link that starts with https://</label>
           <input type="url" id="edit-image" placeholder="https://..." />
         </div>
         <div class="sp-actions">
@@ -187,15 +189,30 @@ function render() {
   var m = ctx.media || {};
   var mediaEl = document.getElementById('media');
   mediaEl.innerHTML = '';
-  if (m.type === 'video' || m.type === 'image') {
+  if (m.type === 'image' && /^https:\/\//.test(String(m.url || ''))) {
+    /* SOCIAL_CARD_V1: show the picture itself (the stat card, or Mitchell's own), so he approves exactly what goes out. */
+    var onIg = (ctx.platforms || []).indexOf('instagram') !== -1;
+    var cap = document.createElement('span');
+    cap.textContent = m.source === 'card' ? 'Stat card: the picture' + (onIg ? ' on Instagram and' : '') + ' with the LinkedIn post' : 'Your picture';
+    mediaEl.appendChild(cap);
+    var pa = document.createElement('a'); pa.href = m.url; pa.target = '_blank'; pa.rel = 'noopener';
+    var img = document.createElement('img'); img.className = 'sp-pic'; img.src = m.url;
+    img.alt = (m.card && m.card.number) ? m.card.number + ', ' + (m.card.line || '') : 'The picture for this post';
+    pa.appendChild(img); mediaEl.appendChild(pa);
+    if (m.source === 'card' || m.card_url) {
+      var pn = document.createElement('span'); pn.className = 'sp-pic-note';
+      pn.textContent = m.source === 'card' ? 'Want your own picture instead? Use Edit and paste its link.' : 'Clear the picture box in Edit to go back to the stat card.';
+      mediaEl.appendChild(pn);
+    }
+  } else if (m.type === 'video' || m.type === 'image') {
     var label = (m.type === 'video' ? 'Video clip' : 'Picture') + (m.name ? ': ' + m.name : '');
     var link = m.web_url || m.url;
     if (link) { var a = document.createElement('a'); a.href = link; a.target = '_blank'; a.rel = 'noopener'; a.textContent = label; mediaEl.appendChild(a); }
     else mediaEl.textContent = label;
   }
-  document.getElementById('row-media').style.display = mediaEl.textContent ? 'block' : 'none';
+  document.getElementById('row-media').style.display = mediaEl.childNodes.length ? 'block' : 'none';
   document.getElementById('visual').textContent = ctx.visual_note || '';
-  document.getElementById('row-visual').style.display = (ctx.visual_note && m.type !== 'video') ? 'block' : 'none';
+  document.getElementById('row-visual').style.display = (ctx.visual_note && m.type !== 'video' && m.type !== 'image') ? 'block' : 'none';
   var nums = document.getElementById('numbers');
   nums.innerHTML = '';
   (ctx.numbers_used || []).forEach(function (n) {
@@ -288,7 +305,13 @@ function openEditor() {
   if (ctx.scheduled_for) { var w = isoToCt(ctx.scheduled_for); document.getElementById('edit-date').value = w.date; document.getElementById('edit-time').value = w.time; }
   var m = ctx.media || {};
   document.getElementById('edit-image-row').style.display = m.type === 'video' ? 'none' : 'block';
-  document.getElementById('edit-image').value = (m.type === 'image' && m.url) ? m.url : '';
+  /* SOCIAL_CARD_V1: with a stat card the box is for Mitchell's OWN picture only; empty keeps (or brings back) the card,
+     so a post on Instagram never loses its picture (the database enforces the same rule). */
+  var hasCard = m.source === 'card' || !!m.card_url;
+  document.getElementById('edit-image-label').textContent = hasCard
+    ? 'Your own picture instead of the stat card (optional): paste a link that starts with https://. Leave it empty to keep the stat card.'
+    : 'Your own picture (optional): paste a link that starts with https://';
+  document.getElementById('edit-image').value = (m.type === 'image' && m.url && m.source !== 'card') ? m.url : '';
   document.getElementById('view-mode').style.display = 'none';
   document.getElementById('edit-mode').style.display = 'block';
   document.getElementById('hint').style.display = 'none';
