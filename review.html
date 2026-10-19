@@ -83,8 +83,12 @@
    credential (same posture as gap.html). The email's buttons open this page with ?t=<token>&d=approve|reject|not_now;
    the choice is recorded HERE, by script, never by the link itself, so a link scanner fetching the URL changes nothing.
    Both RPCs are SECURITY DEFINER over an RLS-denied table; decide_ai_suggestion also tells the Obsidian sync. */
+/* LINK_TOKEN_TRIM_V1 (2026-10-19), same fix as the menu page: decision tokens are 48 hex characters (ai_suggestions
+   default, gen_random_bytes(24)), so use the first run of hex characters and ignore a stray character around it. */
 var params = new URLSearchParams(window.location.search);
-var token = params.get('t') || params.get('token') || '';
+var tokenRaw = params.get('t') || params.get('token') || '';
+var tokenRun = tokenRaw.match(/[0-9a-f]{16,}/i);
+var token = tokenRun ? tokenRun[0] : tokenRaw.trim();
 var wanted = (params.get('d') || '').toLowerCase();
 var ctx = null;
 var busy = false;

@@ -138,8 +138,12 @@
 
 // Accept ?t= (what the gap email sends) and ?token= (what menu.html uses), so a hand-edited
 // or mail-client-mangled link does not silently lose an answer.
+// LINK_TOKEN_TRIM_V1 (2026-10-19), same fix as the menu page: answer tokens are 64 hex characters (Build Gap Email,
+// randomBytes(32)), so use the first run of hex characters and ignore a stray character a mail scanner stuck on.
 var params = new URLSearchParams(window.location.search);
-var token = params.get('t') || params.get('token') || '';
+var tokenRaw = params.get('t') || params.get('token') || '';
+var tokenRun = tokenRaw.match(/[0-9a-f]{16,}/i);
+var token = tokenRun ? tokenRun[0] : tokenRaw.trim();
 var ctx = null;
 
 window.addEventListener('load', boot);

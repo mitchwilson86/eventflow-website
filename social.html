@@ -128,9 +128,13 @@
    ?t=<token>&d=approve|skip|edit; approve and skip are recorded HERE, by script, never by the link itself, so a link
    scanner fetching the URL changes nothing. Both RPCs (get_social_post / decide_social_post) are SECURITY DEFINER over
    RLS-denied tables; every rule (7-day expiry, locked states, the no-long-dash rule, length limits, time range) is
-   enforced in SQL, the checks here only explain them early. */
+   enforced in SQL, the checks here only explain them early.
+   LINK_TOKEN_TRIM_V1 (2026-10-19), same fix as the menu page: decision tokens are 48 hex characters (social_posts
+   default, gen_random_bytes(24)), so use the first run of hex characters and ignore a stray character around it. */
 var params = new URLSearchParams(window.location.search);
-var token = params.get('t') || params.get('token') || '';
+var tokenRaw = params.get('t') || params.get('token') || '';
+var tokenRun = tokenRaw.match(/[0-9a-f]{16,}/i);
+var token = tokenRun ? tokenRun[0] : tokenRaw.trim();
 var wanted = (params.get('d') || '').toLowerCase();
 var ctx = null;
 var busy = false;

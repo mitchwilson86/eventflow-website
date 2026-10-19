@@ -35,7 +35,11 @@
     var q = new URLSearchParams(location.search);
     var client = q.get('c') || '';
     var email = q.get('e') || '';
-    var token = q.get('t') || '';
+    // LINK_TOKEN_TRIM_V1 (2026-10-19), same fix as the menu page: unsubscribe tokens are 64 hex characters (ops-api
+    // unsubTokenFor, HMAC-SHA256), so use the first run of hex characters and ignore a stray character around it.
+    var tokenRaw = q.get('t') || '';
+    var tokenRun = tokenRaw.match(/[0-9a-f]{16,}/i);
+    var token = tokenRun ? tokenRun[0] : tokenRaw.trim();
     var cid = q.get('cid') || '';
     var titleEl = document.getElementById('title');
     var msgEl = document.getElementById('msg');
