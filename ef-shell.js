@@ -229,8 +229,11 @@ window.EF_SHELL = (function () {
         (data && data.clients || []).forEach(function (c) {
           if (!c || !c.slug) return;
           var authList = me ? [me] : [];
+          // CLIENT_MERGE_BY_SLUG_V1 (2026-10-18): merge by slug ONLY. It also matched on the gmail address, so two
+          // venues sharing an inbox (Sunda Detroit set up on sales@ as a stand-in, Nashville's legacy gmail_address
+          // is sales@ too) collapsed into ONE entry and the venue picker lost a venue. The seed entry has a slug.
           var existing = Object.values(CLIENTS).find(function (cl) {
-            return cl.slug === c.slug || (c.gmail && cl.gmail_address === c.gmail);
+            return cl.slug === c.slug;
           });
           if (existing) {
             existing.slug = c.slug;
@@ -379,7 +382,12 @@ window.EF_SHELL = (function () {
     initGoogleSignIn(handleCredential);
 
     var saved = signedInEmail();
-    if (saved) {
+    // CLIENT_MERGE_BY_SLUG_V1 (2026-10-18): the quick path runs BEFORE client_list arrives, when CLIENTS holds only the
+    // seed venue. If the remembered venue (picker key) is not in it yet, resolving now would "repair" the remembered
+    // choice back to the seed and the switch to another venue would never stick. Wait for the real list instead.
+    var rememberedSlug = (window.EF_VENUE_PICKER && EF_VENUE_PICKER.getActive()) || '';
+    var rememberedKnown = !rememberedSlug || Object.values(CLIENTS).some(function (c) { return c.slug === rememberedSlug; });
+    if (saved && rememberedKnown) {
       var quick = resolve(saved);
       if (quick) {
         var msg = document.getElementById('session-msg');
