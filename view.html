@@ -48,7 +48,7 @@
   var $ = function (id) { return document.getElementById(id); };
   function fail(title, msg) { $('spin').hidden = true; $('title').textContent = title; $('msg').textContent = msg; }
   function staffBrowser() {
-    try { return !!(localStorage.getItem('sb-uzojlcwsrbsqckycjlgm-auth-token') || sessionStorage.getItem('ef_id_token')); } catch (e) { return false; }
+    try { return !!(localStorage.getItem('sb-uzojlcwsrbsqckycjlgm-auth-token') || sessionStorage.getItem('ef_id_token') || localStorage.getItem('ef_active_venue') || (function () { for (var i = 0; i < localStorage.length; i++) { if (String(localStorage.key(i)).indexOf('ef_vf_token_') === 0) return true; } return false; })()) /* LINK_STAFF_SIGNIN_V1 */; } catch (e) { return false; }
   }
   function go(res) {
     var dest = String((res && res.dest) || '');
