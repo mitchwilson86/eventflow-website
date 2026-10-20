@@ -88,6 +88,8 @@
     .vb-badge.private { background: rgba(21,97,109,.1); color: var(--teal); }
     .vb-badge.shared { background: var(--bg-input); color: var(--text-secondary); }
     .vb-badge.buyout { background: rgba(0,21,36,.08); color: var(--dark-navy); }
+    .vb-badge.off { background: rgba(147,40,44,.1); color: #93282c; } /* SPACE_OFFERED_V1 */
+    .vb-space.is-off .vb-space-info { opacity: .62; }
     .vb-space-meta { font-size: 12.5px; color: var(--text-secondary); margin-top: 5px; line-height: 1.6; }
     .vb-space-actions { display: flex; gap: 8px; flex-shrink: 0; }
     .vb-mini-btn { font-size: 12px; padding: 6px 12px; border-radius: 7px; border: 1px solid var(--border); background: var(--bg-card);
@@ -391,6 +393,11 @@
             <div class="vf-field" id="spNoMinField" style="display:none;">
               <label class="vf-check"><input type="checkbox" id="sp_no_fb_min" onchange="syncNoMin()" /> This space has no food and beverage minimum</label>
               <span class="hint">Tick this only when there truly is no minimum (guests simply order from your group menus); the assistant then says so plainly. Leave it unticked with 0 and 0 when a minimum exists but you do not publish it; the assistant hands that pricing to your events manager.</span>
+            </div>
+            <!-- SPACE_OFFERED_V1: hidden until the backend says it keeps this switch (caps_space_offered) -->
+            <div class="vf-field" id="spOfferedField" style="display:none;">
+              <label class="vf-check"><input type="checkbox" id="sp_offered" /> Offer this space to guests</label>
+              <span class="hint">Untick to take a space off the table for now, for example the patio in winter. The assistant stops recommending it, quoting it and sending its photos until you tick it again. Nothing else about the space changes.</span>
             </div>
             <div class="vf-field">
               <label>&nbsp;</label>
@@ -722,8 +729,10 @@
     list.innerHTML = '';
     PROFILE.spaces.forEach(function (sp) {
       var card = document.createElement('div');
-      card.className = 'vb-space';
+      var isOff = sp.offered === false; // SPACE_OFFERED_V1
+      card.className = 'vb-space' + (isOff ? ' is-off' : '');
       var badges = '';
+      if (isOff) badges += '<span class="vb-badge off">Off for now</span>';
       if (Array.isArray(sp.combo_of) && sp.combo_of.length) badges += '<span class="vb-badge combo">Combination</span>';
       if (sp.buyout) badges += '<span class="vb-badge buyout">Buyout</span>';
       badges += sp.is_private === false ? '<span class="vb-badge shared">Semi-private</span>' : '<span class="vb-badge private">Private</span>';
@@ -733,6 +742,7 @@
             : ('<br>Minimums: ' + money(sp.fb_min_weekday) + ' Sun-Thu · ' + money(sp.fb_min_weekend) + ' Fri-Sat'))
         + '<br>' + ((sp.photos || []).length ? (sp.photos.length + ' photo' + (sp.photos.length > 1 ? 's' : '')) : 'No photos');
       if (Array.isArray(sp.combo_of) && sp.combo_of.length) meta += '<br>Combines: ' + sp.combo_of.join(' + ');
+      if (isOff) meta += '<br>Not offered to guests right now: the assistant does not recommend, quote or show it.';
       var info = document.createElement('div');
       info.className = 'vb-space-info';
       var nameEl = document.createElement('div');
@@ -751,7 +761,14 @@
       var delBtn = document.createElement('button');
       delBtn.className = 'vb-mini-btn danger'; delBtn.textContent = 'Delete';
       delBtn.onclick = function () { deleteSpace(sp.name); };
-      actions.appendChild(editBtn); actions.appendChild(delBtn);
+      actions.appendChild(editBtn);
+      if (PROFILE.caps && PROFILE.caps.space_offered) { // SPACE_OFFERED_V1: one-click seasonal switch
+        var offBtn = document.createElement('button');
+        offBtn.className = 'vb-mini-btn'; offBtn.textContent = isOff ? 'Turn on' : 'Turn off';
+        offBtn.onclick = function () { toggleOffered(sp.name); };
+        actions.appendChild(offBtn);
+      }
+      actions.appendChild(delBtn);
       card.appendChild(info); card.appendChild(actions);
       list.appendChild(card);
     });
@@ -811,6 +828,9 @@
     document.getElementById('spNoMinField').style.display = (PROFILE.caps && PROFILE.caps.space_fb_min_policy) ? '' : 'none';
     document.getElementById('sp_no_fb_min').checked = !!(sp && sp.fb_min_policy === 'none');
     syncNoMin();
+    // SPACE_OFFERED_V1: shown only when the backend keeps the switch; a new space starts switched on.
+    document.getElementById('spOfferedField').style.display = (PROFILE.caps && PROFILE.caps.space_offered) ? '' : 'none';
+    document.getElementById('sp_offered').checked = !(sp && sp.offered === false);
     document.getElementById('photoRows').innerHTML = '';
     (sp && sp.photos || []).forEach(function (p) { addPhotoRow(p.url || p, p.caption || ''); });
     document.getElementById('comboPickerWrap').style.display = isCombo ? 'block' : 'none';
@@ -864,6 +884,14 @@
       return;
     }
     if (noMinOk) space.fb_min_policy = document.getElementById('sp_no_fb_min').checked ? 'none' : '';
+    // SPACE_OFFERED_V1: same rule for the on/off switch. A switched-off space is never saved through a backend that would
+    // drop the switch, because that would quietly put a seasonal space back in front of guests.
+    var offOk = !!(PROFILE.caps && PROFILE.caps.space_offered);
+    if (!offOk && editingSp && editingSp.offered === false) {
+      showMsg('This space is switched off, and this page cannot save that setting yet. Nothing was changed. Please contact EventFlow.', 'err');
+      return;
+    }
+    if (offOk) space.offered = document.getElementById('sp_offered').checked;
     var btn = document.getElementById('saveSpaceBtn');
     btn.disabled = true; btn.textContent = 'Saving…';
     api({ action: 'save_space', space: space, original_name: editingOriginalName || '' }).then(function (res) {
@@ -876,6 +904,34 @@
       btn.disabled = false; btn.textContent = 'Save space';
       showMsg('Save failed. Please try again.', 'err');
     });
+  }
+
+  // SPACE_OFFERED_V1: the card's Turn off / Turn on button. Re-saves the space exactly as stored, with the switch flipped.
+  function toggleOffered(name) {
+    if (!(PROFILE.caps && PROFILE.caps.space_offered)) return;
+    var sp = PROFILE.spaces.find(function (s) { return s.name === name; });
+    if (!sp) return;
+    var turnOn = sp.offered === false;
+    if (!confirm(turnOn
+      ? 'Turn "' + name + '" back on? The assistant will start recommending it to guests again.'
+      : 'Turn "' + name + '" off? The assistant will stop recommending it, quoting it and sending its photos until you turn it back on.')) return;
+    clearMsg();
+    var space = {
+      name: sp.name, description: sp.description || '',
+      capacity_seated: sp.capacity_seated || 0, capacity_standing: sp.capacity_standing || 0,
+      fb_min_weekday: sp.fb_min_weekday || 0, fb_min_weekend: sp.fb_min_weekend || 0,
+      is_private: sp.is_private !== false, buyout: !!sp.buyout,
+      photos: (sp.photos || []).map(function (p) { return { url: p.url || p, caption: p.caption || '' }; }),
+      offered: turnOn
+    };
+    if (Array.isArray(sp.combo_of) && sp.combo_of.length) space.combo_of = sp.combo_of.slice();
+    if (PROFILE.caps.space_fb_min_policy) space.fb_min_policy = sp.fb_min_policy === 'none' ? 'none' : '';
+    api({ action: 'save_space', space: space, original_name: sp.name }).then(function (res) {
+      if (res.error) { handleAuthError(res.error); return; }
+      PROFILE.spaces = res.spaces || [];
+      renderSpaces();
+      showMsg('"' + name + '" is now ' + (turnOn ? 'on: the assistant offers it to guests again.' : 'off: the assistant no longer offers it.') + ' Live within a few minutes.', 'ok');
+    }).catch(function () { showMsg('Save failed. Please try again.', 'err'); });
   }
 
   function deleteSpace(name) {
@@ -1370,6 +1426,7 @@
     api({ action: 'get_venue_profile' }).then(function (res) {
       if (res.error) { handleAuthError(res.error); return; }
       PROFILE = { facts: res.facts || {}, spaces: res.spaces || [], ai: res.ai || {}, caps: res.caps || {} }; // SPACE_FB_MIN_POLICY_V1
+      if (res.caps_space_offered === true) PROFILE.caps.space_offered = true; // SPACE_OFFERED_V1: the backend keeps a space's on/off switch
       EF_SHELL.mountSidebar('venue', { venueName: res.venue_name || SLUG });
       document.getElementById('venue-name').textContent = res.venue_name || SLUG;
       document.getElementById('user-email-sidebar').textContent = res.caller || '';
