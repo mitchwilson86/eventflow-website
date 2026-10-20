@@ -10,6 +10,7 @@
   <url><loc>https://eventflowsales.com/developers</loc><priority>0.5</priority><changefreq>monthly</changefreq></url>
   <url><loc>https://eventflowsales.com/help</loc><priority>0.6</priority><changefreq>monthly</changefreq></url>
   <url><loc>https://eventflowsales.com/integrations</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://eventflowsales.com/promises</loc><priority>0.5</priority><changefreq>monthly</changefreq></url>
   <url><loc>https://eventflowsales.com/privacy</loc><priority>0.3</priority><changefreq>yearly</changefreq></url>
   <url><loc>https://eventflowsales.com/terms</loc><priority>0.3</priority><changefreq>yearly</changefreq></url>
 </urlset>

@@ -48,6 +48,7 @@ EventFlow does not currently offer a public API. Operator features are delivered
 - [Blog](https://eventflowsales.com/blog)
 - [Careers](https://eventflowsales.com/careers)
 - [Changelog](https://eventflowsales.com/changelog)
+- [Our Promises](https://eventflowsales.com/promises): plain-English summary of price, change notice, testing, stopping the service, and guest data handling
 - [Privacy Policy](https://eventflowsales.com/privacy)
 - [Terms of Service](https://eventflowsales.com/terms)
 - [Unsubscribe](https://eventflowsales.com/unsubscribe): email unsubscribe page

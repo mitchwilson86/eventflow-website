@@ -59,6 +59,12 @@
   to = "/pricing.html"
   status = 200
 
+# SERVICE_PROMISES_V1 (2026-10-20)
+[[redirects]]
+  from = "/promises"
+  to = "/promises.html"
+  status = 200
+
 [[redirects]]
   from = "/notifications"
   to = "/notifications.html"
