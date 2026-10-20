@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Opening your link</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <style>
+    :root { --text: #0f172a; --muted: #475569; --line: #e2e8f0; --bg: #f8fafc; --card: #ffffff; --accent: #1e3a8a; }
+    @media (prefers-color-scheme: dark) { :root { --text: #e2e8f0; --muted: #94a3b8; --line: #334155; --bg: #0f172a; --card: #1e293b; --accent: #93c5fd; } }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px;
+      background: var(--bg); color: var(--text); font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    .card { width: 100%; max-width: 440px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 28px 24px; text-align: center; }
+    h1 { font-size: 20px; margin: 0 0 8px; }
+    p { margin: 0 0 12px; color: var(--muted); }
+    a.go { display: inline-block; margin-top: 4px; color: var(--accent); font-weight: 600; word-break: break-word; }
+    .spin { width: 28px; height: 28px; margin: 0 auto 16px; border: 3px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: s 0.8s linear infinite; }
+    @keyframes s { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+  </style>
+</head>
+<body>
+  <div class="card" role="status" aria-live="polite">
+    <div class="spin" id="spin"></div>
+    <h1 id="title">Opening your link&hellip;</h1>
+    <p id="msg">One moment.</p>
+    <p id="manual" hidden></p>
+    <noscript><p>This link needs JavaScript to open. Please reply to the email and we will send it to you again.</p></noscript>
+  </div>
+<script>
+/* LINK_OPENS_V1 (staged 2026-10-20). A link in one of our emails to a page we do not own (a menu or photo on Google Drive,
+   the venue's own site) comes here as /view.html?t=<token>. The token says nothing about the guest. Once this page has
+   loaded in a browser we count the open (the count happens in JavaScript, never on the first server fetch, which keeps
+   most email-scanner pre-clicks out), then forward to the menu or photo the email named. The destination always comes
+   from our records for that token, never from the address bar, so this page can never send anyone anywhere else. */
+(function () {
+  var BASE = 'https://uzojlcwsrbsqckycjlgm.supabase.co';
+  var OPS = BASE + '/functions/v1/ops-api?action=link_open';
+  var RPC = BASE + '/rest/v1/rpc/link_open';
+  var ANON = 'sb_publishable__PO3lrDOGl_AaG4TaznEJA_P4Y5ouPU'; /* the public key the menu page already uses */
+  var raw = '';
+  try { raw = new URLSearchParams(window.location.search).get('t') || ''; } catch (e) { raw = ''; }
+  /* A mail scanner can add a stray character after the token (MENU_TOKEN_TRIM_V1): read the token from the start. */
+  var m = /^\s*([0-9a-f]{8}[a-z0-9]{12})/.exec(String(raw).toLowerCase());
+  var token = m ? m[1] : '';
+  var $ = function (id) { return document.getElementById(id); };
+  function fail(title, msg) { $('spin').hidden = true; $('title').textContent = title; $('msg').textContent = msg; }
+  function staffBrowser() {
+    try { return !!(localStorage.getItem('sb-uzojlcwsrbsqckycjlgm-auth-token') || sessionStorage.getItem('ef_id_token')); } catch (e) { return false; }
+  }
+  function go(res) {
+    var dest = String((res && res.dest) || '');
+    if (!/^https:\/\/[^\s"'<>]+$/i.test(dest)) return fail('This link could not be opened', 'Please reply to the email and we will send it to you again.');
+    var host = '';
+    try { host = new URL(dest).hostname.replace(/^www\./, ''); } catch (e) { host = 'the page'; }
+    var label = String((res && res.label) || '').trim();
+    $('title').textContent = label ? 'Opening ' + label : 'Opening your link';
+    $('msg').textContent = 'If nothing happens in a few seconds, use the link below.';
+    var a = document.createElement('a');
+    a.className = 'go'; a.href = dest; a.rel = 'noopener'; a.textContent = 'Open it on ' + host;
+    var man = $('manual'); man.appendChild(a); man.hidden = false;
+    window.location.replace(dest);
+  }
+  function post(url, headers, body, ms) {
+    var ctl = typeof AbortController === 'function' ? new AbortController() : null;
+    var timer = ctl ? setTimeout(function () { ctl.abort(); }, ms) : null;
+    return fetch(url, { method: 'POST', headers: headers, body: JSON.stringify(body), signal: ctl ? ctl.signal : undefined })
+      .then(function (r) { if (timer) clearTimeout(timer); return r.json().catch(function () { return {}; }).then(function (j) { return { status: r.status, body: j || {} }; }); });
+  }
+  function open() {
+    var robot = navigator.webdriver === true, staff = staffBrowser();
+    post(OPS, { 'Content-Type': 'application/json' }, { t: token, kind: 'view', robot: robot, staff: staff }, 6000)
+      .then(function (r) {
+        if (r.status === 200 && r.body.ok === true) return go(r.body);
+        if (r.status === 404) return fail('This link has expired', 'Please reply to the email and we will send it to you again.');
+        throw new Error('ops ' + r.status);
+      })
+      .catch(function () {
+        /* ops-api is down or slow: count it and find the destination through the database directly, so the guest still gets there */
+        post(RPC, { 'Content-Type': 'application/json', apikey: ANON, Authorization: 'Bearer ' + ANON }, { p_token: token, p_kind: 'view', p_flags: { robot: robot, staff: staff } }, 8000)
+          .then(function (r) {
+            if (r.status === 200 && r.body && r.body.ok === true) return go(r.body);
+            fail('This link could not be opened', 'Please reply to the email and we will send it to you again.');
+          })
+          .catch(function () { fail('This link could not be opened', 'Please check your connection and try again, or reply to the email and we will send it to you again.'); });
+      });
+  }
+  if (!token) return fail('This link is not complete', 'Please use the link from your email, or reply to it and we will send it to you again.');
+  /* Count only once the page is actually on screen (a page opened in the background waits until it is shown). */
+  if (document.visibilityState === 'hidden') {
+    var once = function () { if (document.visibilityState !== 'hidden') { document.removeEventListener('visibilitychange', once); open(); } };
+    document.addEventListener('visibilitychange', once);
+  } else open();
+})();
+</script>
+</body>
+</html>

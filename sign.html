@@ -72,6 +72,33 @@ let bundle = null;
 const tokenRaw = new URLSearchParams(window.location.search).get('token') || '';
 const tokenRun = tokenRaw.match(/[0-9a-f]{16,}/i);
 const token = tokenRun ? tokenRun[0] : tokenRaw.trim();
+/* LINK_OPENS_V1 (staged 2026-10-20): count this open once the page has rendered in a browser (never on the first server
+   fetch, which keeps most email-scanner pre-clicks out). Fire and forget: if ops-api is down the database is called
+   directly, and if that fails too nothing on this page changes. A browser signed in to the EventFlow dashboard counts as
+   staff and an automated browser as a robot, never as the guest. Only the token from this page's own link is sent. */
+function __efCountOpen(kind, tok) {
+  try {
+    if (!tok || window.__efOpenCounted) return;
+    window.__efOpenCounted = true;
+    var send = function () {
+      var staff = false;
+      try { staff = !!(localStorage.getItem('sb-uzojlcwsrbsqckycjlgm-auth-token') || sessionStorage.getItem('ef_id_token')); } catch (e) { staff = false; }
+      var robot = navigator.webdriver === true;
+      fetch(SUPABASE_URL + '/functions/v1/ops-api?action=link_open', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ t: tok, kind: kind, robot: robot, staff: staff }), keepalive: true })
+        .then(function (r) { if (r.status >= 500) throw new Error('ops ' + r.status); })
+        .catch(function () {
+          fetch(SUPABASE_URL + '/rest/v1/rpc/link_open', { method: 'POST', keepalive: true,
+            headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY },
+            body: JSON.stringify({ p_token: tok, p_kind: kind, p_flags: { robot: robot, staff: staff } }) }).catch(function () {});
+        });
+    };
+    if (document.visibilityState === 'hidden') {
+      var once = function () { if (document.visibilityState !== 'hidden') { document.removeEventListener('visibilitychange', once); send(); } };
+      document.addEventListener('visibilitychange', once);
+    } else send();
+  } catch (e) { /* counting must never break the page */ }
+}
 
 window.addEventListener('load', boot);
 
@@ -84,6 +111,7 @@ async function boot() {
     if (!data || data.error) { showError(humanizeError(data && data.error)); return; }
     bundle = data;
     renderDoc(bundle);
+    __efCountOpen('contract', token); /* LINK_OPENS_V1 */
     document.getElementById('loader').style.display = 'none';
     if (bundle.contract.status === 'signed') {
       document.getElementById('already-signed').style.display = 'block';
