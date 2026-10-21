@@ -33,150 +33,199 @@
         gtag('config', 'G-Y5L9CGEL9S');
     </script>
 
+    <script>document.documentElement.classList.add('js')</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/marketing-shared.css">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/site/site.css">
 </head>
 <body>
-    <nav>
-        <div class="nav-inner">
-            <a class='nav-logo' href='/'>
-                <img src="logo.svg" alt="EventFlow Logo">
-                EventFlow
-            </a>
-            <ul class="nav-links" id="navLinks">
-                <li><a href='/'>Home</a></li>
-                <li><a href='/#features'>Features</a></li>
-                <li><a href='/pricing'>Pricing</a></li>
-                <li><a href='/#contact'>Contact</a></li>
-                <li><a class='nav-cta' href='#' data-demo-trigger>Book a Demo</a></li>
-            </ul>
-            <div class="mobile-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')">
-                <span></span><span></span><span></span>
-            </div>
-        </div>
-    </nav>
+    <a href="#main" class="skip-link">Skip to main content</a>
 
-
-    <!-- SERVICE_PROMISES_V1 (2026-10-20): Cohost plan item 6, wording approved by Mitchell 2026-10-20. A plain-English
-         summary: the Terms of Service and Privacy Policy apply if anything differs (stated on the page). -->
-    <div class="page-header">
-        <div class="container">
-            <h1>Our promises to your venue</h1>
-            <p>The plain-English version of how EventFlow works with you.</p>
-        </div>
-    </div>
-    <div class="page-content">
-        <div class="container">
-            <div class="content-block">
-                <p class="legal-updated">Last updated: October 20, 2026</p>
-
-                <p>The full legal text is in our <a href="/terms">Terms of Service</a> and <a href="/privacy">Privacy Policy</a>. If anything here reads differently, those documents apply.</p>
-
-                <h2>One flat price. No usage fees.</h2>
+    <div class="page">
+        <!-- ==================== TOP ROW (same as the home page) ==================== -->
+        <header class="top" role="banner">
+            <a class="tile top-logo" href="/" aria-label="EventFlow home"><img src="/assets/home/mark.png" width="160" height="160" alt=""></a>
+            <nav class="tile top-links" aria-label="Main navigation">
                 <ul>
+                    <li><a href="/#demo">Demo</a></li>
+                    <li><a href="/#features">Features</a></li>
+                    <li><a href="/pricing">Pricing</a></li>
+                    <li><a href="/#faq">Questions</a></li>
+                </ul>
+            </nav>
+            <div class="tile top-menu">
+                <button type="button" id="menuToggle" aria-expanded="false" aria-controls="menuSheet">Menu</button>
+            </div>
+            <div class="tile top-action"><a class="btn" href="/#contact" data-demo-trigger>Book a demo</a></div>
+            <nav class="menu-sheet" id="menuSheet" hidden aria-label="Main navigation (phone)">
+                <a href="/#demo">Demo</a>
+                <a href="/#features">Features</a>
+                <a href="/pricing">Pricing</a>
+                <a href="/#faq">Questions</a>
+                <a href="/about">About</a>
+            </nav>
+        </header>
+
+        <main id="main">
+        <!-- ==================== PAGE HEAD ==================== -->
+        <section class="phead phead--wide phead--photo" aria-labelledby="page-title">
+            <div class="tile phead-title">
+                <h1 id="page-title"><span>Our promises to your venue</span></h1>
+            </div>
+            <div class="tile tile--accent phead-side">
+                <p class="lead rise" style="--d:260ms">The plain-English version of how EventFlow works with you.</p>
+                <p class="small rise" style="--d:370ms">Last updated: October 20, 2026</p>
+                <p class="rise" style="--d:480ms">The full legal text is in our <a class="link" href="/terms">Terms of Service</a> and <a class="link" href="/privacy">Privacy Policy</a>. If anything here reads differently, those documents apply.</p>
+            </div>
+            <figure class="tile photo phead-pic shutter">
+                <img src="/assets/site/bunratty-castle-hotel-table-setting-for-wedding.jpg" width="1280" height="854" fetchpriority="high" decoding="async" alt="A private function room set for a wedding dinner: one long table with white cloths, candles and glasses at every place.">
+            </figure>
+        </section>
+
+        <!-- ==================== SECTIONS ==================== -->
+        <div class="bands bands--big">
+            <section class="band" id="one-flat-price-no-usage-fees" aria-labelledby="one-flat-price-no-usage-fees-h">
+                <h2 id="one-flat-price-no-usage-fees-h">One flat price. No usage fees.</h2>
+                <div class="prose">
+                    <ul>
                     <li>One monthly price per venue: <strong>$249</strong> (Copilot) or <strong>$449</strong> (Autopilot). Restaurant groups get a quote.</li>
                     <li>No charge per email, per guest or per reply. A busy month costs the same as a quiet one. The cost of the AI is on us.</li>
                     <li>A one-time <strong>$750</strong> guided setup. Outbound campaigns are an optional <strong>$149</strong> a month, also flat.</li>
                     <li>If we ever change our prices, we tell you at least 30 days before it reaches your bill.</li>
-                </ul>
-
-                <h2>You hear about changes before your guests do.</h2>
-                <ul>
+                    </ul>
+                </div>
+            </section>
+            <section class="band" id="you-hear-about-changes-before-your-guests-do" aria-labelledby="you-hear-about-changes-before-your-guests-do-h">
+                <h2 id="you-hear-about-changes-before-your-guests-do-h">You hear about changes before your guests do.</h2>
+                <div class="prose">
+                    <ul>
                     <li>We improve the assistant in one planned update about once a month, not a stream of surprises.</li>
                     <li>Before an update changes how the assistant writes to your guests, we send you a short note in plain English saying what is changing, at least <strong>3 business days</strong> ahead.</li>
                     <li>If something is broken or could upset a guest, we fix it straight away and tell you the same day.</li>
-                </ul>
+                    </ul>
+                </div>
+            </section>
+        </div>
 
-                <h2>Every change is tested before it reaches a guest.</h2>
-                <ul>
+        <!-- ==================== PICTURES ==================== -->
+        <div class="board board--pics">
+            <figure class="tile photo tile--wide"><img src="/assets/home/giuseppe-grill-leblon-private-dining-room-rio.jpg" width="1280" height="853" loading="lazy" decoding="async" alt="A private dining room set for a large party, with a long wooden table, wine glasses at every place and a wall of wine bottles."></figure>
+            <figure class="tile photo tile--wide"><img src="/assets/home/kitchen-service-geograph-org-uk-7608737.jpg" width="1280" height="958" loading="lazy" decoding="async" alt="A chef working the pass during service, plates stacked on the shelf and order tickets clipped along the rail."></figure>
+        </div>
+
+        <!-- ==================== SECTIONS, CONTINUED ==================== -->
+        <div class="bands bands--big">
+            <section class="band" id="every-change-is-tested-before-it-reaches-a-guest" aria-labelledby="every-change-is-tested-before-it-reaches-a-guest-h">
+                <h2 id="every-change-is-tested-before-it-reaches-a-guest-h">Every change is tested before it reaches a guest.</h2>
+                <div class="prose">
+                    <ul>
                     <li>Every change runs about <strong>2,500 automated checks</strong> before it goes live.</li>
                     <li>Every change to how the assistant writes is first replayed through <strong>more than 80 practice guest conversations</strong>: big parties, allergies, discount requests, date changes, payment scams. It only ships if they pass.</li>
                     <li>The assistant answers from the facts you give it (rooms, menus, minimums, policies). You can see and change them on your dashboard at any time.</li>
                     <li>No AI is perfect. That is why the assistant hands anything unusual to your team, and why every email it sends is on record for you to see.</li>
-                </ul>
-
-                <h2>You can stop it at any time.</h2>
-                <ul>
+                    </ul>
+                </div>
+            </section>
+            <section class="band" id="you-can-stop-it-at-any-time" aria-labelledby="you-can-stop-it-at-any-time-h">
+                <h2 id="you-can-stop-it-at-any-time-h">You can stop it at any time.</h2>
+                <div class="prose">
+                    <ul>
                     <li>No contract. Cancel any month by email, with no cancellation fee. You keep access until the end of the month you have paid for.</li>
                     <li>When the assistant hands a guest to your team, or you tell us you are handling a guest yourself, it stops emailing that guest until you say otherwise.</li>
                     <li>Want to pause everything? Email or text us and we switch the assistant off for your venue <strong>the same day</strong>.</li>
                     <li>On Copilot, your manager is copied on every reply the assistant sends.</li>
                     <li>Replies go out from your own email address, and your inbox and Tripleseat stay yours. You can disconnect EventFlow from them yourself at any time.</li>
-                </ul>
-
-                <h2>Your guests' information.</h2>
-                <ul>
+                    </ul>
+                </div>
+            </section>
+            <section class="band" id="your-guests-information" aria-labelledby="your-guests-information-h">
+                <h2 id="your-guests-information-h">Your guests' information.</h2>
+                <div class="prose">
+                    <ul>
                     <li><strong>What we keep:</strong> what a guest tells you about their event (name, contact details, their messages, date, headcount, menu choices, dietary needs) and what the assistant sent back.</li>
                     <li><strong>What we use it for:</strong> only helping your venue answer and book that guest. We never sell it, never use it for another venue, and never use it to train AI.</li>
-                </ul>
-                <h3>Who handles it</h3>
-                <ul>
+                    </ul>
+                    <h3>Who handles it</h3>
+                    <ul>
                     <li><strong>The AI is Claude, made by Anthropic.</strong> Anthropic's business terms say it may not train its models on our data. It deletes what we send it within 30 days, and keeps it longer only where safety reviews or the law require.</li>
                     <li><strong>Our database (Supabase) is in the United States</strong> (Ohio).</li>
                     <li><strong>Our automation service (n8n) runs in the European Union</strong> (Frankfurt, Germany). Its run history, which includes the emails it handled, is deleted automatically after 30 days.</li>
                     <li><strong>Our dashboard and some reports run on Google.</strong> Alerts about guests reach your team, and ours, by Slack and email.</li>
                     <li>Your own mailbox and Tripleseat keep their own copies, as they always have.</li>
-                </ul>
-                <ul>
+                    </ul>
+                    <ul>
                     <li><strong>When a guest asks:</strong> a guest can ask to see, correct or delete their information by emailing us or you. We act on it promptly.</li>
                     <li><strong>When you leave:</strong> we send you an export if you want one, then delete your venue's data from our live systems within 30 days. Backup copies roll off on their normal cycle.</li>
-                </ul>
-
-                <p>Questions? Email <a href="mailto:sales@eventflowsales.com">sales@eventflowsales.com</a>.</p>
-            </div>
+                    </ul>
+                    <p>Questions? Email <a href="mailto:sales@eventflowsales.com">sales@eventflowsales.com</a>.</p>
+                </div>
+            </section>
         </div>
+
+        <!-- ==================== THE CLOSE (the home page's action tile) ==================== -->
+        <section class="cta" aria-labelledby="cta-title">
+            <figure class="tile photo cta-l">
+                <img src="/assets/home/main-dining-room-set-for-a-banquet.jpg" width="1280" height="776" loading="lazy" decoding="async" alt="An archival photograph of a club dining room set for a banquet, with long tables of food and stacked plates.">
+            </figure>
+            <div class="tile tile--accent cta-c">
+                <h2 class="head" id="cta-title">Let's look at your inbox</h2>
+                <p>Tell us how inquiries reach you today, and we'll walk you through what EventFlow would have sent back. Setup takes about a week, and we do it with you.</p>
+                <a class="btn" href="/#contact" data-demo-trigger>Book a demo</a>
+            </div>
+            <div class="tile tile--brandy cta-r" aria-hidden="true"></div>
+        </section>
+        </main>
+
+        <!-- ==================== FOOTER: the wordmark as a rising bar chart ==================== -->
+        <footer class="foot" role="contentinfo">
+            <div class="blocks" aria-label="EventFlow, drawn as a bar chart that rises from left to right" role="img">
+                <div class="b-row" aria-hidden="true"><span style="height:38%">E</span><span style="height:42%">V</span><span style="height:48%">E</span><span style="height:55%">N</span><span style="height:63%">T</span></div><div class="b-row" aria-hidden="true"><span style="height:72%">F</span><span style="height:82%">L</span><span style="height:91%">O</span><span style="height:100%">W</span></div>
+            </div>
+            <div class="foot-grid">
+                <div class="foot-col">
+                    <h2>Product</h2>
+                    <a href="/#features">Features</a>
+                    <a href="/pricing">Pricing</a>
+                    <a href="/integrations">Integrations</a>
+                    <a href="/changelog">Changelog</a>
+                </div>
+                <div class="foot-col">
+                    <h2>Company</h2>
+                    <a href="/about">About</a>
+                    <a href="/blog">Blog</a>
+                    <a href="/careers">Careers</a>
+                    <a href="/#contact">Contact</a>
+                </div>
+                <div class="foot-col">
+                    <h2>Resources</h2>
+                    <a href="/documentation">Documentation</a>
+                    <a href="/help">Help Center</a>
+                    <a href="/promises">Our Promises</a>
+                    <a href="/developers">Developers</a>
+                </div>
+                <div class="foot-col">
+                    <h2>Legal</h2>
+                    <a href="/privacy">Privacy Policy</a>
+                    <a href="/terms">Terms of Service</a>
+                </div>
+                <div class="foot-contact">
+                    <p>Questions? Email <a class="link" href="mailto:sales@eventflowsales.com">sales@eventflowsales.com</a></p>
+                    <p class="footer-social"><!-- SITE_SOCIAL_LINKS_V1 -->Follow us on <a class="link" href="https://www.linkedin.com/company/eventflowsales/" target="_blank" rel="noopener">LinkedIn</a>, <a class="link" href="https://www.instagram.com/eventflowsales/" target="_blank" rel="noopener">Instagram</a> and <a class="link" href="https://www.tiktok.com/@eventflowsales" target="_blank" rel="noopener">TikTok</a>.</p>
+                </div>
+                <p class="credits">Pictures: <a href="https://commons.wikimedia.org/wiki/File:Bunratty_Castle_Hotel_-_Table_Setting_for_Wedding_Reception_Dinner_-_geograph.org.uk_-_3779894.jpg">"Bunratty Castle Hotel, Table Setting for Wedding Reception Dinner"</a> by Joseph Mischyshyn, <a href="https://creativecommons.org/licenses/by-sa/2.0">CC BY-SA 2.0</a>; <a href="https://commons.wikimedia.org/wiki/File:Giuseppe_Grill_Leblon_Private_Dining_Room_Rio_de_Janeiro.jpg">"Giuseppe Grill Leblon Private Dining Room Rio de Janeiro"</a>, <a href="https://creativecommons.org/licenses/by-sa/4.0">CC BY-SA 4.0</a>; <a href="https://commons.wikimedia.org/wiki/File:Kitchen_service_-_geograph.org.uk_-_7608737.jpg">"Kitchen service"</a> by Anthony O'Neil, <a href="https://creativecommons.org/licenses/by-sa/2.0">CC BY-SA 2.0</a>; <a href="https://commons.wikimedia.org/wiki/File:Main_Dining_Room_Set_for_a_Banquet_at_the_Minneapolis_Athletic_Club_-_DPLA_-_908797a753aee756f9a4ea92ae17f4e0.jpg">"Main Dining Room Set for a Banquet at the Minneapolis Athletic Club"</a>, public domain. All via Wikimedia Commons, shown in black and white.</p>
+            </div>
+            <div class="foot-last">
+                <span>&copy; 2026 EventFlow. Smarter Bookings. Fuller Rooms.</span>
+                <a class="btn" href="/#contact" data-demo-trigger>Book a demo</a>
+            </div>
+        </footer>
     </div>
 
-
-    <footer>
-        <div class="container">
-            <div class="footer-grid">
-                <div class="footer-brand">
-                    <a class='nav-logo' href='/'>
-                        <img src="logo.svg" alt="EventFlow" style="height:36px;width:36px;border-radius:10px;">
-                        EventFlow
-                    </a>
-                    <p>AI-powered sales automation for restaurants and hospitality venues. Smarter bookings. Fuller rooms.</p>
-                    <p class="footer-social" style="margin-top:12px;"><!-- SITE_SOCIAL_LINKS_V1 -->Follow us: <a href="https://www.linkedin.com/company/eventflowsales/" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-underline-offset:3px;">LinkedIn</a> &middot; <a href="https://www.instagram.com/eventflowsales/" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-underline-offset:3px;">Instagram</a> &middot; <a href="https://www.tiktok.com/@eventflowsales" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-underline-offset:3px;">TikTok</a></p>
-                </div>
-                <div class="footer-col">
-                    <h4>Product</h4>
-                    <a href='/#features'>Features</a>
-                    <a href='/pricing'>Pricing</a>
-                    <a href='/integrations'>Integrations</a>
-                    <a href='/changelog'>Changelog</a>
-                </div>
-                <div class="footer-col">
-                    <h4>Company</h4>
-                    <a href='/about'>About</a>
-                    <a href='/blog'>Blog</a>
-                    <a href='/careers'>Careers</a>
-                    <a href='/#contact'>Contact</a>
-                </div>
-                <div class="footer-col">
-                    <h4>Resources</h4>
-                    <a href='/documentation'>Documentation</a>
-                    <a href='/help'>Help Center</a>
-                    <a href='/promises'>Our Promises</a>
-                    <a href='/privacy'>Privacy Policy</a>
-                    <a href='/terms'>Terms of Service</a>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <span>&copy; 2026 EventFlow. All rights reserved.</span>
-                <span>Smarter bookings. Fuller rooms.</span>
-            </div>
-        </div>
-    </footer>
-
-    <script>
-        document.querySelectorAll('.nav-links a').forEach(link => {
-            link.addEventListener('click', () => {
-                document.getElementById('navLinks').classList.remove('open');
-            });
-        });
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/SplitText.min.js"></script>
+    <script src="/assets/site/site.js"></script>
     <script src="/assets/demo-modal.js" defer></script>
 </body>
 </html>

@@ -33,123 +33,171 @@
         gtag('config', 'G-Y5L9CGEL9S');
     </script>
 
+    <script>document.documentElement.classList.add('js')</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/marketing-shared.css">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/site/site.css">
 </head>
 <body>
-    <nav>
-        <div class="nav-inner">
-            <a class='nav-logo' href='/'>
-                <img src="logo.svg" alt="EventFlow Logo">
-                EventFlow
-            </a>
-            <ul class="nav-links" id="navLinks">
-                <li><a href='/'>Home</a></li>
-                <li><a href='/#features'>Features</a></li>
-                <li><a href='/pricing'>Pricing</a></li>
-                <li><a href='/#contact'>Contact</a></li>
-                <li><a class='nav-cta' href='#' data-demo-trigger>Book a Demo</a></li>
-            </ul>
-            <div class="mobile-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')">
-                <span></span><span></span><span></span>
+    <a href="#main" class="skip-link">Skip to main content</a>
+
+    <div class="page">
+        <!-- ==================== TOP ROW (same as the home page) ==================== -->
+        <header class="top" role="banner">
+            <a class="tile top-logo" href="/" aria-label="EventFlow home"><img src="/assets/home/mark.png" width="160" height="160" alt=""></a>
+            <nav class="tile top-links" aria-label="Main navigation">
+                <ul>
+                    <li><a href="/#demo">Demo</a></li>
+                    <li><a href="/#features">Features</a></li>
+                    <li><a href="/pricing">Pricing</a></li>
+                    <li><a href="/#faq">Questions</a></li>
+                </ul>
+            </nav>
+            <div class="tile top-menu">
+                <button type="button" id="menuToggle" aria-expanded="false" aria-controls="menuSheet">Menu</button>
             </div>
-        </div>
-    </nav>
+            <div class="tile top-action"><a class="btn" href="/#contact" data-demo-trigger>Book a demo</a></div>
+            <nav class="menu-sheet" id="menuSheet" hidden aria-label="Main navigation (phone)">
+                <a href="/#demo">Demo</a>
+                <a href="/#features">Features</a>
+                <a href="/pricing">Pricing</a>
+                <a href="/#faq">Questions</a>
+                <a href="/about">About</a>
+            </nav>
+        </header>
 
+        <main id="main">
+        <!-- ==================== PAGE HEAD ==================== -->
+        <section class="phead phead--wide phead--photo" aria-labelledby="page-title">
+            <div class="tile phead-title">
+                <h1 id="page-title"><span>EventFlow developer resources</span></h1>
+            </div>
+            <div class="tile tile--brandy phead-side">
+                <p class="lead rise" style="--d:260ms">Machine-readable entry points for the EventFlow platform, in one place.</p>
+            </div>
+            <figure class="tile photo phead-pic shutter">
+                <img src="/assets/site/11-depot-st-concord-united-states-unsplash.jpg" width="1280" height="853" fetchpriority="high" decoding="async" alt="A restaurant table laid for dinner, with wine glasses, water glasses and a folded napkin on each plate, the dining room soft behind it.">
+            </figure>
+        </section>
 
-    <div class="page-header">
-        <div class="container">
-            <h1>EventFlow developer resources</h1>
-            <p>Machine-readable entry points for the EventFlow platform, in one place.</p>
-        </div>
+        <!-- ==================== THE BOARD ==================== -->
+        <section class="board" aria-label="Developer resources">
+            <article class="tile tile--paper tile--wide tile--frag">
+                <h2>OpenAPI Spec</h2>
+                <p>EventFlow does not offer a public API yet. The spec at <a href="/openapi.json" class="link">/openapi.json</a> is a valid OpenAPI document with zero endpoints, published so automated tools get a machine-readable answer instead of a 404.</p>
+                <div class="frag" data-ui role="img" aria-label="The OpenAPI document at /openapi.json: version 3.0.3, titled EventFlow API, with no paths.">
+                    <div class="frag-head"><b>GET /openapi.json</b><span class="tag">200</span></div>
+<pre><code>{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "EventFlow API",
+    "version": "0.1.0"
+  },
+  "paths": {}
+}</code></pre>
+                </div>
+            </article>
+            <article class="tile tile--accent">
+                <h2>llms.txt Agent Guide</h2>
+                <p>A markdown guide to this site for AI agents, including when EventFlow is the right tool and how to proceed. Lives at <a href="/llms.txt" class="link">/llms.txt</a>.</p>
+            </article>
+            <article class="tile tile--brandy">
+                <h2>Sitemap</h2>
+                <p>Every indexable page on eventflowsales.com, listed at <a href="/sitemap.xml" class="link">/sitemap.xml</a>.</p>
+            </article>
+            <article class="tile tile--brandy tile--wide tile--frag">
+                <h2>Structured JSON Errors</h2>
+                <p>Requests under /api/ return HTTP 404 with a structured JSON body: an error code, a plain message, and hint links. Unknown page paths return a real 404 status with pointers to these resources.</p>
+                <div class="frag" data-ui role="img" aria-label="The JSON body returned for any path under /api/: a not_found error with status 404, a message and hint links.">
+                    <div class="frag-head"><b>GET /api/bookings</b><span class="tag tag--warm">404</span></div>
+<pre><code>{
+  "error": {
+    "code": "not_found",
+    "status": 404,
+    "message": "EventFlow does not offer a public API. This path does not exist.",
+    "hints": [
+      "Site guide for agents: https://eventflowsales.com/llms.txt",
+      "OpenAPI spec (zero endpoints): https://eventflowsales.com/openapi.json",
+      "Documentation: https://eventflowsales.com/documentation"
+    ]
+  }
+}</code></pre>
+                </div>
+            </article>
+            <article class="tile">
+                <h2>Product Documentation</h2>
+                <p>Guides for venue operators on setup, knowledge base, email configuration, and CRM integration, at <a href="/documentation" class="link">/documentation</a>.</p>
+            </article>
+            <article class="tile tile--paper">
+                <h2>Want an Integration?</h2>
+                <p>EventFlow works with Outlook (Microsoft 365), Slack, and Tripleseat today, and with Gmail on request. Custom integrations are available on the Premium plan. <a href="/#contact" class="link">Talk to the team</a>.</p>
+            </article>
+        </section>
+
+        <!-- ==================== THE CLOSE (the home page's action tile) ==================== -->
+        <section class="cta" aria-labelledby="cta-title">
+            <figure class="tile photo cta-l">
+                <img src="/assets/home/main-dining-room-set-for-a-banquet.jpg" width="1280" height="776" loading="lazy" decoding="async" alt="An archival photograph of a club dining room set for a banquet, with long tables of food and stacked plates.">
+            </figure>
+            <div class="tile tile--accent cta-c">
+                <h2 class="head" id="cta-title">Let's look at your inbox</h2>
+                <p>Tell us how inquiries reach you today, and we'll walk you through what EventFlow would have sent back. Setup takes about a week, and we do it with you.</p>
+                <a class="btn" href="/#contact" data-demo-trigger>Book a demo</a>
+            </div>
+            <div class="tile tile--brandy cta-r" aria-hidden="true"></div>
+        </section>
+        </main>
+
+        <!-- ==================== FOOTER: the wordmark as a rising bar chart ==================== -->
+        <footer class="foot" role="contentinfo">
+            <div class="blocks" aria-label="EventFlow, drawn as a bar chart that rises from left to right" role="img">
+                <div class="b-row" aria-hidden="true"><span style="height:38%">E</span><span style="height:42%">V</span><span style="height:48%">E</span><span style="height:55%">N</span><span style="height:63%">T</span></div><div class="b-row" aria-hidden="true"><span style="height:72%">F</span><span style="height:82%">L</span><span style="height:91%">O</span><span style="height:100%">W</span></div>
+            </div>
+            <div class="foot-grid">
+                <div class="foot-col">
+                    <h2>Product</h2>
+                    <a href="/#features">Features</a>
+                    <a href="/pricing">Pricing</a>
+                    <a href="/integrations">Integrations</a>
+                    <a href="/changelog">Changelog</a>
+                </div>
+                <div class="foot-col">
+                    <h2>Company</h2>
+                    <a href="/about">About</a>
+                    <a href="/blog">Blog</a>
+                    <a href="/careers">Careers</a>
+                    <a href="/#contact">Contact</a>
+                </div>
+                <div class="foot-col">
+                    <h2>Resources</h2>
+                    <a href="/documentation">Documentation</a>
+                    <a href="/help">Help Center</a>
+                    <a href="/promises">Our Promises</a>
+                    <a href="/developers">Developers</a>
+                </div>
+                <div class="foot-col">
+                    <h2>Legal</h2>
+                    <a href="/privacy">Privacy Policy</a>
+                    <a href="/terms">Terms of Service</a>
+                </div>
+                <div class="foot-contact">
+                    <p>Questions? Email <a class="link" href="mailto:sales@eventflowsales.com">sales@eventflowsales.com</a></p>
+                    <p class="footer-social"><!-- SITE_SOCIAL_LINKS_V1 -->Follow us on <a class="link" href="https://www.linkedin.com/company/eventflowsales/" target="_blank" rel="noopener">LinkedIn</a>, <a class="link" href="https://www.instagram.com/eventflowsales/" target="_blank" rel="noopener">Instagram</a> and <a class="link" href="https://www.tiktok.com/@eventflowsales" target="_blank" rel="noopener">TikTok</a>.</p>
+                </div>
+                <p class="credits">Pictures: <a href="https://commons.wikimedia.org/wiki/File:11_Depot_St,_Concord,_United_States_(Unsplash).jpg">"11 Depot St, Concord, United States"</a> by Michael Browning, CC0; <a href="https://commons.wikimedia.org/wiki/File:Main_Dining_Room_Set_for_a_Banquet_at_the_Minneapolis_Athletic_Club_-_DPLA_-_908797a753aee756f9a4ea92ae17f4e0.jpg">"Main Dining Room Set for a Banquet at the Minneapolis Athletic Club"</a>, public domain. All via Wikimedia Commons, shown in black and white.</p>
+            </div>
+            <div class="foot-last">
+                <span>&copy; 2026 EventFlow. Smarter Bookings. Fuller Rooms.</span>
+                <a class="btn" href="/#contact" data-demo-trigger>Book a demo</a>
+            </div>
+        </footer>
     </div>
-    <div class="page-content">
-        <div class="container">
-            <div class="cards-grid">
-                <div class="card">
-                    <div class="card-icon"><svg width="24" height="24" fill="none" stroke="var(--teal-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
-                    <h3>OpenAPI Spec</h3>
-                    <p>EventFlow does not offer a public API yet. The spec at <a href="/openapi.json" style="color:var(--teal-light, #1b7a89);text-decoration:underline;">/openapi.json</a> is a valid OpenAPI document with zero endpoints, published so automated tools get a machine-readable answer instead of a 404.</p>
-                </div>
-                <div class="card">
-                    <div class="card-icon"><svg width="24" height="24" fill="none" stroke="var(--teal-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
-                    <h3>llms.txt Agent Guide</h3>
-                    <p>A markdown guide to this site for AI agents, including when EventFlow is the right tool and how to proceed. Lives at <a href="/llms.txt" style="color:var(--teal-light, #1b7a89);text-decoration:underline;">/llms.txt</a>.</p>
-                </div>
-                <div class="card">
-                    <div class="card-icon"><svg width="24" height="24" fill="none" stroke="var(--teal-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
-                    <h3>Sitemap</h3>
-                    <p>Every indexable page on eventflowsales.com, listed at <a href="/sitemap.xml" style="color:var(--teal-light, #1b7a89);text-decoration:underline;">/sitemap.xml</a>.</p>
-                </div>
-                <div class="card">
-                    <div class="card-icon"><svg width="24" height="24" fill="none" stroke="var(--teal-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
-                    <h3>Structured JSON Errors</h3>
-                    <p>Requests under /api/ return HTTP 404 with a structured JSON body: an error code, a plain message, and hint links. Unknown page paths return a real 404 status with pointers to these resources.</p>
-                </div>
-                <div class="card">
-                    <div class="card-icon"><svg width="24" height="24" fill="none" stroke="var(--teal-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
-                    <h3>Product Documentation</h3>
-                    <p>Guides for venue operators on setup, knowledge base, email configuration, and CRM integration, at <a href="/documentation" style="color:var(--teal-light, #1b7a89);text-decoration:underline;">/documentation</a>.</p>
-                </div>
-                <div class="card">
-                    <div class="card-icon"><svg width="24" height="24" fill="none" stroke="var(--teal-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
-                    <h3>Want an Integration?</h3>
-                    <p>EventFlow works with Outlook (Microsoft 365), Slack, and Tripleseat today, and with Gmail on request. Custom integrations are available on the Premium plan. <a href="/#contact" style="color:var(--teal-light, #1b7a89);text-decoration:underline;">Talk to the team</a>.</p>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <footer>
-        <div class="container">
-            <div class="footer-grid">
-                <div class="footer-brand">
-                    <a class='nav-logo' href='/'>
-                        <img src="logo.svg" alt="EventFlow" style="height:36px;width:36px;border-radius:10px;">
-                        EventFlow
-                    </a>
-                    <p>AI-powered sales automation for restaurants and hospitality venues. Smarter bookings. Fuller rooms.</p>
-                    <p class="footer-social" style="margin-top:12px;"><!-- SITE_SOCIAL_LINKS_V1 -->Follow us: <a href="https://www.linkedin.com/company/eventflowsales/" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-underline-offset:3px;">LinkedIn</a> &middot; <a href="https://www.instagram.com/eventflowsales/" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-underline-offset:3px;">Instagram</a> &middot; <a href="https://www.tiktok.com/@eventflowsales" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-underline-offset:3px;">TikTok</a></p>
-                </div>
-                <div class="footer-col">
-                    <h4>Product</h4>
-                    <a href='/#features'>Features</a>
-                    <a href='/pricing'>Pricing</a>
-                    <a href='/integrations'>Integrations</a>
-                    <a href='/changelog'>Changelog</a>
-                </div>
-                <div class="footer-col">
-                    <h4>Company</h4>
-                    <a href='/about'>About</a>
-                    <a href='/blog'>Blog</a>
-                    <a href='/careers'>Careers</a>
-                    <a href='/#contact'>Contact</a>
-                </div>
-                <div class="footer-col">
-                    <h4>Resources</h4>
-                    <a href='/documentation'>Documentation</a>
-                    <a href='/developers'>Developer Resources</a>
-                    <a href='/help'>Help Center</a>
-                    <a href='/promises'>Our Promises</a>
-                    <a href='/privacy'>Privacy Policy</a>
-                    <a href='/terms'>Terms of Service</a>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <span>&copy; 2026 EventFlow. All rights reserved.</span>
-                <span>Smarter bookings. Fuller rooms.</span>
-            </div>
-        </div>
-    </footer>
-
-    <script>
-        document.querySelectorAll('.nav-links a').forEach(link => {
-            link.addEventListener('click', () => {
-                document.getElementById('navLinks').classList.remove('open');
-            });
-        });
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/SplitText.min.js"></script>
+    <script src="/assets/site/site.js"></script>
     <script src="/assets/demo-modal.js" defer></script>
 </body>
 </html>

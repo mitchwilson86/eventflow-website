@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terms of Service — EventFlow</title>
+    <title>Terms of Service | EventFlow</title>
     <!-- Favicon -->
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" type="image/png" href="/favicon.png" sizes="32x32">
@@ -12,14 +12,14 @@
 
     <!-- Open Graph -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Terms of Service — EventFlow">
+    <meta property="og:title" content="Terms of Service | EventFlow">
     <meta property="og:description" content="The terms governing your use of the EventFlow platform for AI-powered hospitality sales automation.">
     <meta property="og:url" content="https://eventflowsales.com">
     <meta property="og:site_name" content="EventFlow">
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Terms of Service — EventFlow">
+    <meta name="twitter:title" content="Terms of Service | EventFlow">
     <meta name="twitter:description" content="The terms governing your use of the EventFlow platform for AI-powered hospitality sales automation.">
 
     <link rel="canonical" href="https://eventflowsales.com/terms">
@@ -33,175 +33,251 @@
         gtag('config', 'G-Y5L9CGEL9S');
     </script>
 
+    <script>document.documentElement.classList.add('js')</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/marketing-shared.css">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/site/site.css">
 </head>
 <body>
-    <nav>
-        <div class="nav-inner">
-            <a class='nav-logo' href='/'>
-                <img src="logo.svg" alt="EventFlow Logo">
-                EventFlow
-            </a>
-            <ul class="nav-links" id="navLinks">
-                <li><a href='/'>Home</a></li>
-                <li><a href='/#features'>Features</a></li>
-                <li><a href='/pricing'>Pricing</a></li>
-                <li><a href='/#contact'>Contact</a></li>
-                <li><a class='nav-cta' href='#' data-demo-trigger>Book a Demo</a></li>
-            </ul>
-            <div class="mobile-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')">
-                <span></span><span></span><span></span>
-            </div>
-        </div>
-    </nav>
+    <a href="#main" class="skip-link">Skip to main content</a>
 
-
-    <div class="page-header">
-        <div class="container">
-            <h1>Terms of Service</h1>
-            <p>The terms governing your use of the EventFlow platform.</p>
-        </div>
-    </div>
-    <div class="page-content">
-        <div class="container">
-            <div class="content-block">
-                <p class="legal-updated">Last updated: August 14, 2026</p>
-
-                <h2>1. Acceptance of Terms</h2>
-                <p>These Terms of Service ("Terms") govern your use of the EventFlow platform ("Service"), operated by EventFlow Sales LLC ("EventFlow," "we," "our," or "us"). By accessing or using the Service, you agree to be bound by these Terms. If you are using the Service on behalf of a business, you represent that you have authority to bind that business, and "you" means that business.</p>
-
-                <h2>2. Description of Service</h2>
-                <p>EventFlow provides an AI-powered sales and event management platform for the hospitality industry. Depending on your plan and configuration, the Service may include automated email response generation and sending, lead qualification and pipeline tracking, automated follow-up sequences, knowledge base management, CRM integrations, courtesy date holds, booking records, drafted event orders and contracts, electronic signature collection, guest menu selection forms, outbound email campaigns, and alerts to your staff by email, Slack, or SMS.</p>
-                <p>We may add, change, or remove features over time. Features described as beta or in development are provided as-is and may change or be withdrawn.</p>
-
-                <h2>3. Account Registration</h2>
-                <p>You must provide accurate and complete information when creating an account. You are responsible for maintaining the security of your account credentials and for all activity that occurs under your account. Notify us promptly if you believe your account has been compromised.</p>
-
-                <h2>4. Acceptable Use</h2>
-                <p>You agree to use EventFlow only for lawful purposes related to managing your venue's event inquiries and sales operations. You may not:</p>
+    <div class="page">
+        <!-- ==================== TOP ROW (same as the home page) ==================== -->
+        <header class="top" role="banner">
+            <a class="tile top-logo" href="/" aria-label="EventFlow home"><img src="/assets/home/mark.png" width="160" height="160" alt=""></a>
+            <nav class="tile top-links" aria-label="Main navigation">
                 <ul>
+                    <li><a href="/#demo">Demo</a></li>
+                    <li><a href="/#features">Features</a></li>
+                    <li><a href="/pricing">Pricing</a></li>
+                    <li><a href="/#faq">Questions</a></li>
+                </ul>
+            </nav>
+            <div class="tile top-menu">
+                <button type="button" id="menuToggle" aria-expanded="false" aria-controls="menuSheet">Menu</button>
+            </div>
+            <div class="tile top-action"><a class="btn" href="/#contact" data-demo-trigger>Book a demo</a></div>
+            <nav class="menu-sheet" id="menuSheet" hidden aria-label="Main navigation (phone)">
+                <a href="/#demo">Demo</a>
+                <a href="/#features">Features</a>
+                <a href="/pricing">Pricing</a>
+                <a href="/#faq">Questions</a>
+                <a href="/about">About</a>
+            </nav>
+        </header>
+
+        <main id="main">
+        <!-- ==================== PAGE HEAD ==================== -->
+        <section class="phead" aria-labelledby="page-title">
+            <div class="tile phead-title">
+                <h1 id="page-title"><span>Terms of Service</span></h1>
+            </div>
+            <div class="tile tile--brandy phead-side">
+                <p class="lead rise" style="--d:260ms">The terms governing your use of the EventFlow platform.</p>
+                <p class="small rise" style="--d:370ms">Last updated: August 14, 2026</p>
+                <nav class="rise" style="--d:480ms" aria-label="On this page"><ul class="contents"><li><a href="#1-acceptance-of-terms">1. Acceptance of Terms</a></li><li><a href="#2-description-of-service">2. Description of Service</a></li><li><a href="#3-account-registration">3. Account Registration</a></li><li><a href="#4-acceptable-use">4. Acceptable Use</a></li><li><a href="#5-your-responsibilities">5. Your Responsibilities</a></li><li><a href="#6-subscription-and-billing">6. Subscription and Billing</a></li><li><a href="#7-ai-generated-content-and-automated-sending">7. AI-Generated Content and Automated Sending</a></li><li><a href="#8-dietary-and-allergen-information">8. Dietary and Allergen Information</a></li><li><a href="#9-documents-contracts-and-electronic-signatures">9. Documents, Contracts, and Electronic Signatures</a></li><li><a href="#10-your-data">10. Your Data</a></li><li><a href="#11-intellectual-property">11. Intellectual Property</a></li><li><a href="#12-confidentiality">12. Confidentiality</a></li><li><a href="#13-disclaimer-of-warranties">13. Disclaimer of Warranties</a></li><li><a href="#14-limitation-of-liability">14. Limitation of Liability</a></li><li><a href="#15-indemnification">15. Indemnification</a></li><li><a href="#16-service-availability">16. Service Availability</a></li><li><a href="#17-suspension-and-termination">17. Suspension and Termination</a></li><li><a href="#18-changes-to-terms">18. Changes to Terms</a></li><li><a href="#19-general">19. General</a></li><li><a href="#20-governing-law">20. Governing Law</a></li><li><a href="#21-contact">21. Contact</a></li></ul></nav>
+            </div>
+        </section>
+
+        <!-- ==================== SECTIONS ==================== -->
+        <div class="bands">
+            <section class="band" id="1-acceptance-of-terms" aria-labelledby="1-acceptance-of-terms-h">
+                <h2 id="1-acceptance-of-terms-h">1. Acceptance of Terms</h2>
+                <div class="prose">
+                    <p>These Terms of Service ("Terms") govern your use of the EventFlow platform ("Service"), operated by EventFlow Sales LLC ("EventFlow," "we," "our," or "us"). By accessing or using the Service, you agree to be bound by these Terms. If you are using the Service on behalf of a business, you represent that you have authority to bind that business, and "you" means that business.</p>
+                </div>
+            </section>
+            <section class="band" id="2-description-of-service" aria-labelledby="2-description-of-service-h">
+                <h2 id="2-description-of-service-h">2. Description of Service</h2>
+                <div class="prose">
+                    <p>EventFlow provides an AI-powered sales and event management platform for the hospitality industry. Depending on your plan and configuration, the Service may include automated email response generation and sending, lead qualification and pipeline tracking, automated follow-up sequences, knowledge base management, CRM integrations, courtesy date holds, booking records, drafted event orders and contracts, electronic signature collection, guest menu selection forms, outbound email campaigns, and alerts to your staff by email, Slack, or SMS.</p>
+                    <p>We may add, change, or remove features over time. Features described as beta or in development are provided as-is and may change or be withdrawn.</p>
+                </div>
+            </section>
+            <section class="band" id="3-account-registration" aria-labelledby="3-account-registration-h">
+                <h2 id="3-account-registration-h">3. Account Registration</h2>
+                <div class="prose">
+                    <p>You must provide accurate and complete information when creating an account. You are responsible for maintaining the security of your account credentials and for all activity that occurs under your account. Notify us promptly if you believe your account has been compromised.</p>
+                </div>
+            </section>
+            <section class="band" id="4-acceptable-use" aria-labelledby="4-acceptable-use-h">
+                <h2 id="4-acceptable-use-h">4. Acceptable Use</h2>
+                <div class="prose">
+                    <p>You agree to use EventFlow only for lawful purposes related to managing your venue's event inquiries and sales operations. You may not:</p>
+                    <ul>
                     <li>Use the Service to send spam, unlawful, unsolicited, or deceptive messages</li>
                     <li>Attempt to reverse-engineer, decompile, or extract the underlying AI models or prompts</li>
                     <li>Share your account credentials with unauthorized parties</li>
                     <li>Use the Service in a way that violates any applicable law or regulation</li>
                     <li>Upload malicious content or attempt to compromise the platform's security</li>
                     <li>Use the Service to build a competing product</li>
-                </ul>
-
-                <h2>5. Your Responsibilities</h2>
-                <p>Because the Service acts on your behalf and relies on information you supply, you agree that:</p>
-                <ul>
+                    </ul>
+                </div>
+            </section>
+            <section class="band" id="5-your-responsibilities" aria-labelledby="5-your-responsibilities-h">
+                <h2 id="5-your-responsibilities-h">5. Your Responsibilities</h2>
+                <div class="prose">
+                    <p>Because the Service acts on your behalf and relies on information you supply, you agree that:</p>
+                    <ul>
                     <li>You have the right to provide us with all data you upload or connect, including guest contact details, whether entered by you, imported from another system, or supplied by a third party.</li>
                     <li>You have obtained any consent required to contact those guests, and you are responsible for complying with laws governing commercial email and messaging, including the CAN-SPAM Act and, where you enable SMS, the Telephone Consumer Protection Act.</li>
                     <li>You are responsible for complying with any law that applies to automated or AI-generated communications with consumers, including any obligation to disclose that a message was generated by an automated system.</li>
                     <li>The venue information you supply, including prices, capacities, minimums, availability, and policies, is accurate and kept current. The Service relies on it when writing replies.</li>
                     <li>You will monitor the Service, review the escalations and alerts it raises, and respond to guests yourself where a person is needed.</li>
-                </ul>
-
-                <h2>6. Subscription and Billing</h2>
-                <p>EventFlow is offered as a monthly subscription. Pricing is per venue and varies by plan (Copilot, Autopilot, and Premium). A one-time setup fee of $750 applies to each new venue unless waived in writing, and optional add-ons, such as outbound email campaigns, are billed separately at the rates shown on our pricing page. Current pricing is available at <a href="/pricing">eventflowsales.com/pricing</a>.</p>
-                <p>Subscriptions renew automatically each month until cancelled. You may cancel at any time, and your access will continue until the end of your current billing period. Fees are non-refundable except where required by law, and setup fees are non-refundable once onboarding has begun. Fees are exclusive of taxes, which are your responsibility. We may change pricing with at least 30 days' notice before it applies to your next billing period. We may suspend the Service if an invoice remains unpaid after written notice.</p>
-
-                <h2>7. AI-Generated Content and Automated Sending</h2>
-                <p>The core of the Service is that our AI reads incoming inquiries and writes and sends replies on your behalf, automatically, without a person approving each message beforehand. By using the Service you authorize us to send communications from your connected accounts, in your venue's name, on that basis. Depending on your configuration, the Service may also place courtesy holds, create or update records in your CRM, draft event documents, and send follow-up and campaign emails automatically.</p>
-                <p>AI-generated content can contain errors. It may state prices, availability, capacity, policies, or other details incorrectly, including details drawn from information you supplied. <strong>You are responsible for the content of communications sent from your accounts, for monitoring what the Service sends, for correcting anything that is wrong, and for deciding whether to honor any commitment the AI appears to make on your behalf.</strong> Nothing the Service sends constitutes an offer, quote, or commitment by EventFlow, and EventFlow is not a party to any agreement between you and your guests.</p>
-                <p>We provide controls to help you supervise the Service, including copying a named member of your team on outgoing messages, escalation rules that hand a conversation to a person, and the ability to remove any guest from automated handling. Configuring and monitoring those controls is your responsibility. To the maximum extent permitted by law, EventFlow is not liable for the content of AI-generated communications or for any error, omission, or commitment contained in them.</p>
-
-                <h2>8. Dietary and Allergen Information</h2>
-                <p>The Service records dietary requirements, allergies, and preferences that guests provide, and passes them to you. EventFlow and the venues using the Service make every reasonable effort to capture this information accurately and to accommodate it. Even so, <strong>neither EventFlow nor any venue can guarantee that a dish, ingredient, or event will be free of a particular allergen</strong>, because kitchens prepare many ingredients in shared spaces and menus, suppliers, and preparation methods change. Guests with serious allergies or medical dietary requirements should confirm arrangements directly with venue staff before the event. Responsibility for food safety, allergen handling, and what is communicated to guests about them rests with the venue, not with EventFlow. Nothing in the Service is a medical or safety assurance.</p>
-
-                <h2>9. Documents, Contracts, and Electronic Signatures</h2>
-                <p>The Service can draft event orders, contracts, invoices, and similar documents, and can collect electronic signatures on them. These are drafts and tools provided for your convenience. They are not legal advice, and EventFlow is not a law firm. Any agreement created through the Service is between you and your guest. You are responsible for reviewing every document before it is issued, for its accuracy and legal sufficiency, and for determining whether an electronic signature is valid and enforceable for your purposes in your jurisdiction. EventFlow makes no representation or warranty about the enforceability of any document or signature produced through the Service.</p>
-
-                <h2>10. Your Data</h2>
-                <p>You retain ownership of all data you upload to or connect with EventFlow, including venue documents, email content, guest records, and business information. You grant EventFlow a limited, non-exclusive license to host, process, and transmit this data in order to provide, secure, support, and improve the Service. We do not use your data to train artificial intelligence models, we do not permit our AI providers to do so, and we never use your data to serve another customer. Our handling of personal data is described in our <a href="/privacy">Privacy Policy</a>. Business customers who require a data processing agreement can request one.</p>
-
-                <h2>11. Intellectual Property</h2>
-                <p>The EventFlow platform, including its software, prompts, configuration, design, and branding, is owned by EventFlow and protected by intellectual property laws. Your subscription grants you a limited, non-exclusive, non-transferable license to use the Service during your subscription period. Content the Service generates for you, such as reply text and drafted documents, is yours to use in your business.</p>
-
-                <h2>12. Confidentiality</h2>
-                <p>Each party may receive non-public information from the other. Each party agrees to protect the other's confidential information with at least reasonable care, to use it only as needed under these Terms, and not to disclose it to third parties except to employees, contractors, and service providers who need it and are bound by similar obligations, or where disclosure is required by law. This does not apply to information that is public, already known, independently developed, or lawfully received from another source.</p>
-
-                <h2>13. Disclaimer of Warranties</h2>
-                <p>The Service is provided "as is" and "as available." To the maximum extent permitted by law, EventFlow disclaims all warranties, express or implied, including implied warranties of merchantability, fitness for a particular purpose, title, and non-infringement. We do not warrant that the Service will be uninterrupted, error-free, or secure, that AI-generated content will be accurate, or that the Service will produce any particular business result. The Service depends on third-party providers, and we are not responsible for their availability, for changes to their services, or for the suspension of any account you hold with them.</p>
-
-                <h2>14. Limitation of Liability</h2>
-                <p>To the maximum extent permitted by law, EventFlow shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including lost revenue, lost bookings, lost profits, or loss of data, arising from your use of the Service, even if advised of the possibility. Our total aggregate liability for all claims shall not exceed the amount you paid for the Service in the 12 months preceding the event giving rise to the claim.</p>
-
-                <h2>15. Indemnification</h2>
-                <p>You agree to indemnify and hold EventFlow harmless from any third-party claim, loss, or expense (including reasonable legal fees) arising from your use of the Service, your data or your guests' data, your communications with guests, your compliance or non-compliance with laws governing marketing and messaging, or your breach of these Terms. EventFlow agrees to indemnify you against any third-party claim that the Service as provided by us infringes that party's intellectual property rights.</p>
-
-                <h2>16. Service Availability</h2>
-                <p>We aim to keep the Service highly available but do not guarantee uninterrupted access. We may perform maintenance and updates, and may experience outages, that temporarily affect availability. We will make reasonable efforts to give advance notice of planned downtime.</p>
-
-                <h2>17. Suspension and Termination</h2>
-                <p>Either party may terminate this agreement at any time. We may also suspend or terminate your access immediately if you breach these Terms, use the Service unlawfully, fail to pay after notice, or create a risk to the Service or to other users. Upon termination, your access will cease at the end of your current billing period unless terminated for cause. You may request an export of your data before termination takes effect, and we will delete your data in accordance with our Privacy Policy. Sections that by their nature should survive termination, including sections 10 through 15, 19, and 20, will survive.</p>
-
-                <h2>18. Changes to Terms</h2>
-                <p>We may update these Terms from time to time. Material changes will be communicated by email or platform notification at least 30 days before taking effect. Continued use of the Service after changes take effect constitutes acceptance of the updated Terms.</p>
-
-                <h2>19. General</h2>
-                <p>These Terms, together with our Privacy Policy, are the entire agreement between us regarding the Service. If any provision is found unenforceable, the rest remains in effect. Our failure to enforce a provision is not a waiver of it. You may not assign these Terms without our written consent, and we may assign them to a successor in connection with a merger, acquisition, or sale of assets. Neither party is liable for delays or failures caused by events beyond its reasonable control. Notices to you may be sent to the email address on your account, and notices to us should be sent to the address in section 21.</p>
-
-                <h2>20. Governing Law</h2>
-                <p>These Terms are governed by the laws of the State of Tennessee, without regard to conflict of law principles. Any disputes shall be resolved in the state or federal courts located in Nashville, Tennessee, and both parties consent to that jurisdiction.</p>
-
-                <h2>21. Contact</h2>
-                <p>For questions about these Terms, contact EventFlow Sales LLC at <a href="mailto:sales@eventflowsales.com">sales@eventflowsales.com</a>.</p>
-            </div>
+                    </ul>
+                </div>
+            </section>
+            <section class="band" id="6-subscription-and-billing" aria-labelledby="6-subscription-and-billing-h">
+                <h2 id="6-subscription-and-billing-h">6. Subscription and Billing</h2>
+                <div class="prose">
+                    <p>EventFlow is offered as a monthly subscription. Pricing is per venue and varies by plan (Copilot, Autopilot, and Premium). A one-time setup fee of $750 applies to each new venue unless waived in writing, and optional add-ons, such as outbound email campaigns, are billed separately at the rates shown on our pricing page. Current pricing is available at <a href="/pricing">eventflowsales.com/pricing</a>.</p>
+                    <p>Subscriptions renew automatically each month until cancelled. You may cancel at any time, and your access will continue until the end of your current billing period. Fees are non-refundable except where required by law, and setup fees are non-refundable once onboarding has begun. Fees are exclusive of taxes, which are your responsibility. We may change pricing with at least 30 days' notice before it applies to your next billing period. We may suspend the Service if an invoice remains unpaid after written notice.</p>
+                </div>
+            </section>
+            <section class="band" id="7-ai-generated-content-and-automated-sending" aria-labelledby="7-ai-generated-content-and-automated-sending-h">
+                <h2 id="7-ai-generated-content-and-automated-sending-h">7. AI-Generated Content and Automated Sending</h2>
+                <div class="prose">
+                    <p>The core of the Service is that our AI reads incoming inquiries and writes and sends replies on your behalf, automatically, without a person approving each message beforehand. By using the Service you authorize us to send communications from your connected accounts, in your venue's name, on that basis. Depending on your configuration, the Service may also place courtesy holds, create or update records in your CRM, draft event documents, and send follow-up and campaign emails automatically.</p>
+                    <p>AI-generated content can contain errors. It may state prices, availability, capacity, policies, or other details incorrectly, including details drawn from information you supplied. <strong>You are responsible for the content of communications sent from your accounts, for monitoring what the Service sends, for correcting anything that is wrong, and for deciding whether to honor any commitment the AI appears to make on your behalf.</strong> Nothing the Service sends constitutes an offer, quote, or commitment by EventFlow, and EventFlow is not a party to any agreement between you and your guests.</p>
+                    <p>We provide controls to help you supervise the Service, including copying a named member of your team on outgoing messages, escalation rules that hand a conversation to a person, and the ability to remove any guest from automated handling. Configuring and monitoring those controls is your responsibility. To the maximum extent permitted by law, EventFlow is not liable for the content of AI-generated communications or for any error, omission, or commitment contained in them.</p>
+                </div>
+            </section>
+            <section class="band" id="8-dietary-and-allergen-information" aria-labelledby="8-dietary-and-allergen-information-h">
+                <h2 id="8-dietary-and-allergen-information-h">8. Dietary and Allergen Information</h2>
+                <div class="prose">
+                    <p>The Service records dietary requirements, allergies, and preferences that guests provide, and passes them to you. EventFlow and the venues using the Service make every reasonable effort to capture this information accurately and to accommodate it. Even so, <strong>neither EventFlow nor any venue can guarantee that a dish, ingredient, or event will be free of a particular allergen</strong>, because kitchens prepare many ingredients in shared spaces and menus, suppliers, and preparation methods change. Guests with serious allergies or medical dietary requirements should confirm arrangements directly with venue staff before the event. Responsibility for food safety, allergen handling, and what is communicated to guests about them rests with the venue, not with EventFlow. Nothing in the Service is a medical or safety assurance.</p>
+                </div>
+            </section>
+            <section class="band" id="9-documents-contracts-and-electronic-signatures" aria-labelledby="9-documents-contracts-and-electronic-signatures-h">
+                <h2 id="9-documents-contracts-and-electronic-signatures-h">9. Documents, Contracts, and Electronic Signatures</h2>
+                <div class="prose">
+                    <p>The Service can draft event orders, contracts, invoices, and similar documents, and can collect electronic signatures on them. These are drafts and tools provided for your convenience. They are not legal advice, and EventFlow is not a law firm. Any agreement created through the Service is between you and your guest. You are responsible for reviewing every document before it is issued, for its accuracy and legal sufficiency, and for determining whether an electronic signature is valid and enforceable for your purposes in your jurisdiction. EventFlow makes no representation or warranty about the enforceability of any document or signature produced through the Service.</p>
+                </div>
+            </section>
+            <section class="band" id="10-your-data" aria-labelledby="10-your-data-h">
+                <h2 id="10-your-data-h">10. Your Data</h2>
+                <div class="prose">
+                    <p>You retain ownership of all data you upload to or connect with EventFlow, including venue documents, email content, guest records, and business information. You grant EventFlow a limited, non-exclusive license to host, process, and transmit this data in order to provide, secure, support, and improve the Service. We do not use your data to train artificial intelligence models, we do not permit our AI providers to do so, and we never use your data to serve another customer. Our handling of personal data is described in our <a href="/privacy">Privacy Policy</a>. Business customers who require a data processing agreement can request one.</p>
+                </div>
+            </section>
+            <section class="band" id="11-intellectual-property" aria-labelledby="11-intellectual-property-h">
+                <h2 id="11-intellectual-property-h">11. Intellectual Property</h2>
+                <div class="prose">
+                    <p>The EventFlow platform, including its software, prompts, configuration, design, and branding, is owned by EventFlow and protected by intellectual property laws. Your subscription grants you a limited, non-exclusive, non-transferable license to use the Service during your subscription period. Content the Service generates for you, such as reply text and drafted documents, is yours to use in your business.</p>
+                </div>
+            </section>
+            <section class="band" id="12-confidentiality" aria-labelledby="12-confidentiality-h">
+                <h2 id="12-confidentiality-h">12. Confidentiality</h2>
+                <div class="prose">
+                    <p>Each party may receive non-public information from the other. Each party agrees to protect the other's confidential information with at least reasonable care, to use it only as needed under these Terms, and not to disclose it to third parties except to employees, contractors, and service providers who need it and are bound by similar obligations, or where disclosure is required by law. This does not apply to information that is public, already known, independently developed, or lawfully received from another source.</p>
+                </div>
+            </section>
+            <section class="band" id="13-disclaimer-of-warranties" aria-labelledby="13-disclaimer-of-warranties-h">
+                <h2 id="13-disclaimer-of-warranties-h">13. Disclaimer of Warranties</h2>
+                <div class="prose">
+                    <p>The Service is provided "as is" and "as available." To the maximum extent permitted by law, EventFlow disclaims all warranties, express or implied, including implied warranties of merchantability, fitness for a particular purpose, title, and non-infringement. We do not warrant that the Service will be uninterrupted, error-free, or secure, that AI-generated content will be accurate, or that the Service will produce any particular business result. The Service depends on third-party providers, and we are not responsible for their availability, for changes to their services, or for the suspension of any account you hold with them.</p>
+                </div>
+            </section>
+            <section class="band" id="14-limitation-of-liability" aria-labelledby="14-limitation-of-liability-h">
+                <h2 id="14-limitation-of-liability-h">14. Limitation of Liability</h2>
+                <div class="prose">
+                    <p>To the maximum extent permitted by law, EventFlow shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including lost revenue, lost bookings, lost profits, or loss of data, arising from your use of the Service, even if advised of the possibility. Our total aggregate liability for all claims shall not exceed the amount you paid for the Service in the 12 months preceding the event giving rise to the claim.</p>
+                </div>
+            </section>
+            <section class="band" id="15-indemnification" aria-labelledby="15-indemnification-h">
+                <h2 id="15-indemnification-h">15. Indemnification</h2>
+                <div class="prose">
+                    <p>You agree to indemnify and hold EventFlow harmless from any third-party claim, loss, or expense (including reasonable legal fees) arising from your use of the Service, your data or your guests' data, your communications with guests, your compliance or non-compliance with laws governing marketing and messaging, or your breach of these Terms. EventFlow agrees to indemnify you against any third-party claim that the Service as provided by us infringes that party's intellectual property rights.</p>
+                </div>
+            </section>
+            <section class="band" id="16-service-availability" aria-labelledby="16-service-availability-h">
+                <h2 id="16-service-availability-h">16. Service Availability</h2>
+                <div class="prose">
+                    <p>We aim to keep the Service highly available but do not guarantee uninterrupted access. We may perform maintenance and updates, and may experience outages, that temporarily affect availability. We will make reasonable efforts to give advance notice of planned downtime.</p>
+                </div>
+            </section>
+            <section class="band" id="17-suspension-and-termination" aria-labelledby="17-suspension-and-termination-h">
+                <h2 id="17-suspension-and-termination-h">17. Suspension and Termination</h2>
+                <div class="prose">
+                    <p>Either party may terminate this agreement at any time. We may also suspend or terminate your access immediately if you breach these Terms, use the Service unlawfully, fail to pay after notice, or create a risk to the Service or to other users. Upon termination, your access will cease at the end of your current billing period unless terminated for cause. You may request an export of your data before termination takes effect, and we will delete your data in accordance with our Privacy Policy. Sections that by their nature should survive termination, including sections 10 through 15, 19, and 20, will survive.</p>
+                </div>
+            </section>
+            <section class="band" id="18-changes-to-terms" aria-labelledby="18-changes-to-terms-h">
+                <h2 id="18-changes-to-terms-h">18. Changes to Terms</h2>
+                <div class="prose">
+                    <p>We may update these Terms from time to time. Material changes will be communicated by email or platform notification at least 30 days before taking effect. Continued use of the Service after changes take effect constitutes acceptance of the updated Terms.</p>
+                </div>
+            </section>
+            <section class="band" id="19-general" aria-labelledby="19-general-h">
+                <h2 id="19-general-h">19. General</h2>
+                <div class="prose">
+                    <p>These Terms, together with our Privacy Policy, are the entire agreement between us regarding the Service. If any provision is found unenforceable, the rest remains in effect. Our failure to enforce a provision is not a waiver of it. You may not assign these Terms without our written consent, and we may assign them to a successor in connection with a merger, acquisition, or sale of assets. Neither party is liable for delays or failures caused by events beyond its reasonable control. Notices to you may be sent to the email address on your account, and notices to us should be sent to the address in section 21.</p>
+                </div>
+            </section>
+            <section class="band" id="20-governing-law" aria-labelledby="20-governing-law-h">
+                <h2 id="20-governing-law-h">20. Governing Law</h2>
+                <div class="prose">
+                    <p>These Terms are governed by the laws of the State of Tennessee, without regard to conflict of law principles. Any disputes shall be resolved in the state or federal courts located in Nashville, Tennessee, and both parties consent to that jurisdiction.</p>
+                </div>
+            </section>
+            <section class="band" id="21-contact" aria-labelledby="21-contact-h">
+                <h2 id="21-contact-h">21. Contact</h2>
+                <div class="prose">
+                    <p>For questions about these Terms, contact EventFlow Sales LLC at <a href="mailto:sales@eventflowsales.com">sales@eventflowsales.com</a>.</p>
+                </div>
+            </section>
         </div>
+        </main>
+
+        <!-- ==================== FOOTER: the wordmark as a rising bar chart ==================== -->
+        <footer class="foot" role="contentinfo">
+            <div class="blocks" aria-label="EventFlow, drawn as a bar chart that rises from left to right" role="img">
+                <div class="b-row" aria-hidden="true"><span style="height:38%">E</span><span style="height:42%">V</span><span style="height:48%">E</span><span style="height:55%">N</span><span style="height:63%">T</span></div><div class="b-row" aria-hidden="true"><span style="height:72%">F</span><span style="height:82%">L</span><span style="height:91%">O</span><span style="height:100%">W</span></div>
+            </div>
+            <div class="foot-grid">
+                <div class="foot-col">
+                    <h2>Product</h2>
+                    <a href="/#features">Features</a>
+                    <a href="/pricing">Pricing</a>
+                    <a href="/integrations">Integrations</a>
+                    <a href="/changelog">Changelog</a>
+                </div>
+                <div class="foot-col">
+                    <h2>Company</h2>
+                    <a href="/about">About</a>
+                    <a href="/blog">Blog</a>
+                    <a href="/careers">Careers</a>
+                    <a href="/#contact">Contact</a>
+                </div>
+                <div class="foot-col">
+                    <h2>Resources</h2>
+                    <a href="/documentation">Documentation</a>
+                    <a href="/help">Help Center</a>
+                    <a href="/promises">Our Promises</a>
+                    <a href="/developers">Developers</a>
+                </div>
+                <div class="foot-col">
+                    <h2>Legal</h2>
+                    <a href="/privacy">Privacy Policy</a>
+                    <a href="/terms">Terms of Service</a>
+                </div>
+                <div class="foot-contact">
+                    <p>Questions? Email <a class="link" href="mailto:sales@eventflowsales.com">sales@eventflowsales.com</a></p>
+                    <p class="footer-social"><!-- SITE_SOCIAL_LINKS_V1 -->Follow us on <a class="link" href="https://www.linkedin.com/company/eventflowsales/" target="_blank" rel="noopener">LinkedIn</a>, <a class="link" href="https://www.instagram.com/eventflowsales/" target="_blank" rel="noopener">Instagram</a> and <a class="link" href="https://www.tiktok.com/@eventflowsales" target="_blank" rel="noopener">TikTok</a>.</p>
+                </div>
+            </div>
+            <div class="foot-last">
+                <span>&copy; 2026 EventFlow. Smarter Bookings. Fuller Rooms.</span>
+                <a class="btn" href="/#contact" data-demo-trigger>Book a demo</a>
+            </div>
+        </footer>
     </div>
 
-    <footer>
-        <div class="container">
-            <div class="footer-grid">
-                <div class="footer-brand">
-                    <a class='nav-logo' href='/'>
-                        <img src="logo.svg" alt="EventFlow" style="height:36px;width:36px;border-radius:10px;">
-                        EventFlow
-                    </a>
-                    <p>AI-powered sales automation for restaurants and hospitality venues. Smarter bookings. Fuller rooms.</p>
-                    <p class="footer-social" style="margin-top:12px;"><!-- SITE_SOCIAL_LINKS_V1 -->Follow us: <a href="https://www.linkedin.com/company/eventflowsales/" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-underline-offset:3px;">LinkedIn</a> &middot; <a href="https://www.instagram.com/eventflowsales/" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-underline-offset:3px;">Instagram</a> &middot; <a href="https://www.tiktok.com/@eventflowsales" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-underline-offset:3px;">TikTok</a></p>
-                </div>
-                <div class="footer-col">
-                    <h4>Product</h4>
-                    <a href='/#features'>Features</a>
-                    <a href='/pricing'>Pricing</a>
-                    <a href='/integrations'>Integrations</a>
-                    <a href='/changelog'>Changelog</a>
-                </div>
-                <div class="footer-col">
-                    <h4>Company</h4>
-                    <a href='/about'>About</a>
-                    <a href='/blog'>Blog</a>
-                    <a href='/careers'>Careers</a>
-                    <a href='/#contact'>Contact</a>
-                </div>
-                <div class="footer-col">
-                    <h4>Resources</h4>
-                    <a href='/documentation'>Documentation</a>
-                    <a href='/help'>Help Center</a>
-                    <a href='/promises'>Our Promises</a>
-                    <a href='/privacy'>Privacy Policy</a>
-                    <a href='/terms'>Terms of Service</a>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <span>&copy; 2026 EventFlow. All rights reserved.</span>
-                <span>Smarter bookings. Fuller rooms.</span>
-            </div>
-        </div>
-    </footer>
-
-    <script>
-        document.querySelectorAll('.nav-links a').forEach(link => {
-            link.addEventListener('click', () => {
-                document.getElementById('navLinks').classList.remove('open');
-            });
-        });
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/SplitText.min.js"></script>
+    <script src="/assets/site/site.js"></script>
     <script src="/assets/demo-modal.js" defer></script>
 </body>
 </html>
