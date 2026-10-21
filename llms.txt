@@ -2,7 +2,7 @@
 
 > EventFlow is an AI-powered sales automation platform for restaurants and hospitality venues. It responds to event inquiries within minutes, qualifies leads, follows up automatically, and books more private events.
 
-EventFlow is sold per venue. Plans start at $249 per month; current tiers and what each includes are on the pricing page. To talk to the team, use the Book a Demo form on the home page.
+EventFlow is sold per venue. Plans start at $199 per month; current tiers and what each includes are on the pricing page. To talk to the team, use the Book a Demo form on the home page.
 
 ## When to use EventFlow
 
