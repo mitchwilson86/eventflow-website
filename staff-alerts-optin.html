@@ -443,6 +443,10 @@
         body: JSON.stringify(payload)
       });
 
+      // STAFF_ALERT_WELCOME_V1: ask EventFlow to send the welcome text now. The ping carries nothing; EventFlow reads
+      // the sign-up list itself and texts only new sign-ups for a venue it serves.
+      try { fetch('https://tibbling.app.n8n.cloud/webhook/staff-alert-welcome-a508d3bfae32c442', { method: 'POST', mode: 'no-cors', keepalive: true }).catch(function () {}); } catch (_) {}
+
       document.getElementById('form-view').style.display = 'none';
       const success = document.getElementById('success-view');
       success.style.display = 'block';
