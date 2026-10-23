@@ -54,6 +54,15 @@
     .sp-loader { text-align: center; color: var(--text-secondary); padding: 48px 0; font-size: 14px; }
     .sp-pic { display: block; width: 100%; max-width: 320px; height: auto; border: 1px solid var(--border); border-radius: 10px; margin-top: 6px; }
     .sp-pic-note { display: block; font-size: 13px; color: var(--text-secondary); margin-top: 6px; }
+    .sp-batch-row { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin: 0 0 10px 0; }
+    .sp-batch-row .sp-eyebrow { margin-bottom: 4px; }
+    .sp-batch-title { font-size: 16px; font-weight: 600; color: var(--text-primary); margin: 0 0 2px 0; line-height: 1.35; }
+    .sp-batch-snip { font-size: 14px; color: var(--text-secondary); margin: 6px 0 0 0; line-height: 1.5; }
+    .sp-batch-state { font-size: 14px; font-weight: 600; margin: 8px 0 0 0; }
+    .sp-batch-state.good { color: var(--teal); }
+    .sp-batch-state.warn { color: var(--red); }
+    .sp-batch-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .sp-batch-links .btn { padding: 6px 12px; font-size: 14px; }
   </style>
 </head>
 <body>
@@ -120,6 +129,25 @@
       <p class="sp-hint" id="hint">Approve sends it to the posting queue for its planned time. Edit lets you change the words or the time first. Skip removes it. You can undo until it is posted.</p>
     </div>
   </div>
+
+  <!-- SOCIAL_APPROVE_ALL_V1: the email's "Approve all" button opens this list (?ts=<token>.<token>&d=approve). -->
+  <div id="batch" style="display:none">
+    <div class="sp-preview" id="batch-preview" style="display:none">
+      <strong>Preview mode.</strong> Approving only marks these posts. Nothing is sent to Publer and nothing is posted while EventFlow's social posts are in preview.
+    </div>
+    <div class="sp-card">
+      <div class="sp-status" id="batch-status" style="display:none">
+        <h2 id="batch-status-title"></h2>
+        <p id="batch-status-body"></p>
+      </div>
+      <div class="sp-eyebrow">This week's posts</div>
+      <div id="batch-list"></div>
+      <div class="sp-actions" id="batch-actions" style="display:none">
+        <button class="btn sp-btn-approve" id="btn-approve-all" onclick="approveAll()">Approve all</button>
+      </div>
+      <p class="sp-hint">Open a post to edit it, change its time or skip it. You can undo any of them until it is posted.</p>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -143,7 +171,16 @@ var LIMITS = { linkedin_personal: 3000, linkedin_page: 3000, instagram: 2200, ti
 var PILLARS = { proof: 'Proof post', show: 'Show it working', teach: 'Teaching post', founder: 'Founder story', talking: 'Talking video clip' };
 var EM = String.fromCharCode(8212), EN = String.fromCharCode(8211);
 
-window.addEventListener('load', boot);
+/* SOCIAL_APPROVE_ALL_V1 (2026-10-23). The Monday email's "Approve all" button opens ?ts=<token>.<token>.<token>&d=approve.
+   Each token is still the credential for its own post only; this page approves them one at a time with the same
+   decide_social_post call the single-post page uses, by script, never by the link itself (a link scanner changes nothing).
+   Only posts still waiting (drafted) are approved: a post already approved, skipped or expired is left as it is. */
+var batchTokens = (params.get('ts') || '').split(/[.,\s]+/).map(function (x) {
+  var run = x.match(/[0-9a-f]{16,}/i); return run ? run[0] : '';
+}).filter(function (x, i, a) { return x && a.indexOf(x) === i; }).slice(0, 8);
+var batch = [];
+
+window.addEventListener('load', params.has('ts') ? bootBatch : boot);
 
 async function boot() {
   if (!token) return showError('This link is missing its code. Please open it again from the "This week\'s posts" email.');
@@ -388,9 +425,144 @@ async function decide(d, edits) {
   }
 }
 
+async function bootBatch() {
+  if (!batchTokens.length) return showError('This link is missing its codes. Please open it again from the "This week\'s posts" email.');
+  var sb;
+  try { sb = await getSupabase(); } catch (err) { return showError(humanizeError((err && err.message) || String(err))); }
+  for (var i = 0; i < batchTokens.length; i++) {
+    var row = { token: batchTokens[i], ctx: null, error: '', done: '' };
+    try {
+      var res = await sb.rpc('get_social_post', { p_token: row.token });
+      if (res.error) row.error = humanizeError(res.error.message); else row.ctx = res.data || null;
+    } catch (err) { row.error = humanizeError((err && err.message) || String(err)); }
+    batch.push(row);
+  }
+  if (!batch.some(function (r) { return r.ctx; })) return showError(batch[0].error || 'We could not open these posts. Please open them one by one from the email.');
+  renderBatch();
+  if (wanted === 'approve') await approveAll();
+}
+
+function batchWaiting(r) { return r.ctx && !r.ctx.expired && r.ctx.status === 'drafted'; }
+
+async function approveAll() {
+  if (busy) return;
+  busy = true;
+  var btnAll = document.getElementById('btn-approve-all');
+  btnAll.disabled = true;
+  try {
+    var sb = await getSupabase();
+    for (var i = 0; i < batch.length; i++) {
+      var r = batch[i];
+      if (!batchWaiting(r)) continue;
+      try {
+        var res = await sb.rpc('decide_social_post', { p_token: r.token, p_decision: 'approve', p_edits: null });
+        if (res.error) throw res.error;
+        if (!res.data || res.data.ok !== true) throw new Error('Unexpected response');
+        r.ctx = res.data; r.error = ''; r.done = 'approved';
+      } catch (err) { r.error = humanizeError((err && err.message) || String(err)); }
+      renderBatch();
+    }
+  } catch (err) {
+    batch.forEach(function (r) { if (batchWaiting(r) && !r.error) r.error = humanizeError((err && err.message) || String(err)); });
+  } finally {
+    btnAll.disabled = false;
+    busy = false;
+  }
+  /* A reload must never approve again after an Undo, so the "approve" part leaves the address. */
+  if (window.history && window.history.replaceState) window.history.replaceState(null, '', window.location.pathname + '?ts=' + batchTokens.join('.'));
+  renderBatch();
+}
+
+async function undoOne(i) {
+  if (busy) return;
+  busy = true;
+  var r = batch[i];
+  try {
+    var sb = await getSupabase();
+    var res = await sb.rpc('decide_social_post', { p_token: r.token, p_decision: 'undo', p_edits: null });
+    if (res.error) throw res.error;
+    if (!res.data || res.data.ok !== true) throw new Error('Unexpected response');
+    r.ctx = res.data; r.error = ''; r.done = '';
+  } catch (err) { r.error = humanizeError((err && err.message) || String(err)); }
+  busy = false;
+  renderBatch();
+}
+
+function renderBatch() {
+  document.getElementById('loader').style.display = 'none';
+  document.getElementById('error').style.display = 'none';
+  document.getElementById('content').style.display = 'none';
+  document.getElementById('batch').style.display = 'block';
+  var first = batch.filter(function (r) { return r.ctx; })[0];
+  var mode = first ? first.ctx.mode : '';
+  var preview = mode === 'preview' || mode === 'off';
+  document.getElementById('batch-preview').style.display = mode === 'preview' ? 'block' : 'none';
+  var list = document.getElementById('batch-list');
+  list.innerHTML = '';
+  batch.forEach(function (r, i) {
+    var row = document.createElement('div'); row.className = 'sp-batch-row';
+    var c = r.ctx || {};
+    var eb = document.createElement('div'); eb.className = 'sp-eyebrow';
+    eb.textContent = (PILLARS[c.pillar] || 'Post') + (c.scheduled_for ? ' · ' + fmtWhen(c.scheduled_for) : '');
+    row.appendChild(eb);
+    var ti = document.createElement('p'); ti.className = 'sp-batch-title'; ti.textContent = c.title || 'Post ' + (i + 1); row.appendChild(ti);
+    var body = (c.body_by_platform || {}).linkedin_personal || (c.body_by_platform || {})[(c.platforms || [])[0]] || '';
+    if (body) {
+      var sn = document.createElement('p'); sn.className = 'sp-batch-snip';
+      sn.textContent = body.length > 160 ? body.slice(0, 157).replace(/\s+\S*$/, '') + '...' : body;
+      row.appendChild(sn);
+    }
+    var st = document.createElement('p'); st.className = 'sp-batch-state';
+    var s = c.expired ? 'expired' : c.status;
+    if (r.error) { st.className += ' warn'; st.textContent = r.error; }
+    else if (s === 'approved') { st.className += ' good'; st.textContent = preview ? 'Approved (preview: marked only, nothing posts)' : 'Approved for ' + fmtWhen(c.scheduled_for); }
+    else if (s === 'scheduled') { st.className += ' good'; st.textContent = 'Scheduled in Publer for ' + fmtWhen(c.scheduled_for); }
+    else if (s === 'publishing') { st.className += ' good'; st.textContent = 'Being sent to Publer'; }
+    else if (s === 'posted') { st.className += ' good'; st.textContent = 'Posted'; }
+    else if (s === 'skipped') st.textContent = 'Skipped (left as it is)';
+    else if (s === 'expired') st.textContent = 'This draft expired';
+    else if (s === 'failed') { st.className += ' warn'; st.textContent = 'Publer did not accept this post. Open it to fix it.'; }
+    else st.textContent = 'Waiting for your OK';
+    row.appendChild(st);
+    var links = document.createElement('div'); links.className = 'sp-batch-links';
+    var open = document.createElement('a'); open.className = 'btn'; open.href = window.location.pathname + '?t=' + encodeURIComponent(r.token); open.textContent = 'Open'; open.target = '_blank'; open.rel = 'noopener';
+    links.appendChild(open);
+    if (s === 'approved' || s === 'scheduled') {
+      var u = document.createElement('button'); u.className = 'btn'; u.textContent = 'Undo';
+      u.onclick = (function (k) { return function () { undoOne(k); }; })(i);
+      links.appendChild(u);
+    }
+    row.appendChild(links);
+    list.appendChild(row);
+  });
+  var waiting = batch.filter(batchWaiting).length;
+  var approvedNow = batch.filter(function (r) { return r.done === 'approved'; }).length;
+  var failed = batch.filter(function (r) { return r.error; }).length;
+  var btnAll = document.getElementById('btn-approve-all');
+  btnAll.textContent = waiting === 1 ? 'Approve the one still waiting' : 'Approve all ' + waiting;
+  document.getElementById('batch-actions').style.display = waiting > 0 ? 'flex' : 'none';
+  var box = document.getElementById('batch-status');
+  var title = '', bodyTxt = '', cls = 'neutral';
+  if (approvedNow && !failed) {
+    cls = 'good'; title = 'Approved ' + approvedNow + ' post' + (approvedNow === 1 ? '' : 's');
+    bodyTxt = preview ? 'Marked as approved. In preview nothing is sent to Publer, so nothing will be posted.'
+                      : 'They go into the posting queue for their planned times. You can undo any of them until it is posted.';
+  } else if (approvedNow || failed) {
+    cls = failed ? 'warn' : 'good'; title = 'Approved ' + approvedNow + ' of ' + (approvedNow + failed + waiting);
+    bodyTxt = 'The posts that were not approved say why below. You can open each one from here.';
+  } else if (!waiting) {
+    title = 'Nothing left to approve'; bodyTxt = 'Every post below was already approved, skipped or has expired.';
+  }
+  box.className = 'sp-status ' + cls;
+  box.style.display = title ? 'block' : 'none';
+  document.getElementById('batch-status-title').textContent = title;
+  document.getElementById('batch-status-body').textContent = bodyTxt;
+}
+
 function showError(msg) {
   document.getElementById('loader').style.display = 'none';
   document.getElementById('content').style.display = 'none';
+  document.getElementById('batch').style.display = 'none';
   document.getElementById('error').style.display = 'block';
   document.getElementById('error-msg').textContent = msg;
 }
