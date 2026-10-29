@@ -23,6 +23,12 @@
   to = "/events.html"
   status = 200
 
+# GROUP_VIEW_DEMO_V1 (2026-10-29): the sample group view (all locations side by side).
+[[redirects]]
+  from = "/locations"
+  to = "/locations.html"
+  status = 200
+
 [[redirects]]
   from = "/admin"
   to = "/admin.html"

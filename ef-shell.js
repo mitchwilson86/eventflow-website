@@ -36,6 +36,8 @@ window.EF_SHELL = (function () {
   };
 
   var NAV = [
+    // GROUP_VIEW_DEMO_V1 (2026-10-29): the group view exists only as a sample for now, so it shows only in sample mode.
+    { key: 'locations',    href: '/locations?demo=1', label: 'All Locations', demoOnly: true, icon: '<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>' },
     { key: 'dashboard',    href: '/dashboard',    label: 'Dashboard',    icon: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>' },
     { key: 'events',       href: '/events',       label: 'Events',       icon: '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>' },
     { key: 'bookings',   href: '/bookings',     label: 'Bookings',     icon: '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>' },
@@ -144,6 +146,7 @@ window.EF_SHELL = (function () {
       // can unhide it after a later sign-in; it renders visible immediately
       // when the caller is already known to be an admin.
       if (linkOnly && GOOGLE_ONLY_NAV[n.key]) return '';
+      if (n.demoOnly && !demoActive()) return '';
       var hidden = n.admin && !admin ? ' style="display:none;"' : '';
       var cls = 'nav-item' + (n.admin ? ' admin-nav-link' : '') + (n.key === activeKey ? ' active' : '');
       return '<a href="' + n.href + '" class="' + cls + '"' + hidden + '>' +
@@ -431,13 +434,15 @@ window.EF_SHELL = (function () {
     try {
       if (sessionStorage.getItem('ef_demo') !== '1') return false;
     } catch (e) { return false; }
-    return /^\/dashboard(\.html)?\/?$/.test(window.location.pathname);
+    // GROUP_VIEW_DEMO_V1: the sample group view (/locations) is a sample-only page too.
+    return /^\/(dashboard|locations)(\.html)?\/?$/.test(window.location.pathname);
   }
   var DEMO_FILES = {
     get_home_overview: '/assets/demo/home_overview.json',
     get_conversations: '/assets/demo/conversations.json',
     get_conversation: '/assets/demo/conversations.json',
-    ask_eventflow: '/assets/demo/ask.json'   // ASK_EVENTFLOW_V1: canned answers keyed by question
+    ask_eventflow: '/assets/demo/ask.json',  // ASK_EVENTFLOW_V1: canned answers keyed by question
+    get_group_overview: '/assets/demo/group_overview.json'   // GROUP_VIEW_DEMO_V1: the sample group view
   };
   function api(payload) {
     payload = payload || {};

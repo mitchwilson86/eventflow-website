@@ -1,0 +1,125 @@
+{
+  "success": true,
+  "sample": true,
+  "group_name": "Harborview Hospitality (sample)",
+  "note": "GROUP_VIEW_DEMO_V1 (2026-10-29): made-up numbers for a fictional group, shown only in sample mode. The real group view is phase 4 of docs/multi_location_audit_and_dashboard_plan_2026-10-29.md.",
+  "totals": {
+    "locations": 5,
+    "live": 3,
+    "guests_7d": 68,
+    "emails_7d": 90,
+    "reply_minutes": 1,
+    "needs_you": 10,
+    "oldest_waiting_hours": 74,
+    "oldest_waiting_location": "Riverside",
+    "holds_ending_48h": 4,
+    "booked_events_30d": 36,
+    "booked_revenue_30d": 134630,
+    "ef_booked_events_30d": 23,
+    "ef_booked_revenue_30d": 85600
+  },
+  "locations": [
+    {
+      "slug": "harborview-demo",
+      "name": "Downtown",
+      "status": "live",
+      "guests_7d": 11,
+      "emails_7d": 14,
+      "reply_minutes": 0.8,
+      "needs_you": 2,
+      "oldest_waiting_hours": 26,
+      "holds_ending_48h": 1,
+      "booked_events_30d": 6,
+      "booked_revenue_30d": 21480,
+      "ef_booked_events_30d": 4,
+      "ef_booked_revenue_30d": 15200
+    },
+    {
+      "slug": "harborview-riverside",
+      "name": "Riverside",
+      "status": "live",
+      "guests_7d": 38,
+      "emails_7d": 52,
+      "reply_minutes": 1,
+      "needs_you": 7,
+      "oldest_waiting_hours": 74,
+      "holds_ending_48h": 3,
+      "booked_events_30d": 19,
+      "booked_revenue_30d": 74900,
+      "ef_booked_events_30d": 12,
+      "ef_booked_revenue_30d": 46300
+    },
+    {
+      "slug": "harborview-lakeshore",
+      "name": "Lakeshore",
+      "status": "live",
+      "guests_7d": 19,
+      "emails_7d": 24,
+      "reply_minutes": 1,
+      "needs_you": 1,
+      "oldest_waiting_hours": 5,
+      "holds_ending_48h": 0,
+      "booked_events_30d": 11,
+      "booked_revenue_30d": 38250,
+      "ef_booked_events_30d": 7,
+      "ef_booked_revenue_30d": 24100
+    },
+    {
+      "slug": "harborview-midtown",
+      "name": "Midtown",
+      "status": "setup",
+      "setup_done": 6,
+      "setup_total": 7,
+      "setup_next": "add the buyout minimum"
+    },
+    {
+      "slug": "harborview-bayside",
+      "name": "Bayside",
+      "status": "not_started"
+    }
+  ],
+  "attention": [
+    {
+      "location": "Riverside",
+      "type": "agreement",
+      "title": "Menu chosen: send the agreement and deposit",
+      "detail": "Alicia Fontaine, corporate mixer for 45 guests, about $4,200.",
+      "waiting_hours": 74
+    },
+    {
+      "location": "Riverside",
+      "type": "hold",
+      "title": "Hold ends today at 6:00 PM",
+      "detail": "Theo Brandt, team dinner for 30 guests. The date is released if they do not confirm.",
+      "waiting_hours": 0
+    },
+    {
+      "location": "Riverside",
+      "type": "call",
+      "title": "Never opened our links: worth a call or text",
+      "detail": "Renata Silva, welcome drinks for 80 guests. Phone number on the Events card.",
+      "waiting_hours": 50
+    },
+    {
+      "location": "Downtown",
+      "type": "handoff",
+      "title": "Handed to your team: asked about the minimum",
+      "detail": "Priya Raman, holiday party for 60 guests. The full conversation and a suggested reply are on the Events card.",
+      "waiting_hours": 26
+    },
+    {
+      "location": "Lakeshore",
+      "type": "handoff",
+      "title": "Handed to your team: asked for a tour",
+      "detail": "Jon Park, anniversary dinner for 6.",
+      "waiting_hours": 5
+    },
+    {
+      "location": "Midtown",
+      "type": "setup",
+      "title": "Setup: 6 of 7 steps done",
+      "detail": "Add the buyout minimum to go live.",
+      "waiting_hours": null
+    }
+  ]
+}
