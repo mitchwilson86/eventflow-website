@@ -212,6 +212,13 @@
     .consent-block {
       margin: 24px 0 28px;
     }
+    .consent-optional {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.4px;
+      color: var(--cream);
+      margin-bottom: 10px;
+    }
     .consent-label {
       display: flex;
       gap: 14px;
@@ -234,6 +241,8 @@
       font-size: 13px;
       line-height: 1.65;
       color: var(--muted);
+      text-transform: none;
+      letter-spacing: normal;
     }
     .consent-text a {
       color: var(--electric);
@@ -370,14 +379,15 @@
           </div>
         </div>
         <div class="consent-block">
+          <p class="consent-optional">Text alerts (optional)</p>
           <label class="consent-label">
-            <input type="checkbox" id="consent" required>
+            <input type="checkbox" id="consent" name="sms_consent" value="yes">
             <span class="consent-text">
-              I agree to receive automated SMS alerts from EventFlow Sales LLC regarding inbound event inquiries at Sunda Nashville. You'll receive up to 10 messages per month. Message &amp; data rates may apply. Reply <strong>STOP</strong> at any time to unsubscribe or <strong>HELP</strong> for assistance. View our <a href="/privacy">Privacy Policy</a> and <a href="/terms">Terms of Service</a>.
+              Yes, text me alerts. By checking this box, I agree to receive automated SMS alerts from EventFlow Sales LLC regarding inbound event inquiries at Sunda Nashville. You'll receive up to 10 messages per month. Message &amp; data rates may apply. Reply <strong>STOP</strong> at any time to unsubscribe or <strong>HELP</strong> for assistance. Checking this box is optional and is not required to submit this form. View our <a href="/privacy">Privacy Policy</a> and <a href="/terms">Terms of Service</a>.
             </span>
           </label>
         </div>
-        <button type="submit" class="btn">Confirm Enrollment →</button>
+        <button type="submit" class="btn">Submit →</button>
         <p class="fine-print">
           Msg &amp; data rates may apply · Reply STOP to cancel · Reply HELP for help<br>
           Recurring automated alerts · Carriers not liable for delayed or undelivered messages
@@ -394,6 +404,11 @@
       <h2>You're enrolled.</h2>
       <p>You'll receive a confirmation text shortly.<br>Reply STOP at any time to unsubscribe.</p>
     </div>
+    <!-- Submitted without the text alerts box -->
+    <div class="success" id="declined-view">
+      <h2>No texts will be sent.</h2>
+      <p>You left the text alerts box unchecked, so you are not signed up and nothing was saved.<br>To get alerts, reload this page and check the box.</p>
+    </div>
   </div>
   <p class="footer">EventFlow · Smarter bookings. Fuller rooms.</p>
 </div>
@@ -406,12 +421,15 @@
     const consent = document.getElementById('consent');
     const btn = form.querySelector('.btn');
 
-    if (!consent.checked) {
-      consent.reportValidity();
-      return;
-    }
     if (!form.checkValidity()) {
       form.reportValidity();
+      return;
+    }
+    // TFV_OPTIN_OPTIONAL_V1: the text alerts box is optional (Twilio toll-free rejection 30505). Unchecked = nothing
+    // is saved and no welcome text is asked for, so only people who agreed are ever on the list.
+    if (!consent.checked) {
+      document.getElementById('form-view').style.display = 'none';
+      document.getElementById('declined-view').style.display = 'block';
       return;
     }
 
@@ -451,7 +469,7 @@
       const success = document.getElementById('success-view');
       success.style.display = 'block';
     } catch (err) {
-      btn.textContent = 'Confirm Enrollment \u2192';
+      btn.textContent = 'Submit \u2192';
       btn.disabled = false;
       var errEl = document.getElementById('form-error');
       if (!errEl) {
