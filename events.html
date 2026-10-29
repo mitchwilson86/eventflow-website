@@ -320,6 +320,8 @@ function facts(it) {
   if (it.guests) f.push(it.guests + ' guests');
   if (it.room) f.push(it.room);
   if (it.company && it.company.toLowerCase() !== String(it.name || '').toLowerCase()) f.push(it.company);
+  // HOME_NUMBERS_V1 (2026-10-29): the lead's estimated value, worked out by the recap and never shown before.
+  if (Number(it.value) > 0) f.push('about $' + Math.round(Number(it.value)).toLocaleString('en-US'));
   return f.map(esc).join(' &middot; ');
 }
 

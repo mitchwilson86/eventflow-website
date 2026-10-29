@@ -81,6 +81,9 @@
     .ask-sql { white-space:pre-wrap; word-break:break-word; background:var(--bg-inset, #f8fafc); border:1px solid var(--border); border-radius:8px; padding:10px; font-size:0.8rem; margin:8px 0 0; }
     .ask-table td { font-size:0.85rem; white-space:nowrap; max-width:360px; overflow:hidden; text-overflow:ellipsis; }
     @media (max-width: 768px) { .kpi-grid { grid-template-columns:1fr 1fr; } .ask-form { flex-direction:column; } }
+    /* HOME_NUMBERS_V1 (2026-10-29): let the main column shrink to a phone's width; without it the
+       conversations table (which scrolls in its own box) widened the whole page to about 530px. */
+    .main-content { min-width:0; }
   </style>
 </head>
 <body>
@@ -138,9 +141,9 @@
           <h3>This week the assistant handled</h3>
           <div class="kpi-grid" style="margin-top:0.8rem;">
             <div class="kpi-card blue">
-              <div class="kpi-label">Inquiries</div>
-              <div class="kpi-value" id="kpi-inquiries">--</div>
-              <div class="kpi-sub">Guest emails, last 7 days</div>
+              <div class="kpi-label">Guests</div>
+              <div class="kpi-value" id="kpi-guests">--</div>
+              <div class="kpi-sub" id="kpi-guests-sub">People who wrote, last 7 days</div>
             </div>
             <div class="kpi-card gold">
               <div class="kpi-label">AI Replies Sent</div>
@@ -148,9 +151,9 @@
               <div class="kpi-sub">Answered automatically</div>
             </div>
             <div class="kpi-card green">
-              <div class="kpi-label">Avg Response Time</div>
+              <div class="kpi-label">Reply Time</div>
               <div class="kpi-value" id="kpi-response">--</div>
-              <div class="kpi-sub">Inquiry to reply</div>
+              <div class="kpi-sub" id="kpi-response-sub">Typical wait, email to reply</div>
             </div>
             <div class="kpi-card purple">
               <div class="kpi-label">Escalations</div>
@@ -168,14 +171,15 @@
               <div class="stat-label">Menu Links Sent</div>
             </div>
             <div class="stat-item">
-              <div class="stat-val" id="stat-pipeline">--</div>
-              <div class="stat-label">Pipeline Value</div>
+              <div class="stat-val" id="stat-booked-revenue">--</div>
+              <div class="stat-label">Booked Revenue, 30 Days</div>
             </div>
             <div class="stat-item">
-              <div class="stat-val" id="stat-leads">--</div>
-              <div class="stat-label">Active Leads</div>
+              <div class="stat-val" id="stat-booked-events">--</div>
+              <div class="stat-label">Events Booked, 30 Days</div>
             </div>
           </div>
+          <div class="src-footnote" id="booked-footnote" style="display:none;"></div>
           <div class="src-footnote" id="src-footnote" style="display:none;"></div>
         </div>
 
@@ -333,14 +337,28 @@ function loadOverview(slug) {
         throw new Error((data && data.error) || 'empty response');
       }
       const k = data.kpis || {};
-      setVal('kpi-inquiries', k.inquiries);
+      // HOME_NUMBERS_V1 (2026-10-29): guests apart from emails, the median reply time from the email's
+      // real arrival, and Tripleseat bookings in place of the old pipeline totals.
+      setVal('kpi-guests', k.guests);
+      setText('kpi-guests-sub', k.guests == null ? 'People who wrote, last 7 days'
+        : k.inquiries + ' email' + (k.inquiries === 1 ? '' : 's') + ', last 7 days');
       setVal('kpi-replies', k.ai_replies);
-      setVal('kpi-response', fmtMinutes(k.avg_response_minutes));
+      setVal('kpi-response', k.reply_minutes_median == null ? null : fmtMinutes(k.reply_minutes_median));
+      setText('kpi-response-sub', k.reply_samples
+        ? 'Typical wait, ' + k.reply_samples + ' email' + (k.reply_samples === 1 ? '' : 's') + ' (web forms not counted)'
+        : 'No emails answered in the last 7 days');
       setVal('kpi-escalations', k.escalations);
       setVal('stat-holds', k.holds_placed);
       setVal('stat-menulinks', k.menu_links_sent);
-      setVal('stat-pipeline', k.pipeline_value == null ? '—' : k.pipeline_value);
-      setVal('stat-leads', k.pipeline_leads == null ? '—' : k.pipeline_leads);
+      setVal('stat-booked-revenue', k.booked_revenue_30d == null ? null : '$' + Number(k.booked_revenue_30d).toLocaleString('en-US'));
+      setVal('stat-booked-events', k.booked_events_30d);
+      const bfn = document.getElementById('booked-footnote');
+      if (k.booked_events_30d == null) bfn.style.display = 'none';
+      else {
+        bfn.style.display = 'block';
+        bfn.textContent = 'Booked revenue: events confirmed in Tripleseat in the last 30 days, from any source, before tax and service.' +
+          (k.booked_missing_sales ? ' ' + k.booked_missing_sales + ' of them ' + (k.booked_missing_sales === 1 ? 'has' : 'have') + ' no sales amount in Tripleseat yet and ' + (k.booked_missing_sales === 1 ? 'is' : 'are') + ' not in the total.' : '');
+      }
 
       // Dead sources are named, never silently zero.
       const dead = Object.keys(data.sources || {}).filter(function (s) { return data.sources[s] === false; });
@@ -353,7 +371,7 @@ function loadOverview(slug) {
       renderAttention(data.attention || []);
     })
     .catch(function (err) {
-      ['kpi-inquiries','kpi-replies','kpi-response','kpi-escalations','stat-holds','stat-menulinks','stat-pipeline','stat-leads']
+      ['kpi-guests','kpi-replies','kpi-response','kpi-escalations','stat-holds','stat-menulinks','stat-booked-revenue','stat-booked-events']
         .forEach(function (id) { setVal(id, '—'); });
       EF_SHELL.setState('attention-list', 'error', { message: 'Could not load the overview.', retry: function () { loadOverview(slug); } });
       console.warn('Overview load failed:', err);
@@ -363,6 +381,20 @@ function loadOverview(slug) {
 function setVal(id, v) {
   const el = document.getElementById(id);
   if (el) el.textContent = (v === undefined || v === null) ? '—' : v;
+}
+function setText(id, s) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = s;
+}
+
+// LINK_SESSION_NAV_V1 (2026-10-29): someone signed in with an emailed link cannot open the Google-only
+// pages yet, so a hold opens the Events page instead of Bookings and a campaign item stays put.
+function attnHref(link) {
+  if (EF_SHELL.isLinkOnly && EF_SHELL.isLinkOnly()) {
+    if (link === '/bookings') return '/events';
+    if (link === '/campaigns') return '#';
+  }
+  return link || '#';
 }
 
 function renderAttention(items) {
@@ -375,7 +407,7 @@ function renderAttention(items) {
   }
   el.innerHTML = items.map(function (a, i) {
     const st = ATTN_STYLE[a.type] || { dot: 'var(--text-muted)', label: '' };
-    return '<a class="attn-item" data-i="' + i + '" href="' + esc(a.link || '#') + '">' +
+    return '<a class="attn-item" data-i="' + i + '" href="' + esc(attnHref(a.link)) + '">' +
       '<div class="attn-dot" style="background:' + st.dot + '"></div>' +
       '<div><div class="attn-title">' + esc(a.title) + '</div>' +
       (a.detail ? '<div class="attn-detail">' + esc(a.detail) + '</div>' : '') +

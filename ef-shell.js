@@ -128,14 +128,22 @@ window.EF_SHELL = (function () {
 
   /* ── Sidebar ─────────────────────────────────────────────── */
 
+  // LINK_SESSION_NAV_V1 (2026-10-29): these pages accept only a Google sign-in for now, so someone
+  // signed in with an emailed link (no Google session, e.g. an events manager on Microsoft 365) is not
+  // sent to a sign-in screen they cannot use. The items come back as soon as there is a Google session.
+  var GOOGLE_ONLY_NAV = { bookings: 1, beo: 1, menus: 1, campaigns: 1, settings: 1, notifications: 1 };
+  function isLinkOnly() { return !_googleToken() && !!linkSession(); }
+
   function sidebarHtml(activeKey, opts) {
     opts = opts || {};
     var email = signedInEmail(opts.email);
     var admin = isAdminEmail(email);
+    var linkOnly = isLinkOnly();
     var items = NAV.map(function (n) {
       // The admin item is always in the markup so EF_ADMIN.showAdminNav()
       // can unhide it after a later sign-in; it renders visible immediately
       // when the caller is already known to be an admin.
+      if (linkOnly && GOOGLE_ONLY_NAV[n.key]) return '';
       var hidden = n.admin && !admin ? ' style="display:none;"' : '';
       var cls = 'nav-item' + (n.admin ? ' admin-nav-link' : '') + (n.key === activeKey ? ' active' : '');
       return '<a href="' + n.href + '" class="' + cls + '"' + hidden + '>' +
@@ -148,7 +156,9 @@ window.EF_SHELL = (function () {
           '<span class="brand-logo">EventFlow</span>' +
           '<span class="venue-name" id="venue-name">' + esc(opts.venueName || '') + '</span>' +
         '</div>' +
-        '<nav class="sidebar-nav">' + items + '</nav>' +
+        '<nav class="sidebar-nav">' + items +
+          (linkOnly ? '<div class="nav-note" style="padding:0.75rem 1rem;font-size:0.75rem;line-height:1.4;opacity:0.7;">Bookings, BEO, Menus, Campaigns, Settings and Notifications need a Google sign-in for now.</div>' : '') +
+        '</nav>' +
         '<div class="sidebar-footer">' +
           '<span class="user-email" id="user-email-sidebar">' + esc(email) + '</span>' +
           '<button class="logout-btn" onclick="EF_SHELL.signOut()">Sign Out</button>' +
@@ -554,6 +564,7 @@ window.EF_SHELL = (function () {
     signOut: signOut,
     api: api,
     linkSession: linkSession,
+    isLinkOnly: isLinkOnly,
     requestLink: requestLink,
     getJson: getJson,
     demoActive: demoActive,
