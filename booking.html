@@ -367,7 +367,7 @@ function initNewBooking(params) {
 async function loadBooking(id) {
   const sb = await getSupabase();
   const [{ data: booking, error: be }, { data: items, error: ie }, { data: contracts }, { data: invoices }, { data: payments }] = await Promise.all([
-    sb.from('bookings').select('*, contact:contact_id(*)').eq('id', id).maybeSingle(),
+    sb.from('bookings').select('*, contact:contact_id(*), space:space_id(id, name, capacity_seated, active)').eq('id', id).maybeSingle(),
     sb.from('beo_items').select('*').eq('booking_id', id).order('sort_order'),
     sb.from('contracts').select('*').eq('booking_id', id).order('created_at', { ascending: false }),
     sb.from('invoices').select('*').eq('booking_id', id).order('issue_date'),
@@ -470,8 +470,11 @@ function renderStatusPipeline() {
 function renderForm() {
   const b = state.booking, c = state.contact;
   const sel = document.getElementById('f-space_id');
-  sel.innerHTML = state.spaces.map(s =>
-    `<option value="${s.id}">${esc(s.name)}${s.capacity_seated ? ` · seats ${s.capacity_seated}` : ''}</option>`
+  // A space removed on the Venue page is only switched off (SPACE_LIST_SYNC_V1): a booking already in it keeps it
+  const spaces = state.spaces.slice();
+  if (b.space && b.space_id && !spaces.some(s => s.id === b.space_id)) spaces.unshift(Object.assign({}, b.space, { removed: true }));
+  sel.innerHTML = spaces.map(s =>
+    `<option value="${s.id}">${esc(s.name)}${s.removed ? ' (removed from Venue page)' : ''}${s.capacity_seated ? ` · seats ${s.capacity_seated}` : ''}</option>`
   ).join('');
   sel.value = b.space_id || '';
   document.getElementById('f-event_name').value = b.event_name || '';

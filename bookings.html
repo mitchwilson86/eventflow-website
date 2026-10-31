@@ -219,7 +219,7 @@ async function loadSpaces() {
   const sb = await getSupabase();
   const { data, error } = await sb
     .from('spaces')
-    .select('id, name, capacity_seated, capacity_standing, is_buyout, active, sort_order')
+    .select('id, name, capacity_seated, capacity_standing, is_buyout, active, sort_order, ts_room_ids')
     .eq('venue_id', state.activeVenue.id)
     .eq('active', true)
     .order('sort_order');
@@ -252,7 +252,7 @@ async function loadBookings() {
   // External events (Tripleseat-synced, read-only) for the same window
   const { data: ext, error: extErr } = await sb
     .from('external_events')
-    .select('id, summary, description, starts_at, ends_at, space_id, status, room_name, guest_count, source, synced_at')
+    .select('id, summary, description, starts_at, ends_at, space_id, status, room_name, room_ids, guest_count, source, synced_at')
     .eq('venue_id', state.activeVenue.id)
     .gte('starts_at', startStr)
     .lte('starts_at', endStr);
@@ -284,11 +284,19 @@ function filteredBookings() {
 }
 function filteredExternal() {
   return state.externalEvents.filter(e => {
-    // Tripleseat rooms are not linked to EventFlow space records — hide under a space filter
-    if (state.filters.space_id && e.space_id !== state.filters.space_id) return false;
+    if (state.filters.space_id && !extInSpace(e, state.filters.space_id)) return false;
     if (state.filters.status && extStatusKey(e) !== state.filters.status) return false;
     return true;
   });
+}
+// A calendar feed sets space_id; a Tripleseat event names its rooms ("64064,78415") and a space lists the rooms it
+// covers (ts_room_ids, BOOKINGS_TS_ROOMS_V1). A venue without Tripleseat has no room lists, so only space_id counts.
+function extInSpace(e, spaceId) {
+  if (e.space_id === spaceId) return true;
+  const space = state.spaces.find(s => s.id === spaceId);
+  const rooms = ((space && space.ts_room_ids) || []).map(String);
+  if (!rooms.length || !e.room_ids) return false;
+  return String(e.room_ids).split(',').some(r => rooms.includes(r.trim()));
 }
 
 /* ═══ External (Tripleseat) helpers ════════════════════════════ */
