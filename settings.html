@@ -194,19 +194,9 @@ function loadSettings() {
 }
 
 function fetchFullSettings(slug) {
-  var idToken = sessionStorage.getItem('ef_id_token');
-  var exp = parseInt(sessionStorage.getItem('ef_id_token_exp') || '0', 10);
-  if (!idToken || !exp || Date.now() > exp) {
-    // Expired token — can't load the full row. Fall back to rendering empty rows.
-    hydrateFromRow({});
-    return;
-  }
-  fetch(EF_SHELL.CONFIG.DATA_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ action: 'get_settings', id_token: idToken, client_slug: slug })
-  })
-    .then(function(r) { return r.json(); })
+  // SESSION_KEEPALIVE_V1 (2026-10-31): EF_SHELL.api sends whichever sign-in still works (the page's own pass
+  // after Google's first hour) and signs a timed-out person out, instead of this page showing empty rows.
+  EF_SHELL.api({ action: 'get_settings', client_slug: slug })
     .then(function(data) {
       hydrateFromRow(data && data.success ? (data.settings || {}) : {});
     })
@@ -296,22 +286,9 @@ function saveSettings() {
   status.textContent = 'Saving...';
   status.style.color = 'var(--text-muted)';
 
-  // Require a fresh Google ID token (Apps Script verifies it server-side).
-  // Tokens expire after 1 hour, so prompt re-sign-in if stale.
-  var idToken = sessionStorage.getItem('ef_id_token');
-  var exp = parseInt(sessionStorage.getItem('ef_id_token_exp') || '0', 10);
-  if (!idToken || !exp || Date.now() > exp) {
-    btn.disabled = false;
-    status.textContent = 'Session expired. Please sign in again to save changes.';
-    status.style.color = 'var(--red)';
-    sessionStorage.removeItem('ef_id_token');
-    sessionStorage.removeItem('ef_id_token_exp');
-    setTimeout(function() { window.location.reload(); }, 1500);
-    return;
-  }
-
+  // SESSION_KEEPALIVE_V1 (2026-10-31): EF_SHELL.api adds the sign-in (the page's own pass after Google's
+  // first hour) and signs a timed-out person out; it sends text/plain, so there is no CORS preflight.
   var payload = {
-    id_token: idToken,
     client_slug: currentClient._slug,
     venue_name: document.getElementById('set-venue-name').value.trim(),
     website_url: document.getElementById('set-website').value.trim(),
@@ -319,18 +296,7 @@ function saveSettings() {
     authorized_emails: JSON.stringify(collectAuthEmails())
   };
 
-  // Use text/plain Content-Type to avoid CORS preflight. Apps Script Web Apps
-  // don't respond to OPTIONS preflight with the headers browsers require, so
-  // POSTs with Content-Type: application/json get blocked at the preflight
-  // stage before reaching doPost. text/plain is a "simple" request that skips
-  // preflight entirely. doPost still reads e.postData.contents and parses it
-  // as JSON — the Content-Type header is just metadata.
-  fetch(EF_SHELL.CONFIG.DATA_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(payload)
-  })
-    .then(function(r) { return r.json(); })
+  EF_SHELL.api(payload)
     .then(function(data) {
       btn.disabled = false;
       if (data.success) {

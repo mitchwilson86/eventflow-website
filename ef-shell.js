@@ -78,6 +78,152 @@ window.EF_SHELL = (function () {
   function _googleToken() {
     try { return sessionStorage.getItem('ef_id_token') || ''; } catch (e) { return ''; }
   }
+
+  /* ── Staying signed in (SESSION_KEEPALIVE_V1 + SESSION_EXPIRY_SIGNOUT_V1, 2026-10-31) ───
+   * A Google sign-in lasts one hour and cannot be stretched, and Apps Script refuses every call after that
+   * ("Please sign in again"). So right after a Google sign-in the page asks Apps Script (renew_session) for
+   * its own pass, kept in sessionStorage ef_ka_token: the same signed token an emailed link carries, so every
+   * action accepts it. A pass lasts an hour. While the person is using the page (mouse, keys, scrolling,
+   * taps) it is traded for a fresh one once it is 10 minutes old, so someone active stays signed in, up to 12
+   * hours after the Google sign-in (Apps Script enforces both). Someone who walks away is signed out about an
+   * hour later: when the pass and the Google sign-in have both run out, the page shows the sign-in screen with
+   * a short note (on opening a page, at the moment it runs out, when the tab comes back into view, or when
+   * Apps Script refuses the sign-in). Only on pages that run boot(). An emailed sign-in link is left alone (it
+   * lasts days), so someone who also has one carries on with it. An Apps Script without renew_session gives
+   * no pass, and the page falls back to the one-hour Google sign-in. */
+  var EXPIRED_FLAG = 'ef_signin_expired';
+  var KA_KEY = 'ef_ka_token';
+  var KA_RENEW_AFTER_MS = 10 * 60 * 1000;   // trade a pass in once it is this old and the person was active since
+  var KA_CHECK_MS = 15 * 1000;              // look at most this often while they are active
+  var _booted = false;
+  var _expiring = false;
+  var _expiryTimer = null;
+  var _lastActivity = Date.now();           // opening a page counts as using it
+  var _lastCheck = 0;
+  var _renewing = false;
+  var _kaStop = false;                      // Apps Script refused a pass: no more tries on this page
+  var _kaStartTried = false;
+  function _kaPass() {
+    try {
+      var t = sessionStorage.getItem(KA_KEY) || '';
+      var p = t ? _b64urlJson(t.split('.')[0]) : null;
+      if (!p || p.k !== 'ka' || !p.x) return null;
+      return { token: t, x: Number(p.x), i: Number(p.i) || 0, m: Number(p.m) || 0 };
+    } catch (e) { return null; }
+  }
+  function _kaValid() {
+    var k = _kaPass();
+    return !!k && Date.now() < k.x;
+  }
+  function _googleValid() {
+    try {
+      if (!sessionStorage.getItem('ef_id_token')) return false;
+      var exp = Number(sessionStorage.getItem('ef_id_token_exp') || 0);
+      return !exp || Date.now() < exp;
+    } catch (e) { return false; }
+  }
+  // There was a Google sign-in on this tab and nothing from it works any more.
+  function _timedOut() {
+    var had = false;
+    try { had = !!(sessionStorage.getItem('ef_id_token') || sessionStorage.getItem(KA_KEY)); } catch (e) {}
+    return had && !_googleValid() && !_kaValid();
+  }
+  // Which note the sign-in screen shows: 'cap' = the pass reached its 12-hour limit, '1' = the pass ran out
+  // because nobody used the page, 'google' = there never was a pass (only Google's one-hour sign-in).
+  function _expiryReason() {
+    var k = _kaPass();
+    if (!k) return 'google';
+    return (k.m && Date.now() >= k.m - 60000) ? 'cap' : '1';
+  }
+  function _clearGoogleSession(reason) {
+    try {
+      sessionStorage.removeItem('ef_user_email');
+      sessionStorage.removeItem('ef_id_token');
+      sessionStorage.removeItem('ef_id_token_exp');
+      sessionStorage.removeItem('ef_admin_email');
+      sessionStorage.removeItem(KA_KEY);
+      sessionStorage.setItem(EXPIRED_FLAG, reason || '1');
+    } catch (e) {}
+  }
+  // Mid-page: sign out and reload, so the page opens on its sign-in screen (boot() shows the note).
+  function sessionExpired() {
+    if (_expiring) return;
+    _expiring = true;
+    _clearGoogleSession(_expiryReason());
+    window.location.reload();
+  }
+  // One timer for whichever runs out last, the Google sign-in or the pass; re-armed after every renewal.
+  function watchExpiry() {
+    clearTimeout(_expiryTimer);
+    var end = 0;
+    try {
+      if (sessionStorage.getItem('ef_id_token')) end = Number(sessionStorage.getItem('ef_id_token_exp') || 0);
+    } catch (e) {}
+    var k = _kaPass();
+    if (k && k.x > end) end = k.x;
+    if (!end) return;
+    _expiryTimer = setTimeout(function () {
+      if (_timedOut()) sessionExpired();
+      else watchExpiry();
+    }, Math.min(Math.max(end - Date.now(), 0) + 1000, 2147483000));
+  }
+  // Ask Apps Script for a pass: from the Google sign-in (a new one) or from the current pass (a renewal).
+  // Straight to fetch, not api(): a failed try must never sign anyone out, the timer above decides that.
+  function renewPass(fromGoogle) {
+    if (_renewing || _kaStop) return;
+    var body = { action: 'renew_session' };
+    if (fromGoogle) {
+      if (!_googleValid()) return;
+      body.id_token = _googleToken();
+    } else {
+      var k = _kaPass();
+      if (!k || Date.now() >= k.x) return;
+      body.session_token = k.token;
+    }
+    _renewing = true;
+    fetch(CONFIG.DATA_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(body)
+    }).then(function (r) { return r.json(); })
+      .then(function (d) {
+        _renewing = false;
+        if (d && d.success && d.session_token) {
+          try { sessionStorage.setItem(KA_KEY, d.session_token); } catch (e) {}
+          watchExpiry();
+        } else {
+          _kaStop = true;   // refused (or an Apps Script without renew_session): stop asking
+        }
+      })
+      .catch(function () { _renewing = false; });   // network trouble: the next bit of activity tries again
+  }
+  function maybeRenew() {
+    if (!_booted || _renewing || _kaStop || _expiring) return;
+    var k = _kaPass();
+    if (!k) {
+      if (!_kaStartTried && _googleValid()) { _kaStartTried = true; renewPass(true); }
+      return;
+    }
+    var now = Date.now();
+    if (now >= k.x) return;                      // already run out: the timer signs them out
+    if (k.m && k.x >= k.m) return;               // at the 12-hour limit: nothing left to renew
+    if (now - k.i < KA_RENEW_AFTER_MS) return;   // still fresh
+    if (_lastActivity <= k.i) return;            // nobody has used the page since this pass was made
+    renewPass(false);
+  }
+  function noteActivity() {
+    _lastActivity = Date.now();
+    if (_lastActivity - _lastCheck < KA_CHECK_MS) return;
+    _lastCheck = _lastActivity;
+    maybeRenew();
+  }
+  ['mousemove', 'mousedown', 'keydown', 'wheel', 'scroll', 'touchstart'].forEach(function (ev) {
+    window.addEventListener(ev, noteActivity, { passive: true, capture: true });
+  });
+  // A background tab's timer can run late: check again whenever the tab comes back into view.
+  document.addEventListener('visibilitychange', function () {
+    if (_booted && document.visibilityState === 'visible' && _timedOut()) sessionExpired();
+  });
   (function captureLinkToken() {
     try {
       var m = (window.location.hash || '').match(/[#&]st=([^&]+)/);
@@ -193,6 +339,7 @@ window.EF_SHELL = (function () {
       sessionStorage.removeItem('ef_id_token_exp');
       sessionStorage.removeItem('ef_admin_email');
       sessionStorage.removeItem('ef_auth_kind');
+      sessionStorage.removeItem(KA_KEY);
     } catch (e) {}
     try {
       // Magic-link venue sessions (ef_vf_token_<slug>) end on sign-out too.
@@ -300,6 +447,15 @@ window.EF_SHELL = (function () {
   function boot(opts) {
     opts = opts || {};
     var firedSlug = '';
+    _booted = true;
+
+    // SESSION_EXPIRY_SIGNOUT_V1: a sign-in that has already timed out is signed out before anything loads.
+    if (_timedOut()) _clearGoogleSession(_expiryReason());
+    var expiredNote = '';
+    try {
+      expiredNote = sessionStorage.getItem(EXPIRED_FLAG) || '';
+      sessionStorage.removeItem(EXPIRED_FLAG);
+    } catch (e) {}
 
     // MAGIC_LINK_SHELL_V1: no Google session but a usable emailed link -> sign in with the link.
     var link = _googleToken() ? null : linkSession();
@@ -311,13 +467,8 @@ window.EF_SHELL = (function () {
         }
       } catch (e) {}
     }
-    // The link no longer works (expired, or the address lost access): forget it and show the sign-in screen.
-    function linkFailed() {
-      try {
-        localStorage.removeItem('ef_vf_token_' + link.slug);
-        sessionStorage.removeItem('ef_user_email');
-        sessionStorage.removeItem('ef_auth_kind');
-      } catch (e) {}
+    // Show the sign-in screen even when the page's first-paint check hid it (it saw a session that has since ended).
+    function showLoginScreen(message) {
       Array.prototype.forEach.call(document.querySelectorAll('style'), function (s) {
         if (/#login-screen\s*\{\s*display:\s*none/.test(s.textContent || '')) s.remove();
       });
@@ -325,9 +476,25 @@ window.EF_SHELL = (function () {
       if (ls) ls.style.display = '';
       var errEl = document.getElementById('login-error');
       if (errEl) {
-        errEl.textContent = 'Your sign-in link has expired or no longer has access. Ask for a new one below, or sign in with Google.';
+        errEl.textContent = message;
         errEl.style.display = 'block';
       }
+    }
+    // The link no longer works (expired, or the address lost access): forget it and show the sign-in screen.
+    function linkFailed() {
+      try {
+        localStorage.removeItem('ef_vf_token_' + link.slug);
+        sessionStorage.removeItem('ef_user_email');
+        sessionStorage.removeItem('ef_auth_kind');
+      } catch (e) {}
+      showLoginScreen('Your sign-in link has expired or no longer has access. Ask for a new one below, or sign in with Google.');
+    }
+    if (expiredNote && !link && !signedInEmail()) {
+      showLoginScreen(expiredNote === 'cap'
+        ? 'For your security, everyone signs in again every 12 hours. Sign in again to keep going.'
+        : expiredNote === 'google'
+          ? 'You were signed out because your sign-in timed out. Sign in again to pick up where you left off.'
+          : 'You were signed out because the page was not used for about an hour. Sign in again to pick up where you left off.');
     }
 
     function resolve(email) {
@@ -371,7 +538,12 @@ window.EF_SHELL = (function () {
         sessionStorage.setItem('ef_user_email', email);
         sessionStorage.setItem('ef_id_token', idToken);
         sessionStorage.setItem('ef_id_token_exp', String(payload.exp * 1000));
+        sessionStorage.removeItem(KA_KEY);   // a new Google sign-in starts a new pass (and a new 12 hours)
       } catch (e) {}
+      _kaStop = false;
+      _kaStartTried = true;
+      renewPass(true);
+      watchExpiry();
       var errEl = document.getElementById('login-error');
       loadClients().then(function () {
         var client = resolve(email);
@@ -393,6 +565,9 @@ window.EF_SHELL = (function () {
     }
 
     initGoogleSignIn(handleCredential);
+    watchExpiry();
+    // SESSION_KEEPALIVE_V1: a live Google sign-in with no pass yet (signed in before this shipped, or on /admin) gets one.
+    if (_googleValid() && !_kaValid()) { _kaStartTried = true; renewPass(true); }
 
     var saved = signedInEmail();
     // CLIENT_MERGE_BY_SLUG_V1 (2026-10-18): the quick path runs BEFORE client_list arrives, when CLIENTS holds only the
@@ -466,22 +641,43 @@ window.EF_SHELL = (function () {
     if (demoActive()) {
       return Promise.resolve({ error: 'Not available while viewing sample data.' });
     }
+    // SESSION_KEEPALIVE_V1: the page's own pass first while it works, then the Google sign-in.
+    var ka = _kaValid() ? _kaPass() : null;
     if (!payload.id_token && !payload.session_token) {
-      try {
-        var t = sessionStorage.getItem('ef_id_token');
-        if (t) payload.id_token = t;
-      } catch (e) {}
+      if (ka) payload.session_token = ka.token;
+      else {
+        try {
+          var t = sessionStorage.getItem('ef_id_token');
+          if (t) payload.id_token = t;
+        } catch (e) {}
+      }
     }
     // MAGIC_LINK_SHELL_V1: no Google token -> the emailed sign-in link (for this venue when there is one).
     if (!payload.id_token && !payload.session_token) {
       var ls = linkSession(payload.client_slug);
       if (ls) payload.session_token = ls.token;
     }
+    // SESSION_EXPIRY_SIGNOUT_V1: on a boot() page, a timed-out sign-in signs the person out rather than
+    // sending a call Apps Script will refuse, and so does a refusal. The answer never arrives (the page is
+    // reloading), so no error flashes on the way out.
+    var sentGoogle = _booted && ((!!payload.id_token && payload.id_token === _googleToken()) ||
+      (!!ka && payload.session_token === ka.token));
+    if (sentGoogle && _timedOut()) {
+      sessionExpired();
+      return new Promise(function () {});
+    }
     return fetch(CONFIG.DATA_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(payload)
-    }).then(function (r) { return r.json(); });
+    }).then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (sentGoogle && d && typeof d.error === 'string' && /^Unauthorized\b/.test(d.error)) {
+          sessionExpired();
+          return new Promise(function () {});
+        }
+        return d;
+      });
   }
 
   function getJson(type, slug) {
