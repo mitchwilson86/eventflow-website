@@ -45,8 +45,9 @@
   background: var(--bg-card); border: 1px solid var(--border);
   border-radius: var(--radius); overflow: hidden;
 }
+/* minmax(0, 1fr): a long event name must not widen its day's column */
 .cal-weekhead {
-  display: grid; grid-template-columns: repeat(7, 1fr);
+  display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
   background: var(--bg-inset); border-bottom: 1px solid var(--border);
 }
 .cal-weekhead div {
@@ -54,33 +55,38 @@
   text-transform: uppercase; letter-spacing: .05em;
   color: var(--text-secondary);
 }
+/* Row height is set by fitMonth() in bookings.html so the whole month fits the window */
 .cal-grid {
-  display: grid; grid-template-columns: repeat(7, 1fr);
+  display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-auto-rows: var(--cal-row-h, 120px);
 }
 .cal-cell {
-  min-height: 120px; padding: 6px 8px;
+  min-height: 0; padding: 6px 8px; overflow: hidden; font-size: 13px; line-height: 17px;
   border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
   background: var(--bg-card); cursor: pointer; position: relative;
 }
+.cal-grid .cal-cell:nth-last-child(-n+7) { border-bottom: none; }
 .cal-cell:nth-child(7n) { border-right: none; }
 .cal-cell:hover { background: var(--bg-inset); }
 .cal-cell.other-month { background: #FAFBFC; color: var(--text-muted); }
 .cal-cell.today .cal-daynum {
   background: var(--teal); color: #fff; border-radius: 999px;
-  width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center;
 }
 .cal-daynum { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
 .cal-event {
-  display: block; margin-top: 4px; padding: 3px 6px; border-radius: 4px;
-  font-size: 12px; font-weight: 500; color: #fff;
+  display: block; margin-top: 3px; padding: 2px 6px; border-radius: 4px;
+  font-size: 12px; line-height: 16px; font-weight: 500; color: #fff;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   text-decoration: none; cursor: pointer;
 }
 .cal-event.external { opacity: .75; border: 1px dashed rgba(0,0,0,.25); }
+/* "+ N more" sits on the day-number line, so it costs no event space */
 .cal-event-more {
-  display: block; margin-top: 4px; padding: 2px 6px; font-size: 11px;
-  color: var(--text-secondary); font-weight: 600;
+  display: none; position: absolute; top: 6px; right: 8px;
+  font-size: 11px; line-height: 17px; color: var(--text-secondary); font-weight: 600;
 }
+@media (max-width: 600px) { .cal-more-word { display: none; } }
 
 /* ── Calendar legend ───────────────────────────────────────── */
 .cal-legend {

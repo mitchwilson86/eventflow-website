@@ -370,15 +370,18 @@ function renderMonth() {
   }
   for (const d of Object.keys(byDate)) byDate[d].sort((a, b) => a.t.localeCompare(b.t));
 
+  // Only the weeks this month touches (4 to 6), not a fixed 6
+  const weeks = Math.ceil((start.getDay() + monthEnd(state.viewDate).getDate()) / 7);
   const cells = [];
-  for (let i = 0; i < 42; i++) {
+  for (let i = 0; i < weeks * 7; i++) {
     const day = addDays(firstCell, i);
     const iso = isoDate(day);
     const events = byDate[iso] || [];
     const isOther = day.getMonth() !== state.viewDate.getMonth();
     const isToday = day.getTime() === today.getTime();
 
-    const eventsHtml = events.slice(0, 3).map(ev => {
+    // Every event goes in; fitMonth() hides the ones that do not fit the day
+    const eventsHtml = events.map(ev => {
       if (ev.kind === 'booking') {
         const b = ev.ref;
         const c = STATUS_COLORS[b.status] || STATUS_COLORS.lead;
@@ -395,8 +398,7 @@ function renderMonth() {
                 </div>`;
       }
     }).join('');
-    const moreHtml = events.length > 3
-      ? `<div class="cal-event-more">+ ${events.length - 3} more</div>` : '';
+    const moreHtml = events.length ? `<div class="cal-event-more"></div>` : '';
 
     cells.push(`
       <div class="cal-cell${isOther ? ' other-month' : ''}${isToday ? ' today' : ''}"
@@ -407,7 +409,47 @@ function renderMonth() {
     `);
   }
   grid.innerHTML = cells.join('');
+  fitMonth();
 }
+
+// Size the weeks so the whole month and the key under it fit the window,
+// then show as many events per day as fit, with "+ N more" for the rest.
+const CAL_MIN_ROW = 64;  // room for one event; below this the page scrolls instead
+function fitMonth() {
+  const grid = document.getElementById('cal-grid');
+  const weeks = grid.children.length / 7;
+  if (state.view !== 'month' || !weeks) return;
+  const legend = document.getElementById('cal-legend');
+  const below = legend.offsetHeight + parseFloat(getComputedStyle(legend).marginTop)
+    + parseFloat(getComputedStyle(document.querySelector('.dash-body')).paddingBottom);
+  const top = grid.getBoundingClientRect().top + window.scrollY;
+  const room = window.innerHeight - top - below - 1;  // 1 = the wrap's bottom border
+  grid.style.setProperty('--cal-row-h', Math.max(CAL_MIN_ROW, Math.floor(room / weeks)) + 'px');
+
+  const padBottom = parseFloat(getComputedStyle(grid.children[0]).paddingBottom);
+  for (const cell of grid.children) {
+    const chips = [...cell.querySelectorAll('.cal-event')];
+    if (!chips.length) continue;
+    const more = cell.querySelector('.cal-event-more');
+    chips.forEach(c => { c.style.display = ''; });
+    more.style.display = 'none';
+    const limit = cell.clientHeight - padBottom;
+    let shown = chips.length;
+    while (shown > 1 && chips[shown - 1].offsetTop + chips[shown - 1].offsetHeight > limit) {
+      chips[--shown].style.display = 'none';
+    }
+    if (shown === chips.length) continue;
+    more.style.display = 'block';
+    more.innerHTML = `+${chips.length - shown}<span class="cal-more-word"> more</span>`;
+    more.title = chips.slice(shown).map(c => c.textContent.trim().replace(/\s+/g, ' ')).join('\n');
+  }
+}
+let calFitFrame = 0;
+window.addEventListener('resize', () => {
+  cancelAnimationFrame(calFitFrame);
+  calFitFrame = requestAnimationFrame(fitMonth);
+});
+if (document.fonts) document.fonts.ready.then(fitMonth);
 
 function renderList() {
   const body = document.getElementById('list-body');
