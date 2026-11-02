@@ -113,6 +113,17 @@
     .grid2 { grid-template-columns: 1fr; }
     .sec-note { white-space: normal; text-align: right; }
   }
+
+  /* CATERING_ADDONS: "Add to your order" sheet, same printed-menu styles as the menu above it. */
+  #addons h2.addon-t { color: var(--ink); margin: 0 0 2px; }
+  .addon-lead { margin: 0 0 18px; color: #3d4660; font-family: var(--serif); font-size: 15px; }
+  #addons h2.addon-t + .menu { margin-top: 16px; }
+  .addon-nudge { display: block; margin: 12px 0 2px; color: var(--accent); font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 15px; }
+  .warm-rec { border-left: 3px solid var(--accent); padding: 4px 0 4px 12px; margin: 10px 0 8px; font-family: var(--serif); font-size: 14.5px; color: #3d4660; }
+  .warm-rec p { margin: 0 0 6px; }
+  .warm-say { color: var(--accent); font-style: italic; font-weight: 500; font-size: 15px; }
+  .warm-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 12px 0 2px; font-family: var(--serif); }
+  .warm-line .warm-say { margin: 0; }
 </style>
 </head>
 <body>
@@ -132,6 +143,8 @@
   var app = document.getElementById('app');
   var MENU = null, VINFO = null;
   var qty = {};          // 'itemId|sizeId' -> number
+  var ADDON_ITEMS = {};  // CATERING_ADDONS: item ids in sections marked addon
+  var sawAddons = false;
   var fulfillment = 'delivery';
   var tip = { mode: 'pct', pct: 15 };
 
@@ -209,9 +222,11 @@
 
     // Menu sections
     h += '<div class="menu">';
-    (MENU.sections || []).forEach(function (s) {
+    var renderSec = function (s) {
       var sh = sizeHeader(s);
       h += '<section class="sec"><div class="sec-h"><h2>' + esc(s.name) + '</h2>' + (sh ? '<span class="sec-note">' + esc(sh) + '</span>' : '') + '</div>';
+      // CATERING_ADDONS: the recommendation sits at the top of the section that sells the warming set.
+      if (MENU.warm_rec && (s.items || []).some(function (it) { return it.id === MENU.warm_rec.set_item; })) h += '<div class="warm-rec" id="warmRec" aria-live="polite" style="display:none"></div>';
       (s.items || []).forEach(function (it) {
         var sizes = it.sizes || [];
         var one = sizes.length === 1;
@@ -228,13 +243,25 @@
         h += '</div></div>';
       });
       h += '</section>';
-    });
+    };
+    (MENU.sections || []).filter(function (s) { return !s.addon; }).forEach(renderSec);
     h += '</div>';
 
     // Legend
     var keys = Object.keys(legend).map(function (k) { return '<span>' + tagMark(k, legend) + ' ' + esc(legend[k]) + '</span>'; });
     if (keys.length || MENU.footer) h += '<div class="legend">' + (keys.length ? '<div class="keys">' + keys.join('<span aria-hidden="true">|</span>') + '</div>' : '') + (MENU.footer ? '<p>' + esc(MENU.footer) + '</p>' : '') + '</div>';
     h += '</div>';
+
+    // CATERING_ADDONS: a venue with no addon sections and no packing options gets no sheet, and the page is as it was.
+    var addonSecs = (MENU.sections || []).filter(function (s) { return s.addon; });
+    var packs = MENU.packing_options || [];
+    addonSecs.forEach(function (s) { (s.items || []).forEach(function (it) { ADDON_ITEMS[it.id] = true; }); });
+    if (addonSecs.length || packs.length) {
+      h += '<section class="sheet" id="addons"><h2 class="addon-t">' + esc(MENU.addons_title || 'Add to your order') + '</h2>' + (MENU.addons_intro ? '<p class="addon-lead">' + esc(MENU.addons_intro) + '</p>' : '') + '<div class="menu"' + (addonSecs.length + (packs.length ? 1 : 0) < 2 ? ' style="column-count:1"' : '') + '>';
+      addonSecs.forEach(renderSec);
+      if (packs.length) h += '<section class="sec"><div class="sec-h"><h2>Packing options</h2></div>' + packs.map(function (p) { return '<label class="check"><input type="checkbox" data-pack="' + esc(p) + '"> <span>' + esc(p) + '</span></label>'; }).join('') + '</section>';
+      h += '</div></section>';
+    }
 
     var minDate = new Date(Date.now() + (Number(r.min_notice_hours) || 0) * 3600 * 1000);
     var minIso = minDate.getFullYear() + '-' + String(minDate.getMonth() + 1).padStart(2, '0') + '-' + String(minDate.getDate()).padStart(2, '0');
@@ -261,6 +288,8 @@
       '<div id="customTip" style="display:none;margin-top:8px;max-width:200px"><input class="t" id="tipAmt" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Tip amount ($)"></div>' +
       '<div class="hint">' + (r.tip_base === 'food' ? 'Percent tips are figured on the food total.' : '') + '</div></div>' : '') +
       '<table class="sum" id="sum"></table>' +
+      (MENU.addons_nudge && addonSecs.length ? '<a class="addon-nudge" id="addonNudge" href="#addons" style="display:none">' + esc(MENU.addons_nudge) + '</a>' : '') +
+      (MENU.warm_rec ? '<div class="warm-line" id="warmLine" style="display:none"></div>' : '') +
       '<p class="fine">This is an estimate. ' + esc(VINFO.name || 'The venue') + ' will confirm your order and final total and send payment details. Catering orders are paid in advance.</p>' +
       '<div class="err" id="err"></div>' +
       '<button class="btn" id="submit" type="button" style="margin-top:12px;width:100%">Submit catering order</button></section>';
@@ -282,6 +311,7 @@
     app.addEventListener('click', function (e) {
       var b = e.target.closest('.step button');
       if (b) { var row = b.closest('.size'); var inp = row.querySelector('input'); setQty(row, (parseInt(inp.value, 10) || 0) + Number(b.getAttribute('data-d'))); return; }
+      if (e.target.closest('[data-warm-add]')) { setQty(app.querySelector('.size[data-key="' + MENU.warm_rec.set_item + '|' + MENU.warm_rec.set_size + '"]'), warmRec().sets); return; }
       var f = e.target.closest('#fulfil .pill');
       if (f) { fulfillment = f.getAttribute('data-v'); Array.prototype.forEach.call(el('fulfil').children, function (x) { x.classList.toggle('on', x === f); }); el('addrBox').style.display = fulfillment === 'delivery' ? '' : 'none'; update(); return; }
       var t = e.target.closest('#tips .pill');
@@ -291,7 +321,7 @@
       if (e.target.closest('.step')) { var row = e.target.closest('.size'); setQty(row, parseInt(e.target.value, 10) || 0, true); }
       if (e.target.id === 'tipAmt') { tip = { mode: 'custom', amount: Number(e.target.value) || 0 }; update(); }
     });
-    el('barBtn').addEventListener('click', function () { el('review').scrollIntoView({ behavior: 'smooth' }); });
+    el('barBtn').addEventListener('click', function () { var first = !sawAddons && addonsWorthShowing(); if (first) sawAddons = true; el(first ? 'addons' : 'review').scrollIntoView({ behavior: 'smooth' }); });
     el('submit').addEventListener('click', submit);
   }
   function setQty(row, n, typing) {
@@ -305,6 +335,44 @@
   }
   function order() {
     return { items: Object.keys(qty).map(function (k) { var p = k.split('|'); return { id: p[0], size: p[1], qty: qty[k] }; }), fulfillment: fulfillment, tip: tip };
+  }
+  // CATERING_ADDONS: how many warming sets this order's hot food calls for. An item is hot by its own `hot` or its section's.
+  // Only ever a suggestion: a set reaches the order when the guest adds it. A venue with no warm_rec sees none of this.
+  function warmRec() {
+    var w = MENU.warm_rec, units = 0, counts = {};
+    (MENU.sections || []).forEach(function (s) {
+      (s.items || []).forEach(function (it) {
+        if (!(it.hot !== undefined ? it.hot : s.hot)) return;
+        (it.sizes || []).forEach(function (z) {
+          var q = qty[it.id + '|' + z.id] || 0, pan = (w.pans || {})[z.id];
+          if (!q || !pan) return;
+          units += q * (Number(pan.units) || 0);
+          counts[z.id] = (counts[z.id] || 0) + q;
+        });
+      });
+    });
+    return { sets: Math.ceil(units / (Number(w.units_per_set) || 1)), have: qty[w.set_item + '|' + w.set_size] || 0, counts: counts };
+  }
+  // A sheet that only sells warming sets has nothing for an order with no hot food, or one that already has enough.
+  function addonsWorthShowing() {
+    if (!el('addons')) return false;
+    var onlyWarm = !!el('warmRec') && !(MENU.packing_options || []).length && (MENU.sections || []).filter(function (s) { return s.addon; }).every(function (s) { return (s.items || []).some(function (it) { return it.id === MENU.warm_rec.set_item; }); });
+    if (!onlyWarm) return true;
+    var rec = warmRec();
+    return rec.sets > rec.have;
+  }
+  function plural(n, word) { return n + ' ' + esc(word) + (n === 1 ? '' : 's'); }
+  function showWarmRec() {
+    var w = MENU.warm_rec, box = el('warmRec'), line = el('warmLine');
+    if (!w || !box) return;
+    var rec = warmRec(), short = rec.sets > rec.have;
+    var pans = Object.keys(w.pans || {}).filter(function (k) { return rec.counts[k]; }).map(function (k) { return plural(rec.counts[k], w.pans[k].word); });
+    var addBtn = '<button type="button" class="pill" data-warm-add="1">' + (rec.have ? 'Change to ' : 'Add ') + plural(rec.sets, w.set_word) + '</button>';
+    box.style.display = rec.sets ? '' : 'none';
+    box.innerHTML = !rec.sets ? '' : '<p>Your order has ' + pans.join(' and ') + ' of hot food. ' + esc(w.explain || '') + '</p>' +
+      (short ? '<p class="warm-say">We recommend ' + plural(rec.sets, w.set_word) + '.</p>' + addBtn : '<p class="warm-say" style="margin:0">' + plural(rec.have, w.set_word) + (rec.have === 1 ? ' is' : ' are') + ' enough for your hot food.</p>');
+    line.style.display = short ? '' : 'none';
+    line.innerHTML = short ? '<span class="warm-say">We recommend ' + plural(rec.sets, w.set_word) + ' to keep your hot food warm.</span>' + addBtn : '';
   }
   function update() {
     var est = window.EFCateringPricing.compute(MENU, order());
@@ -322,6 +390,8 @@
         '<tr class="tot"><td>Estimated total</td><td class="r">' + money(est.total) + '</td></tr>';
     }
     el('sum').innerHTML = rows;
+    if (el('addonNudge')) el('addonNudge').style.display = est.lines.length && !est.lines.some(function (l) { return ADDON_ITEMS[l.id]; }) ? '' : 'none';
+    showWarmRec();
     var count = est.lines.reduce(function (a, l) { return a + l.qty; }, 0);
     el('barAmt').textContent = money(est.lines.length ? est.total : 0);
     el('barLbl').textContent = count ? count + (count === 1 ? ' item' : ' items') + ' - estimated total' : 'Estimated total';
@@ -347,14 +417,14 @@
     var est = update();
     var v = function (id) { return el(id) ? el(id).value.trim() : ''; };
     var missing = [];
-    if (!est.lines.length) missing.push('at least one item');
+    if (!est.lines.some(function (l) { return !ADDON_ITEMS[l.id]; })) missing.push('at least one item from the menu');
     ['name', 'email', 'phone', 'event_date', 'event_time'].forEach(function (id) { if (!v(id)) missing.push(FIELD_MSG[id]); });
     if (fulfillment === 'delivery' && !v('address')) missing.push(FIELD_MSG.address);
     if (missing.length) { errBox.textContent = 'Please add ' + missing.join(', ') + '.'; errBox.style.display = 'block'; return; }
     var btn = el('submit'); btn.disabled = true; btn.textContent = 'Sending...';
     var body = { name: v('name'), company: v('company'), email: v('email'), phone: v('phone'), event_date: v('event_date'), event_time: v('event_time'),
       guest_count: v('guest_count'), fulfillment: fulfillment, address: fulfillment === 'delivery' ? v('address') : '', over_radius: !!(el('over_radius') && el('over_radius').checked && fulfillment === 'delivery'),
-      notes: el('notes').value.trim(), items: order().items, tip: tip, lead: qp.get('lead') || '', website: v('website') };
+      notes: notesWithPacking(), items: order().items, tip: tip, lead: qp.get('lead') || '', website: v('website') };
     fetch(OPS + '?action=catering_order&client=' + encodeURIComponent(VENUE), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
       .then(function (r) { return r.json().then(function (j) { return { s: r.status, j: j }; }, function () { return { s: r.status, j: null }; }); })
       .then(function (x) {
@@ -363,11 +433,14 @@
       })
       .catch(function () { errBox.textContent = humanize(null, 0); errBox.style.display = 'block'; btn.disabled = false; btn.textContent = 'Submit catering order'; });
   }
+  function packingPicked() { return Array.prototype.map.call(app.querySelectorAll('[data-pack]:checked'), function (c) { return c.getAttribute('data-pack'); }); }
+  function notesWithPacking() { var n = el('notes').value.trim(), p = packingPicked(); return (p.length ? 'Packing: ' + p.join('; ') + (n ? '\n' : '') : '') + n; }
   function done(est, body) {
     el('bar').style.display = 'none';
     var lines = (est.lines || []).map(function (l) { return '<tr class="line"><td>' + l.qty + ' x ' + esc(l.name) + (l.size !== 'ONE' ? ' (' + esc(l.size_label) + ')' : '') + '</td><td class="r">' + money(l.line_total) + '</td></tr>'; }).join('');
     app.innerHTML = '<section class="sheet panel"><h2>Thank you, your order is in!</h2><p>' + esc(VINFO.name || 'The venue') + ' has your catering order and will confirm it, along with the final total and payment details. A copy is on its way to ' + esc(body.email) + '.</p>' +
       '<table class="sum">' + lines + '<tr class="tot"><td>Estimated total</td><td class="r">' + money(est.total) + '</td></tr></table>' +
+      (/^Packing: /.test(body.notes) ? '<p>' + esc(body.notes.split('\n')[0]) + '</p>' : '') +
       '<p class="fine">If you need to change anything, just reply to the confirmation email.</p></section>';
     window.scrollTo(0, 0);
   }
