@@ -124,6 +124,9 @@
   .warm-say { color: var(--accent); font-style: italic; font-weight: 500; font-size: 15px; }
   .warm-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 12px 0 2px; font-family: var(--serif); }
   .warm-line .warm-say { margin: 0; }
+
+  /* CATERING_STAFFING_V1: what the guest's service choice means, under the choice. */
+  .svc-note { border-left: 3px solid var(--accent); padding: 4px 0 4px 12px; margin: 10px 0 0; font-family: var(--serif); font-size: 14.5px; color: #3d4660; }
 </style>
 </head>
 <body>
@@ -146,6 +149,7 @@
   var ADDON_ITEMS = {};  // CATERING_ADDONS: item ids in sections marked addon
   var sawAddons = false;
   var fulfillment = 'delivery';
+  var service = '';      // CATERING_STAFFING_V1: '' until the guest picks, then 'dropoff' or 'staffed'
   var tip = { mode: 'pct', pct: 15 };
 
   // Dietary marks drawn like the printed menu: a leaf for vegan, a circled GF, an asterisk for raw.
@@ -184,6 +188,9 @@
       .catch(function () { app.innerHTML = '<div class="sheet msg">We could not load the catering menu. Please check your connection and refresh the page.</div>'; });
   }
   function tipsOn() { return !!MENU && (MENU.rules || {}).tips !== false; }
+  function staffOn() { return !!MENU && !!MENU.staffing && fulfillment === 'delivery'; }
+  function isStaffed() { return staffOn() && service === 'staffed'; }
+  var STAFF_ROW = '<tr class="sub"><td>Event staff</td><td class="r">Quoted separately</td></tr>';
   function unavailable() {
     app.innerHTML = '<div class="sheet msg"><h2>Online catering orders are not available</h2><p>Online catering orders are not available for this venue right now. Please contact the venue directly.</p></div>';
   }
@@ -276,8 +283,8 @@
       '<button type="button" class="pill on" data-v="delivery">Delivery (' + money(r.delivery_fee) + ')</button>' +
       (r.pickup !== false ? '<button type="button" class="pill" data-v="pickup">Pickup (free)</button>' : '') + '</div></div>' +
       '<div id="addrBox" style="margin-top:12px">' + field('address', 'Delivery address', 'text', true, 'autocomplete="street-address"') +
-      (r.delivery_radius_mi ? '<label class="check"><input type="checkbox" id="over_radius"> <span>This address is more than ' + esc(r.delivery_radius_mi) + ' miles from ' + esc(VINFO.name || 'the venue') + '. (We will confirm whether we can deliver and the delivery fee.)</span></label>' : '') + '</div>' +
-      '<div style="margin-top:12px"><label class="f" for="notes">Notes, dietary needs or allergies</label><textarea class="t" id="notes" maxlength="1000"></textarea></div>' +
+      (r.delivery_radius_mi ? '<label class="check"><input type="checkbox" id="over_radius"> <span>This address is more than ' + esc(r.delivery_radius_mi) + ' miles from ' + esc(VINFO.name || 'the venue') + '. (We will confirm whether we can deliver and the delivery fee.)</span></label>' : '') + serviceChoice() + '</div>' +
+      '<div style="margin-top:12px"><label class="f" for="notes">Notes, dietary needs or allergies</label><textarea class="t" id="notes" maxlength="' + (MENU.staffing ? 900 : 1000) + '"></textarea></div>' +
       '<div class="hp" aria-hidden="true"><label>Website <input type="text" id="website" tabindex="-1" autocomplete="off"></label></div>' +
       '</section>';
 
@@ -300,6 +307,17 @@
     wire();
     update();
   }
+  // CATERING_STAFFING_V1 (2026-11-02): a delivery order chooses drop-off or staffed. Staffing is quoted by the venue, never priced
+  // here, and the choice travels as the first line of the order notes. A venue with no `staffing` sees none of this.
+  function serviceChoice() {
+    var st = MENU.staffing;
+    if (!st) return '';
+    return '<div style="margin-top:16px"><label class="f">Service <span class="req">*</span></label><div class="choice" id="service">' +
+      '<button type="button" class="pill" data-s="dropoff">' + esc(st.dropoff_label) + '</button>' +
+      '<button type="button" class="pill" data-s="staffed">' + esc(st.staffed_label) + '</button></div>' +
+      '<p class="svc-note" id="serviceNote" style="display:none"></p>' +
+      '<div id="staffBox" style="display:none;margin-top:12px;max-width:260px">' + field('staff_until', 'What time should staff finish?', 'time', true, '') + '</div></div>';
+  }
   function field(id, label, type, req, extra) {
     return '<div><label class="f" for="' + id + '">' + esc(label) + (req ? ' <span class="req">*</span>' : '') + '</label><input class="t" id="' + id + '" type="' + type + '" ' + (extra || '') + '></div>';
   }
@@ -314,6 +332,8 @@
       if (e.target.closest('[data-warm-add]')) { setQty(app.querySelector('.size[data-key="' + MENU.warm_rec.set_item + '|' + MENU.warm_rec.set_size + '"]'), warmRec().sets); return; }
       var f = e.target.closest('#fulfil .pill');
       if (f) { fulfillment = f.getAttribute('data-v'); Array.prototype.forEach.call(el('fulfil').children, function (x) { x.classList.toggle('on', x === f); }); el('addrBox').style.display = fulfillment === 'delivery' ? '' : 'none'; update(); return; }
+      var sv = e.target.closest('#service .pill');
+      if (sv) { service = sv.getAttribute('data-s'); Array.prototype.forEach.call(el('service').children, function (x) { x.classList.toggle('on', x === sv); }); var sn = el('serviceNote'); sn.textContent = MENU.staffing[service === 'staffed' ? 'staffed_note' : 'dropoff_note'] || ''; sn.style.display = sn.textContent ? '' : 'none'; el('staffBox').style.display = service === 'staffed' ? '' : 'none'; update(); return; }
       var t = e.target.closest('#tips .pill');
       if (t) { var p = t.getAttribute('data-p'); if (p === 'custom') { tip = { mode: 'custom', amount: Number(el('tipAmt').value) || 0 }; el('customTip').style.display = ''; el('tipAmt').focus(); } else { tip = Number(p) ? { mode: 'pct', pct: Number(p) } : { mode: 'none' }; el('customTip').style.display = 'none'; } update(); return; }
     });
@@ -387,17 +407,17 @@
         '<tr class="sub"><td>' + (est.fulfillment === 'delivery' ? 'Delivery' : 'Pickup') + '</td><td class="r">' + money(est.delivery) + '</td></tr>' +
         '<tr class="sub"><td>' + esc(r.tax_label || 'Estimated sales tax') + '</td><td class="r">' + money(est.tax) + '</td></tr>' +
         (tipsOn() ? '<tr class="sub"><td>Tip' + (est.tip_mode === 'pct' ? ' (' + est.tip_pct + '%)' : '') + '</td><td class="r">' + money(est.tip) + '</td></tr>' : '') +
-        '<tr class="tot"><td>Estimated total</td><td class="r">' + money(est.total) + '</td></tr>';
+        (isStaffed() ? STAFF_ROW : '') + '<tr class="tot"><td>Estimated total' + (isStaffed() ? ', before staff' : '') + '</td><td class="r">' + money(est.total) + '</td></tr>';
     }
     el('sum').innerHTML = rows;
     if (el('addonNudge')) el('addonNudge').style.display = est.lines.length && !est.lines.some(function (l) { return ADDON_ITEMS[l.id]; }) ? '' : 'none';
     showWarmRec();
     var count = est.lines.reduce(function (a, l) { return a + l.qty; }, 0);
     el('barAmt').textContent = money(est.lines.length ? est.total : 0);
-    el('barLbl').textContent = count ? count + (count === 1 ? ' item' : ' items') + ' - estimated total' : 'Estimated total';
+    el('barLbl').textContent = count ? count + (count === 1 ? ' item' : ' items') + ' - estimated total' + (isStaffed() ? ', before staff' : '') : 'Estimated total';
     return est;
   }
-  var FIELD_MSG = { name: 'your name', email: 'a valid email address', phone: 'a phone number', event_date: 'the date', event_time: 'the time', guest_count: 'the number of guests (a number)', address: 'the delivery address', too_soon: '', 'no items': '' };
+  var FIELD_MSG = { name: 'your name', email: 'a valid email address', phone: 'a phone number', event_date: 'the date', event_time: 'the time', guest_count: 'the number of guests (a number)', address: 'the delivery address', service: 'your choice of drop-off or staffed service', staff_until: 'the time staff should finish', too_soon: '', 'no items': '' };
   function humanize(j, status) {
     if (status === 429) return 'Too many orders have been sent from this connection in the last hour. Please try again later or contact the venue directly.';
     if (j && j.error === 'invalid' && Array.isArray(j.fields)) {
@@ -420,6 +440,8 @@
     if (!est.lines.some(function (l) { return !ADDON_ITEMS[l.id]; })) missing.push('at least one item from the menu');
     ['name', 'email', 'phone', 'event_date', 'event_time'].forEach(function (id) { if (!v(id)) missing.push(FIELD_MSG[id]); });
     if (fulfillment === 'delivery' && !v('address')) missing.push(FIELD_MSG.address);
+    if (staffOn() && !service) missing.push(FIELD_MSG.service);
+    if (isStaffed() && !v('staff_until')) missing.push(FIELD_MSG.staff_until);
     if (missing.length) { errBox.textContent = 'Please add ' + missing.join(', ') + '.'; errBox.style.display = 'block'; return; }
     var btn = el('submit'); btn.disabled = true; btn.textContent = 'Sending...';
     var body = { name: v('name'), company: v('company'), email: v('email'), phone: v('phone'), event_date: v('event_date'), event_time: v('event_time'),
@@ -434,13 +456,18 @@
       .catch(function () { errBox.textContent = humanize(null, 0); errBox.style.display = 'block'; btn.disabled = false; btn.textContent = 'Submit catering order'; });
   }
   function packingPicked() { return Array.prototype.map.call(app.querySelectorAll('[data-pack]:checked'), function (c) { return c.getAttribute('data-pack'); }); }
-  function notesWithPacking() { var n = el('notes').value.trim(), p = packingPicked(); return (p.length ? 'Packing: ' + p.join('; ') + (n ? '\n' : '') : '') + n; }
+  function clock(t) { var m = String(t || '').match(/^(\d{2}):(\d{2})$/); if (!m) return String(t || ''); var h = +m[1]; return (h % 12 || 12) + ':' + m[2] + (h >= 12 ? ' PM' : ' AM'); }
+  // The Catering Order Notifier reads this exact wording (catering/patch_catering_staffing.js); change the two together.
+  function serviceLine() { return !staffOn() ? '' : (isStaffed() ? 'Service: Staffed, staff to finish by ' + clock(el('staff_until').value) : 'Service: Drop-off, no staff'); }
+  function notesWithPacking() { var n = el('notes').value.trim(), p = packingPicked(), s = serviceLine(); return (s ? s + (p.length || n ? '\n' : '') : '') + (p.length ? 'Packing: ' + p.join('; ') + (n ? '\n' : '') : '') + n; }
   function done(est, body) {
+    var staffedOrder = isStaffed(), until = staffedOrder ? clock(el('staff_until').value) : '', afterService = body.notes.replace(/^Service: [^\n]*\n?/, '');
     el('bar').style.display = 'none';
     var lines = (est.lines || []).map(function (l) { return '<tr class="line"><td>' + l.qty + ' x ' + esc(l.name) + (l.size !== 'ONE' ? ' (' + esc(l.size_label) + ')' : '') + '</td><td class="r">' + money(l.line_total) + '</td></tr>'; }).join('');
     app.innerHTML = '<section class="sheet panel"><h2>Thank you, your order is in!</h2><p>' + esc(VINFO.name || 'The venue') + ' has your catering order and will confirm it, along with the final total and payment details. A copy is on its way to ' + esc(body.email) + '.</p>' +
-      '<table class="sum">' + lines + '<tr class="tot"><td>Estimated total</td><td class="r">' + money(est.total) + '</td></tr></table>' +
-      (/^Packing: /.test(body.notes) ? '<p>' + esc(body.notes.split('\n')[0]) + '</p>' : '') +
+      '<table class="sum">' + lines + (staffedOrder ? STAFF_ROW : '') + '<tr class="tot"><td>Estimated total' + (staffedOrder ? ', before staff' : '') + '</td><td class="r">' + money(est.total) + '</td></tr></table>' +
+      (staffedOrder ? '<p>You asked for staff to stay until ' + esc(until) + '. ' + esc(VINFO.name || 'The venue') + ' will confirm the staffing cost with you before your order is final.</p>' : '') +
+      (/^Packing: /.test(afterService) ? '<p>' + esc(afterService.split('\n')[0]) + '</p>' : '') +
       '<p class="fine">If you need to change anything, just reply to the confirmation email.</p></section>';
     window.scrollTo(0, 0);
   }
