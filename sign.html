@@ -35,6 +35,11 @@
     <button class="btn no-print" onclick="window.print()" style="margin-top:12px">Print / Save a copy</button>
   </div>
 
+  <div id="paid-review" class="sign-box" style="display:none">
+    <h2 style="font-family:var(--serif);margin:0 0 4px">We received your deposit</h2>
+    <p style="color:var(--text-secondary)" id="paid-review-detail"></p>
+  </div>
+
   <div id="confirming" class="sign-box no-print" style="display:none">
     <h2 style="font-family:var(--serif);margin-bottom:4px">Confirming your payment…</h2>
     <p style="color:var(--text-secondary)" id="confirming-detail">This usually takes a few seconds.</p>
@@ -146,7 +151,7 @@ function render() {
   if (c.mode === 'test') show('test-banner');
   el('doc').innerHTML = bundle.body_html;
   show('content');
-  show('booked', false); show('pay-box', false); show('sign-form-host', false); show('confirming', false);
+  show('booked', false); show('paid-review', false); show('pay-box', false); show('sign-form-host', false); show('confirming', false);
   // A signed copy has to say it is signed. This box prints with the agreement.
   const sig = bundle.signature;
   if (sig && sig.signed_at) {
@@ -156,8 +161,14 @@ function render() {
     show('signature-record', false);
   }
 
-  if (c.paid_at) {
-    el('booked-detail').textContent = 'Your agreement is signed and your ' + fmtMoney(c.deposit_cents / 100) + ' deposit is paid. We emailed you a copy, and this page stays available as your copy.';
+  if (c.paid_at && c.date_unconfirmed) {
+    /* The money moved, but the room or the booking changed while they were paying, so a person decides. Never "You're booked". */
+    const v = (bundle.venue && bundle.venue.name) || 'The venue';
+    const contact = venueContact();
+    el('paid-review-detail').textContent = 'Your ' + fmtMoney(c.deposit_cents / 100) + ' deposit went through, but your date is not confirmed yet, because something changed with the room or the booking while you were paying. ' + v + ' has been told and will contact you. You do not need to pay again.' + (contact ? ' Questions: ' + contact + '.' : '');
+    show('paid-review');
+  } else if (c.paid_at) {
+    el('booked-detail').textContent ='Your agreement is signed and your ' + fmtMoney(c.deposit_cents / 100) + ' deposit is paid. We emailed you a copy, and this page stays available as your copy.';
     show('booked');
   } else if (c.status === 'signed') {
     el('pay-detail').textContent = 'Your date is confirmed once the ' + fmtMoney(c.deposit_cents / 100) + ' deposit is paid. This link ends ' + endDate(c.expires_at) + '.';

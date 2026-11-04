@@ -981,7 +981,10 @@ async function loadContractPanel() {
   const lines = [];
   if (panel.mode === 'test') lines.push('<strong>Test mode:</strong> no real money moves.');
 
-  if (latest && latest.needs_person) {
+  // The deposit runs through the contract here, so a deposit invoice made by hand could charge the guest twice.
+  if (latest) el('invoice-btn').style.display = 'none';
+
+  if (latest && latest.needs_person && !['definite', 'completed'].includes(state.booking.status)) {
     lines.push(`<strong style="color:var(--red)">A deposit was paid but the booking could not be confirmed.</strong> Check the date, then confirm the booking or refund the guest in Stripe.`);
   }
   if (latest && !latest.paid_at && (latest.stale || []).length) {
