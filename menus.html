@@ -100,6 +100,9 @@
     .option-size .size-text { flex: 1 1 180px; min-width: 0; }
     .option-size .size-text input { flex: 1; min-width: 0; width: 100%; }
     .option-size .size-pieces input { width: 64px; }
+    /* SHOW_SIZE_PER_DISH_V1: the dish's own box for showing its size to guests. */
+    .option-size .size-show { cursor: pointer; }
+    .option-size .size-show input { width: auto; margin: 0; padding: 0; }
 
     .top-bar-pill { display: inline-flex; gap: 6px; align-items: center; background: var(--teal-bg); color: var(--teal-dark); padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; margin-left: 12px; }
     .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
@@ -333,8 +336,6 @@ function renderEditor(menuId) {
   document.querySelectorAll('.menu-pill').forEach(el => el.classList.toggle('active', el.dataset.id === menuId));
 
   const eventTypes = (m.applicable_event_types || []).join(', ');
-  /* SHOW_ITEM_SIZES_V1: shown only when the backend RETURNS the box, so an older backend can never silently drop a save. */
-  const __hasSizeBox = Object.prototype.hasOwnProperty.call(m, 'show_item_sizes');
   const editor = document.getElementById('menu-editor');
   editor.innerHTML = `
     <div class="toolbar">
@@ -362,10 +363,6 @@ function renderEditor(menuId) {
           <input type="checkbox" data-mf="is_active" ${m.is_active!==false?'checked':''} id="mf-active-${m.id}" />
           <label for="mf-active-${m.id}">Active (shown to guests)</label>
         </div>
-        ${__hasSizeBox ? `<div class="field" style="display:flex;flex-direction:row;align-items:center;gap:6px;">
-          <input type="checkbox" data-mf="show_item_sizes" ${m.show_item_sizes?'checked':''} id="mf-sizes-${m.id}" />
-          <label for="mf-sizes-${m.id}" title="Ticked: guests see each dish's size and, on a la carte menus, how many orders to get for one piece per guest. Unticked: guests see neither. The assistant can see sizes either way.">Show dish sizes to guests</label>
-        </div>` : ''}
       </div>
       <div class="field-row">
         <div class="field" style="grid-column:1/-1;">
@@ -380,7 +377,7 @@ function renderEditor(menuId) {
     </div>
 
     <div class="toolbar"><h2 style="margin:0;flex:1;font-size:18px;">Sections</h2><button class="btn btn-primary" data-act="new-section">+ Add section</button></div>
-    <div class="sub" style="font-size:13px;margin-top:-6px;">Size and pieces help the assistant answer "how big is it?" and "how many should we order?". Leave them blank if you are not sure.${__hasSizeBox ? ' Guests only see them when "Show dish sizes to guests" is ticked above.' : ''}</div>
+    <div class="sub" style="font-size:13px;margin-top:-6px;">Size and pieces help the assistant answer "how big is it?" and "how many should we order?". Leave them blank if you are not sure. Tick "Show to guests" on a dish if guests should see its size too. The assistant can see it either way.</div>
     <div id="sections-host"></div>
   `;
 
@@ -463,6 +460,8 @@ function renderOptionHtml(o) {
             <input data-of="serving_note" list="dish-size-suggestions" maxlength="60" placeholder="e.g. Small, Large, 4 pieces" value="${escAttr(o.serving_note||'')}" /></label>
           <label class="size-pieces" title="How many pieces come in one order, as a number. Leave blank if it does not come in pieces.">Pieces per order:
             <input data-of="pieces_per_order" type="number" min="1" max="500" step="1" value="${o.pieces_per_order == null ? '' : escAttr(o.pieces_per_order)}" /></label>
+          ${Object.prototype.hasOwnProperty.call(o, 'show_size_to_guests') ? `<label class="size-show" title="Ticked: guests see this dish's size and, on a la carte menus, how many orders to get for one piece per guest. Unticked: they see neither. The assistant can see the size either way.">
+            <input type="checkbox" data-of="show_size_to_guests" ${o.show_size_to_guests ? 'checked' : ''} /> Show to guests</label>` : ''}
         </div>` : '';
   return `
     <div class="option-row" data-id="${o.id}">
@@ -549,16 +548,6 @@ function commitField(el, kind, id, parentId) {
     } else {
       payload[fieldName] = value;
     }
-    /* SHOW_ITEM_SIZES_V1: Apps Script refuses a menu save without the menu's name, so this one box sends it. The other menu
-       boxes do not, on purpose for now: a working Active box could list the a la carte menu for every group guest. */
-    if (fieldName === 'show_item_sizes') {
-      const owner = findMenuById(id);
-      payload.name = owner ? owner.name : undefined;
-      apiPost('upsert_menu', { menu: payload })
-        .then(res => mergeMenu(res.menu))
-        .catch(() => { el.checked = !value; });
-      return;
-    }
     apiPost('upsert_menu', { menu: payload }).then(res => mergeMenu(res.menu));
   } else if (kind === 'sf') {
     const payload = { id: id, menu_catalog_id: parentId };
@@ -588,6 +577,7 @@ function commitField(el, kind, id, parentId) {
       .catch(() => {   // the next change tries again
         el.dataset.saveFailed = '1';
         if (cur && sameFieldValue(cur[fieldName], value)) cur[fieldName] = before;
+        if (el.type === 'checkbox') el.checked = !value;   // SHOW_SIZE_PER_DISH_V1: the box shows what is really saved
       });
   }
 }
