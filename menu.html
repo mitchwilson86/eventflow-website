@@ -576,6 +576,16 @@ function alcChips(o) {
     ...(o.allergen_tags || []).map(t => `<span class="diet-chip allergen">contains ${esc(tagLabel(t))}</span>`)
   ].join('');
 }
+/* SHOW_ITEM_SIZES_V1 (2026-11-04): get_menu_selection_context sends a dish's size and piece count only when the menu's
+   "Show dish sizes to guests" box is on, so there is no check here: nothing sent, nothing shown. Same wording rule as
+   ops-api dishSize: a note with its own number is used as written, a note with none gets the piece count added. */
+function dishSizeText(o) {
+  const note = String(o.serving_note || '').trim();
+  const n = Number(o.pieces_per_order);
+  const pieces = Number.isInteger(n) && n > 0 ? `${n} piece${n === 1 ? '' : 's'}` : '';
+  if (note && pieces && !/\d/.test(note)) return `${note}, ${pieces}`;
+  return note || pieces;
+}
 function alcSectionHtml(s, guests) {
   const knownGuests = Number(ctx.booking.guest_count) > 0;
   const sug = knownGuests ? suggestedQty(s, guests) : null;
@@ -588,7 +598,7 @@ function alcSectionHtml(s, guests) {
         <div class="alc-main">
           <div class="alc-name">
             <span>${esc(o.name)}</span>
-            ${o.serving_note ? `<span class="alc-serving">${esc(o.serving_note)}</span>` : ''}
+            ${dishSizeText(o) ? `<span class="alc-serving">${esc(dishSizeText(o))}</span>` : ''}
           </div>
         </div>
         <div class="alc-price">${o.price != null ? fmtMoney(o.price) : ''}</div>
@@ -692,11 +702,13 @@ function sectionHtml(s, style, guests) {
       ...(o.dietary_tags||[]).map(t => `<span class="diet-chip">${tagLabel(t)}</span>`),
       ...(o.allergen_tags||[]).map(t => `<span class="diet-chip allergen">contains ${tagLabel(t)}</span>`)
     ].join('');
+    const sizeLine = dishSizeText(o);   // SHOW_ITEM_SIZES_V1: blank unless this menu's box is on and the dish has a size
     if (s.all_included) {
       return `
         <div class="dish-option" style="cursor:default" data-id="${o.id}">
           <div class="dish-option-body">
             <div class="dish-option-title"><span>${esc(o.name)}</span></div>
+            ${sizeLine ? `<div class="dish-option-meta">${esc(sizeLine)}</div>` : ''}
             ${o.description ? `<div class="dish-option-meta">${esc(o.description)}</div>` : ''}
             <div class="dietary-chips">${tags}</div>
           </div>
@@ -707,6 +719,7 @@ function sectionHtml(s, style, guests) {
         <div class="pg-row" data-id="${o.id}">
           <div>
             <div class="pg-name">${esc(o.name)}</div>
+            ${sizeLine ? `<div class="pg-desc">${esc(sizeLine)}</div>` : ''}
             ${o.description ? `<div class="pg-desc">${esc(o.description)}</div>` : ''}
             <div class="dietary-chips">${tags}</div>
           </div>
@@ -719,6 +732,7 @@ function sectionHtml(s, style, guests) {
         <input type="checkbox" data-section="${s.id}" data-option="${o.id}" />
         <div class="dish-option-body">
           <div class="dish-option-title"><span>${esc(o.name)}</span></div>
+          ${sizeLine ? `<div class="dish-option-meta">${esc(sizeLine)}</div>` : ''}
           ${o.description ? `<div class="dish-option-meta">${esc(o.description)}</div>` : ''}
           <div class="dietary-chips">${tags}</div>
         </div>

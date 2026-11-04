@@ -89,6 +89,12 @@
     .tag-chip.allergen.selected { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
     .option-detail { display: flex; flex-direction: column; gap: 4px; }
     .option-upcharge { width: 80px; }
+    /* DISH_SIZE_BOXES_V1: how big a dish is, read by the assistant (and printed on the guest page for a la carte menus). */
+    .option-size { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
+    .option-size label { display: flex; align-items: center; gap: 4px; margin: 0; font-size: 10px; font-weight: 700; color: var(--text-secondary); white-space: nowrap; }
+    .option-size .size-text { flex: 1 1 180px; min-width: 0; }
+    .option-size .size-text input { flex: 1; min-width: 0; width: 100%; }
+    .option-size .size-pieces input { width: 64px; }
 
     .top-bar-pill { display: inline-flex; gap: 6px; align-items: center; background: var(--teal-bg); color: var(--teal-dark); padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; margin-left: 12px; }
     .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
@@ -206,6 +212,15 @@
   </div>
 </div>
 
+<!-- DISH_SIZE_BOXES_V1: suggestions for the Size box. The box also takes anything else the venue wants to type. -->
+<datalist id="dish-size-suggestions">
+  <option value="Small"></option>
+  <option value="Medium"></option>
+  <option value="Large"></option>
+  <option value="Individual portion"></option>
+  <option value="Shareable"></option>
+</datalist>
+
 <script>
 let currentDraft = null;
 let currentUploadId = null;
@@ -239,16 +254,12 @@ function setStatus(msg, kind) {
 
 function apiPost(action, body) {
   setStatus('Saving…');
-  const idToken = sessionStorage.getItem('ef_id_token');
-  return fetch(EF_SHELL.CONFIG.DATA_URL, {
-    method: 'POST',
-    body: JSON.stringify(Object.assign({}, body, {
-      action: action,
-      id_token: idToken,
-      client_slug: currentClient.slug
-    }))
-  })
-    .then(r => r.json())
+  /* DISH_SIZE_BOXES_V1: through the shared EF_SHELL.api, which sends the page's sign-in pass (SESSION_KEEPALIVE_V1).
+     Sending the Google token directly was refused once it ran out after an hour, even for someone still working. */
+  return EF_SHELL.api(Object.assign({}, body, {
+    action: action,
+    client_slug: currentClient.slug
+  }))
     .then(data => {
       if (data.error) {
         setStatus('Error: ' + data.error, 'error');
@@ -256,6 +267,10 @@ function apiPost(action, body) {
       }
       setStatus('Saved ✓', 'saved');
       return data;
+    })
+    .catch(err => {
+      setStatus('Error: ' + err.message, 'error');
+      throw err;
     });
 }
 
@@ -311,6 +326,8 @@ function renderEditor(menuId) {
   document.querySelectorAll('.menu-pill').forEach(el => el.classList.toggle('active', el.dataset.id === menuId));
 
   const eventTypes = (m.applicable_event_types || []).join(', ');
+  /* SHOW_ITEM_SIZES_V1: shown only when the backend RETURNS the box, so an older backend can never silently drop a save. */
+  const __hasSizeBox = Object.prototype.hasOwnProperty.call(m, 'show_item_sizes');
   const editor = document.getElementById('menu-editor');
   editor.innerHTML = `
     <div class="toolbar">
@@ -338,6 +355,10 @@ function renderEditor(menuId) {
           <input type="checkbox" data-mf="is_active" ${m.is_active!==false?'checked':''} id="mf-active-${m.id}" />
           <label for="mf-active-${m.id}">Active (shown to guests)</label>
         </div>
+        ${__hasSizeBox ? `<div class="field" style="display:flex;flex-direction:row;align-items:center;gap:6px;">
+          <input type="checkbox" data-mf="show_item_sizes" ${m.show_item_sizes?'checked':''} id="mf-sizes-${m.id}" />
+          <label for="mf-sizes-${m.id}" title="Ticked: guests see each dish's size and, on a la carte menus, how many orders to get for one piece per guest. Unticked: guests see neither. The assistant can see sizes either way.">Show dish sizes to guests</label>
+        </div>` : ''}
       </div>
       <div class="field-row">
         <div class="field" style="grid-column:1/-1;">
@@ -352,6 +373,7 @@ function renderEditor(menuId) {
     </div>
 
     <div class="toolbar"><h2 style="margin:0;flex:1;font-size:18px;">Sections</h2><button class="btn btn-primary" data-act="new-section">+ Add section</button></div>
+    <div class="sub" style="font-size:13px;margin-top:-6px;">Size and pieces help the assistant answer "how big is it?" and "how many should we order?". Leave them blank if you are not sure.${__hasSizeBox ? ' Guests only see them when "Show dish sizes to guests" is ticked above.' : ''}</div>
     <div id="sections-host"></div>
   `;
 
@@ -424,12 +446,23 @@ function renderOptionHtml(o) {
     const sel = (o.allergen_tags || []).indexOf(t) !== -1;
     return `<span class="tag-chip allergen ${sel?'selected':''}" data-tag="${t}" data-kind="allergen">${tagLabel(t)}</span>`;
   }).join('');
+  /* DISH_SIZE_BOXES_V1 (2026-11-04, Mitchell: "there is no where to put the size of the items for the knowledge base. like
+     small sized, medium sized, large sized, #of pieces"). The two columns and the save have existed since
+     ALACARTE_ADMIN_PRICE_V1; only these boxes were missing. Like the price box, shown only when the backend RETURNS the
+     field, so an older backend can never silently drop a save. */
+  const __sizeBoxes = Object.prototype.hasOwnProperty.call(o, 'serving_note') ? `
+        <div class="option-size">
+          <label class="size-text" title="What one order is. Pick a suggestion or type your own, such as 4 pieces or Large, serves 4.">Size:
+            <input data-of="serving_note" list="dish-size-suggestions" maxlength="60" placeholder="e.g. Small, Large, 4 pieces" value="${escAttr(o.serving_note||'')}" /></label>
+          <label class="size-pieces" title="How many pieces come in one order, as a number. Leave blank if it does not come in pieces.">Pieces per order:
+            <input data-of="pieces_per_order" type="number" min="1" max="500" step="1" value="${o.pieces_per_order == null ? '' : escAttr(o.pieces_per_order)}" /></label>
+        </div>` : '';
   return `
     <div class="option-row" data-id="${o.id}">
       <span class="drag option-drag">⋮⋮</span>
       <input data-of="name" value="${escAttr(o.name||'')}" placeholder="Dish name" />
       <div class="option-detail">
-        <textarea data-of="description" rows="1" placeholder="Description (optional)">${escHtml(o.description||'')}</textarea>
+        <textarea data-of="description" rows="1" placeholder="Description (optional)">${escHtml(o.description||'')}</textarea>${__sizeBoxes}
         <div class="option-tags">
           <strong style="font-size:10px;color:var(--text-secondary);align-self:center;">Diet:</strong>${dietary}
         </div>
@@ -509,16 +542,63 @@ function commitField(el, kind, id, parentId) {
     } else {
       payload[fieldName] = value;
     }
+    /* SHOW_ITEM_SIZES_V1: Apps Script refuses a menu save without the menu's name, so this one box sends it. The other menu
+       boxes do not, on purpose for now: a working Active box could list the a la carte menu for every group guest. */
+    if (fieldName === 'show_item_sizes') {
+      const owner = findMenuById(id);
+      payload.name = owner ? owner.name : undefined;
+      apiPost('upsert_menu', { menu: payload })
+        .then(res => mergeMenu(res.menu))
+        .catch(() => { el.checked = !value; });
+      return;
+    }
     apiPost('upsert_menu', { menu: payload }).then(res => mergeMenu(res.menu));
   } else if (kind === 'sf') {
     const payload = { id: id, menu_catalog_id: parentId };
     payload[fieldName] = value;
     apiPost('upsert_section', { section: payload }).then(res => mergeSection(parentId, res.section));
   } else if (kind === 'of') {
-    const payload = { id: id, section_id: parentId };
+    /* DISH_SIZE_BOXES_V1: (1) Apps Script handleUpsertOption refuses any save without the dish name ("option.name required"),
+       so a one-box save always carries it. (2) Moving through a box without changing it saves nothing. (3) The list is not
+       redrawn after a save, so the cursor stays in the next box while someone fills in many dishes. */
+    const cur = findOption(parentId, id);
+    if (cur && sameFieldValue(cur[fieldName], value)) {
+      if (el.dataset.saveFailed) { delete el.dataset.saveFailed; setStatus(''); }   // put back to what is saved: nothing is wrong any more
+      return;
+    }
+    const before = cur ? cur[fieldName] : undefined;
+    if (cur) cur[fieldName] = value;
+    const payload = { id: id, section_id: parentId, name: cur ? cur.name : undefined };
     payload[fieldName] = value;
-    apiPost('upsert_option', { option: payload }).then(res => mergeOption(parentId, res.option));
+    apiPost('upsert_option', { option: payload })
+      .then(res => {
+        delete el.dataset.saveFailed;
+        const saved = res.option;
+        if (!cur || !saved || !sameFieldValue(cur[fieldName], value)) return;   // a newer edit of this box is on its way
+        cur[fieldName] = saved[fieldName];
+        if (fieldName === 'pieces_per_order' && document.activeElement !== el) el.value = saved[fieldName] == null ? '' : saved[fieldName];
+      })
+      .catch(() => {   // the next change tries again
+        el.dataset.saveFailed = '1';
+        if (cur && sameFieldValue(cur[fieldName], value)) cur[fieldName] = before;
+      });
   }
+}
+
+function findOption(sectionId, optionId) {
+  for (const m of currentMenus) {
+    const s = (m.sections || []).find(x => x.id === sectionId);
+    if (s) return (s.options || []).find(o => o.id === optionId) || null;
+  }
+  return null;
+}
+
+// A saved price can come back as "18.00" and a blank box as null or '': those are not changes.
+function sameFieldValue(a, b) {
+  const blank = v => v === null || v === undefined || v === '';
+  if (blank(a) || blank(b)) return blank(a) && blank(b);
+  if (typeof a === 'number' || typeof b === 'number') return Number(a) === Number(b);
+  return String(a) === String(b);
 }
 
 /* === Local state helpers — splice server responses into currentMenus === */
@@ -597,8 +677,12 @@ function removeOptionLocal(optionId) {
 function saveOptionTags(optId, sectionId, row) {
   const dietary = [...row.querySelectorAll('.tag-chip.dietary.selected')].map(c => c.dataset.tag);
   const allergens = [...row.querySelectorAll('.tag-chip.allergen.selected')].map(c => c.dataset.tag);
-  apiPost('upsert_option', { option: { id: optId, section_id: sectionId, dietary_tags: dietary, allergen_tags: allergens } })
-    .then(res => mergeOption(sectionId, res.option));
+  /* DISH_SIZE_BOXES_V1: carries the dish name (see commitField), and redraws only if the save failed, to put the chip back. */
+  const cur = findOption(sectionId, optId);
+  const before = cur ? { dietary_tags: cur.dietary_tags, allergen_tags: cur.allergen_tags } : null;
+  if (cur) { cur.dietary_tags = dietary; cur.allergen_tags = allergens; }
+  apiPost('upsert_option', { option: { id: optId, section_id: sectionId, name: cur ? cur.name : undefined, dietary_tags: dietary, allergen_tags: allergens } })
+    .catch(() => { if (cur) { Object.assign(cur, before); mergeOption(sectionId, cur); } });
 }
 
 function createMenu() {
