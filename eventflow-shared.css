@@ -453,6 +453,9 @@ thead th.sorted .sort-arrow { opacity: 1; color: var(--orange); }
 .btn.danger { background: var(--red); color: #fff; border-color: var(--red); }
 .btn.danger:hover { background: #dc2626; border-color: #dc2626; }
 .btn.ghost { background: transparent; }
+/* An outline-only danger button: .btn.danger's white text would vanish on .btn.ghost's clear background until hover. */
+.btn.danger.ghost { color: #b91c1c; }
+.btn.danger.ghost:hover { color: #fff; }
 .btn.sm { padding: 4px 10px; font-size: 13px; }
 .btn[disabled] { opacity: .5; cursor: not-allowed; }
 
