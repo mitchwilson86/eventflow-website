@@ -223,8 +223,11 @@
               <div style="margin-top:16px;display:flex;flex-direction:column;gap:8px">
                 <button class="btn primary" onclick="saveBooking()">Save</button>
                 <a class="btn ghost" id="beo-link" href="#" style="display:none" target="_blank">View BEO (PDF)</a>
+                <div id="contract-box" style="display:none;font-size:13px;line-height:1.45;color:var(--text-secondary)"></div>
                 <a class="btn ghost" id="contract-link" href="#" style="display:none" target="_blank">View Contract</a>
-                <button class="btn ghost" id="send-contract-btn" style="display:none" onclick="sendContract()">Send for Signature</button>
+                <a class="btn ghost" id="contract-review-link" href="#" style="display:none" target="_blank">Review and Approve</a>
+                <button class="btn ghost" id="contract-copy-btn" style="display:none" onclick="copyContractLink()">Copy Signing Link</button>
+                <button class="btn ghost" id="prepare-contract-btn" style="display:none" onclick="prepareContract()">Prepare Contract</button>
                 <button class="btn ghost" id="invoice-btn" style="display:none" onclick="createInvoice()">Create Deposit Invoice</button>
                 <button class="btn danger ghost" id="delete-btn" style="display:none" onclick="deleteBooking()">Delete</button>
               </div>
@@ -941,17 +944,120 @@ function renderActions() {
   const hasId = !!state.booking.id;
   document.getElementById('delete-btn').style.display = hasId ? '' : 'none';
   document.getElementById('invoice-btn').style.display = hasId ? '' : 'none';
-  document.getElementById('send-contract-btn').style.display = hasId ? '' : 'none';
 
   const beo = document.getElementById('beo-link');
-  const contract = document.getElementById('contract-link');
   if (hasId) {
     beo.href = `/beo?id=${state.booking.id}`;
-    contract.href = `/contract?id=${state.booking.id}`;
-    beo.style.display = ''; contract.style.display = '';
+    beo.style.display = '';
   } else {
-    beo.style.display = 'none'; contract.style.display = 'none';
+    beo.style.display = 'none';
   }
+  loadContractPanel();
+}
+
+/* CONTRACT_DEPOSIT_V1 (2026-11-03). The old "Send for Signature" button and its built-in wording are gone. Contract
+   controls show only for a venue switched on for contracts and not on Tripleseat. The database decides that: anything
+   else (Sunda, Detroit, an error, the database step not applied yet) leaves every control hidden. */
+let contractPanel = null;
+async function loadContractPanel() {
+  const ids = ['contract-box', 'contract-link', 'contract-review-link', 'contract-copy-btn', 'prepare-contract-btn'];
+  const el = (id) => document.getElementById(id);
+  ids.forEach((id) => { el(id).style.display = 'none'; });
+  contractPanel = null;
+  if (!state.booking.id) return;
+  let panel = null;
+  try {
+    const s = await getSupabase();
+    const { data, error } = await s.rpc('contract_panel', { p_booking: state.booking.id });
+    if (!error) panel = data;
+  } catch (e) { panel = null; }
+  if (!panel || !panel.mode) return;
+  contractPanel = panel;
+
+  const list = panel.contracts || [];
+  const latest = list.find((c) => c.status !== 'voided') || null;
+  const when = (t) => t ? new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+  const money = (c) => fmtMoney((c || 0) / 100);
+  const lines = [];
+  if (panel.mode === 'test') lines.push('<strong>Test mode:</strong> no real money moves.');
+
+  if (latest && latest.needs_person) {
+    lines.push(`<strong style="color:var(--red)">A deposit was paid but the booking could not be confirmed.</strong> Check the date, then confirm the booking or refund the guest in Stripe.`);
+  }
+  if (latest && !latest.paid_at && (latest.stale || []).length) {
+    const words = { date: 'date', time: 'time', room: 'room', guest_email: 'guest email', guest_count: 'guest count', total: 'charges' };
+    const what = latest.stale.map((x) => words[x] || x).join(', ');
+    lines.push(latest.status === 'signed'
+      ? `<strong style="color:var(--red)">The booking changed after the guest signed (${esc(what)}).</strong> The signed version no longer matches, so please talk to the guest.`
+      : `<strong style="color:var(--red)">The booking changed after this version was made (${esc(what)}).</strong> Press Rebuild Contract so the guest gets the right version.`);
+  }
+  if (!latest) {
+    const last = list[0];
+    if (last && last.voided_reason === 'expired') lines.push('The last signing link ran out with no payment.');
+    if (last && last.voided_reason === 'booking_changed') lines.push('The last signing link ended because the booking was changed by hand.');
+    if (!panel.template) {
+      lines.push('This venue has no approved contract wording yet.');
+    } else if (!panel.stripe_ready) {
+      lines.push(`Connect Stripe before sending a contract: <a href="/contract-setup?venue=${encodeURIComponent(panel.venue_slug || '')}">set it up</a>.`);
+    } else {
+      el('prepare-contract-btn').textContent = 'Prepare Contract';
+      el('prepare-contract-btn').style.display = '';
+    }
+  } else if (latest.status === 'draft') {
+    lines.push(`Contract version ${latest.version} is waiting for approval. Deposit ${money(latest.deposit_cents)} of ${money(latest.total_cents)}.`);
+    el('contract-review-link').href = `/contract-review?token=${encodeURIComponent(latest.review_token)}`;
+    el('contract-review-link').style.display = '';
+    el('prepare-contract-btn').textContent = 'Rebuild Contract';
+    el('prepare-contract-btn').style.display = '';
+  } else if (latest.status === 'sent') {
+    lines.push(`Sent ${when(latest.sent_at)}. Opened ${latest.opens || 0} time${latest.opens === 1 ? '' : 's'}. The link ends ${when(latest.expires_at)}. Not signed yet.`);
+    el('contract-copy-btn').style.display = '';
+    el('prepare-contract-btn').textContent = 'Rebuild Contract';
+    el('prepare-contract-btn').style.display = '';
+    el('contract-link').style.display = '';
+  } else if (latest.status === 'signed' && !latest.paid_at) {
+    lines.push(`Signed ${when(latest.signed_at)}. Waiting on the ${money(latest.deposit_cents)} deposit. The link ends ${when(latest.expires_at)}.`);
+    el('contract-copy-btn').style.display = '';
+    el('contract-link').style.display = '';
+  } else if (latest.paid_at) {
+    lines.push(`Signed ${when(latest.signed_at)}. Deposit of ${money(latest.deposit_cents)} paid ${when(latest.paid_at)}.`);
+    el('contract-link').style.display = '';
+  }
+  el('contract-link').href = `/contract?id=${state.booking.id}`;
+  el('contract-box').innerHTML = lines.join('<br>');
+  el('contract-box').style.display = lines.length ? '' : 'none';
+}
+
+async function copyContractLink() {
+  const latest = contractPanel && (contractPanel.contracts || []).find((c) => c.status !== 'voided');
+  if (!latest || !latest.access_token) return;
+  const url = `${window.location.origin}/sign?token=${latest.access_token}`;
+  try { await navigator.clipboard.writeText(url); toast('Signing link copied', 'success'); }
+  catch (e) { prompt('Copy signing link:', url); }
+}
+
+async function prepareContract() {
+  if (!state.booking.id) return;
+  const latest = contractPanel && (contractPanel.contracts || []).find((c) => c.status !== 'voided');
+  if (latest && !confirm('This builds a new version from the booking as saved. Any earlier link stops working. Continue?')) return;
+  const s = await getSupabase();
+  const { data, error } = await s.rpc('contract_prepare_manual', { p_booking: state.booking.id });
+  if (error) return toast('Could not prepare the contract: ' + error.message, 'error');
+  if (data && data.error) {
+    const reasons = {
+      no_line_items: 'Add the food and other charges to this booking first.',
+      no_guest_email: 'This booking has no contact email.',
+      guest_blocked: 'This guest is on a do-not-email list or was flagged, so a person should handle them.',
+      no_approved_template: 'This venue has no approved contract wording yet.',
+      blank_not_filled: 'The contract is missing: ' + ((data.blanks || []).join(', ')) + '.',
+      already_signed: 'This booking already has a signed contract.',
+      checkout_open: 'The guest has a payment page open. Try again in a few minutes.',
+      booking_status: 'A contract can only be prepared for a lead or tentative booking.'
+    };
+    return toast(reasons[data.error] || ('Could not prepare the contract: ' + data.error), 'error');
+  }
+  toast('Contract ready for approval', 'success');
+  loadContractPanel();
 }
 
 function renderInvoices() {
@@ -1212,26 +1318,6 @@ async function addPayment() {
   toast('Payment recorded', 'success');
 }
 
-/* ═══ Send contract ════════════════════════════════════════════ */
-async function sendContract() {
-  if (!state.booking.id) return;
-  const sb = await getSupabase();
-  const token = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '').slice(0, 16);
-  const { data, error } = await sb.from('contracts').insert({
-    booking_id: state.booking.id,
-    status: 'sent',
-    access_token: token,
-    sent_at: new Date().toISOString(),
-    version: (state.contracts[0]?.version || 0) + 1
-  }).select('*').single();
-  if (error) return toast('Contract create failed: ' + error.message, 'error');
-  state.contracts.unshift(data);
-  const url = `${window.location.origin}/sign?token=${token}`;
-  await navigator.clipboard.writeText(url).catch(() => {});
-  toast('Signing link copied to clipboard', 'success');
-  // Open preview for review
-  window.open(`/contract?id=${state.booking.id}`, '_blank');
-}
 </script>
 </body>
 </html>

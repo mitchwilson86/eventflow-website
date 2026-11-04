@@ -287,3 +287,24 @@
   font-size: 13px; line-height: 1.5;
 }
 .sign-accept input[type=checkbox] { margin-top: 4px; width: 18px; height: 18px; }
+/* CONTRACT_DEPOSIT_V1: the locked contract copy, and the banners and review facts around it. */
+.sign-test-banner { background: #FEF3C7; color: #78350F; border: 1px solid #FCD34D; border-radius: var(--radius); padding: 10px 14px; font-size: 13px; font-weight: 600; margin-top: 16px; }
+.doc-page.contract-body { max-width: 100%; margin-top: 16px; overflow-wrap: anywhere; }
+.contract-body .num { text-align: right; white-space: nowrap; }
+.contract-body .line-note { color: var(--text-secondary); font-size: 12px; }
+.contract-body table.facts td:first-child { width: 35%; font-weight: 600; }
+.contract-body table.totals { max-width: 360px; margin-left: auto; }
+.contract-body table.totals tr.grand td { font-weight: 700; }
+.contract-body .sample-note { background: #FEF3C7; color: #78350F; padding: 8px 12px; border-radius: 6px; font-size: 13px; }
+.review-facts { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 14px; }
+.review-facts th { text-align: left; font-weight: 600; color: var(--text-secondary); width: 90px; padding: 5px 8px 5px 0; vertical-align: top; }
+.review-facts td { padding: 5px 0; overflow-wrap: anywhere; }
+.review-note { border-radius: 6px; padding: 8px 12px; font-size: 13px; margin-top: 8px; }
+.review-good { background: #DCFCE7; color: #14532D; }
+.review-warn { background: #FEF3C7; color: #78350F; }
+.review-bad { background: #FEE2E2; color: #7F1D1D; }
+@media (max-width: 560px) {
+  .sign-wrap { margin: 16px auto; padding: 12px; }
+  .doc-page.contract-body { padding: 20px 16px; }
+  .contract-body th, .contract-body td { padding: 6px; font-size: 12px; }
+}

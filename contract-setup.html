@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contract Setup</title>
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="/favicon.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/eventflow-shared.css" />
+  <link rel="stylesheet" href="/bookings.css" />
+  <script src="/bookings-shared.js"></script>
+</head>
+<body style="background:#E2E8F0">
+<div class="sign-wrap">
+  <div id="login" class="sign-box" style="display:none">
+    <h2 style="font-family:var(--serif);margin-bottom:12px">Contract Setup</h2>
+    <button class="btn primary" style="width:100%;justify-content:center" onclick="signInWithGoogle()">Continue with Google</button>
+  </div>
+  <div id="loader" style="text-align:center;padding:40px">Loading…</div>
+  <div id="test-banner" class="sign-test-banner" style="display:none">Test mode. This is a demonstration and no real money moves.</div>
+  <div id="panel" class="sign-box" style="display:none">
+    <h2 style="font-family:var(--serif);margin-bottom:12px" id="venue-name"></h2>
+    <div id="off" style="display:none;color:var(--text-secondary);font-size:14px">Contracts and deposits are not switched on for this venue.</div>
+    <div id="on" style="display:none">
+      <h3 style="font-size:15px;margin-bottom:4px">Taking deposits</h3>
+      <p id="stripe-state" style="font-size:14px;color:var(--text-secondary);margin-bottom:8px"></p>
+      <button class="btn primary" id="connect-btn" style="display:none" onclick="connect()">Connect Stripe</button>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:8px">Deposits go straight to this venue's own Stripe account. EventFlow takes no cut and never holds the money. Stripe's card fee comes out of each deposit and is not returned on a refund.</p>
+      <h3 style="font-size:15px;margin:16px 0 4px">Contract wording</h3>
+      <p id="template-state" style="font-size:14px;color:var(--text-secondary)"></p>
+    </div>
+    <div id="msg" style="margin-top:12px;font-size:13px;color:var(--red)"></div>
+  </div>
+</div>
+<script>
+/* CONTRACT_DEPOSIT_V1 (2026-11-03). Signed-in members of the venue only, and the server checks that. */
+const params = new URLSearchParams(window.location.search);
+const el = (id) => document.getElementById(id);
+const show = (id, on) => { el(id).style.display = on === false ? 'none' : 'block'; };
+let venue = null, session = null;
+
+window.addEventListener('load', boot);
+
+async function boot() {
+  try {
+    await bootstrapSupabaseFromGSI();
+    const sb = await getSupabase();
+    session = (await sb.auth.getSession()).data.session;
+    show('loader', false);
+    if (!session) return show('login');
+    const { activeVenue } = await loadUserVenues();
+    venue = activeVenue;
+    if (!venue) { show('panel'); el('msg').textContent = 'This sign-in is not linked to a venue.'; return; }
+    if (params.get('connected') === '1' || params.get('refresh') === '1') await callConnect({ refresh: true });
+    await render();
+  } catch (e) {
+    show('loader', false); show('panel');
+    el('msg').textContent = 'We could not load this page. Please try again in a minute.';
+  }
+}
+
+async function render() {
+  const sb = await getSupabase();
+  const { data, error } = await sb.rpc('contract_setup_status', { p_venue: venue.id });
+  show('panel');
+  el('venue-name').textContent = venue.name;
+  if (error || !data || data.error || !data.mode) { show('off'); show('on', false); return; }
+  show('on');
+  if (data.mode === 'test') show('test-banner');
+  const s = data.stripe;
+  let text, button = '';
+  if (s.disconnected) { text = 'Stripe was disconnected, so guests cannot pay right now.'; button = 'Connect Stripe again'; }
+  else if (!s.connected) { text = 'Not connected yet. Stripe will ask for the business details and the bank account.'; button = 'Connect Stripe'; }
+  else if (!s.charges_enabled) { text = 'Stripe still needs some details before this account can take payments.'; button = 'Finish on Stripe'; }
+  else { text = 'Connected and able to take payments.' + (s.payouts_enabled ? '' : ' Stripe still needs details before it can pay out to the bank.'); button = s.payouts_enabled ? '' : 'Finish on Stripe'; }
+  el('stripe-state').textContent = text;
+  el('connect-btn').textContent = button;
+  el('connect-btn').style.display = button ? '' : 'none';
+  el('template-state').textContent = data.template ? ('Approved: ' + data.template.name + ', version ' + data.template.version + '.') : 'No approved wording yet. EventFlow sets this up with you from your own contract.';
+}
+
+async function callConnect(extra) {
+  const r = await fetch(SUPABASE_URL + '/functions/v1/stripe-connect', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+    body: JSON.stringify(Object.assign({ venue_id: venue.id }, extra || {}))
+  });
+  return r.json().catch(() => ({}));
+}
+
+async function connect() {
+  const btn = el('connect-btn');
+  btn.disabled = true;
+  el('msg').textContent = '';
+  try {
+    const d = await callConnect();
+    if (d.url && /^https:\/\/connect\.stripe\.com\//.test(d.url)) { window.location.assign(d.url); return; }
+    el('msg').textContent = 'Stripe could not start that. ' + (d.error || '');
+  } catch (e) {
+    el('msg').textContent = 'That did not go through. Please try again.';
+  }
+  btn.disabled = false;
+}
+</script>
+</body>
+</html>

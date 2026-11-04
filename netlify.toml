@@ -142,6 +142,16 @@
   status = 200
 
 [[redirects]]
+  from = "/contract-review"
+  to = "/contract-review.html"
+  status = 200
+
+[[redirects]]
+  from = "/contract-setup"
+  to = "/contract-setup.html"
+  status = 200
+
+[[redirects]]
   from = "/onboarding"
   to = "/dashboard.html"
   status = 301

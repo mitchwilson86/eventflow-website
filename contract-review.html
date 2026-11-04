@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Review Contract</title>
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="/favicon.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/eventflow-shared.css" />
+  <link rel="stylesheet" href="/bookings.css" />
+  <script src="/bookings-shared.js"></script>
+</head>
+<body style="background:#E2E8F0">
+<div class="sign-wrap">
+  <div id="loader" style="text-align:center;padding:40px">Loading the contract…</div>
+  <div id="error" class="sign-box" style="display:none">
+    <h2 style="font-family:var(--serif);margin-bottom:8px">This link can't open the contract</h2>
+    <p id="error-msg" style="color:var(--text-secondary)"></p>
+  </div>
+  <div id="test-banner" class="sign-test-banner" style="display:none">Test mode. This is a demonstration and no real money moves.</div>
+
+  <div id="panel" class="sign-box" style="display:none">
+    <h2 style="font-family:var(--serif);margin-bottom:4px" id="title"></h2>
+    <p style="color:var(--text-secondary);font-size:14px;margin-bottom:12px" id="subtitle"></p>
+    <table class="review-facts" id="facts"></table>
+    <div id="notices"></div>
+    <div id="actions" style="display:none;margin-top:16px">
+      <button class="btn primary" id="approve-btn" style="width:100%;justify-content:center" onclick="approve()">Approve and send to the guest</button>
+      <a class="btn ghost" id="change-link" style="width:100%;justify-content:center;margin-top:8px" href="#">Change it first</a>
+      <p style="color:var(--text-muted);font-size:12px;margin-top:8px">Change opens the booking. Edit it and press Rebuild Contract. That makes a new version and this link stops working.</p>
+    </div>
+    <div id="result" style="margin-top:12px;font-size:14px"></div>
+  </div>
+
+  <div class="doc-page contract-body" id="doc" style="display:none"></div>
+</div>
+
+<script>
+/* CONTRACT_DEPOSIT_V1 (2026-11-03). Opening this page changes nothing, so an email link scanner cannot approve a contract.
+   Only pressing the button does, and the database re-checks the date, the guest and the venue when it is pressed. */
+const raw = new URLSearchParams(window.location.search).get('token') || '';
+const run = raw.match(/[0-9a-f]{16,}/i);
+const token = run ? run[0] : '';
+const el = (id) => document.getElementById(id);
+const show = (id, on) => { el(id).style.display = on === false ? 'none' : 'block'; };
+let bundle = null;
+
+window.addEventListener('load', load);
+
+function fail(msg) { show('loader', false); show('panel', false); show('doc', false); show('error'); el('error-msg').textContent = msg; }
+
+async function load() {
+  if (!token) return fail('This link is missing its code. Please use the link from your email.');
+  try {
+    const sb = await getSupabase();
+    const { data, error } = await sb.rpc('contract_review_get', { p_token: token });
+    if (error || !data) return fail('We could not load this page. Please try again in a minute.');
+    if (data.error) return fail(data.error === 'not_found' ? 'We could not find a contract for this link.' : 'This link is not valid. Please use the link from your email.');
+    bundle = data;
+    render();
+  } catch (e) { fail('We could not load this page. Please try again in a minute.'); }
+}
+
+function render() {
+  const d = bundle, c = d.contract, f = d.facts || {};
+  show('loader', false);
+  if (c.mode === 'test') show('test-banner');
+  el('title').textContent = f.guest_name + ': ' + f.event_name;
+  el('subtitle').textContent = 'Contract version ' + c.version;
+  const rows = [
+    ['Guest', f.guest_name + (f.guest_company ? ', ' + f.guest_company : '') + ' (' + f.guest_email + ')'],
+    ['Date', f.event_date + ', ' + f.event_start + ' to ' + f.event_end],
+    ['Room', f.space_name],
+    ['Guests', f.guest_count],
+    ['Total', fmtMoney(c.total_cents / 100)],
+    ['Deposit', fmtMoney(c.deposit_cents / 100) + ' (' + f.deposit_pct + ')']
+  ];
+  el('facts').innerHTML = rows.map((r) => '<tr><th>' + esc(r[0]) + '</th><td>' + esc(r[1]) + '</td></tr>').join('');
+  el('doc').innerHTML = d.body_html;
+  show('doc');
+  show('panel');
+
+  const notes = [];
+  const hard = (d.conflicts && d.conflicts.hard) || [];
+  const maybe = (d.conflicts && d.conflicts.maybe) || [];
+  if (c.status === 'draft') {
+    if (hard.length) notes.push(['bad', 'This room is taken that night: ' + hard.map((h) => h.name).join(', ') + '. It cannot be approved until that changes.']);
+    else notes.push(['good', 'The room is free that night.']);
+    if (maybe.length) notes.push(['warn', 'Also on the calendar that night, with no room listed: ' + maybe.map((h) => h.name).join(', ') + '.']);
+    if (d.guest_blocked) notes.push(['bad', 'This guest should not get an automated link (' + d.guest_blocked.replace(/_/g, ' ') + '). A person should handle them.']);
+    if (!d.stripe_ready) notes.push(['bad', 'Stripe is not connected and ready, so the guest could not pay. Connect it first.']);
+    if (!d.enabled) notes.push(['bad', 'Contracts are switched off for this venue.']);
+    const words = { date: 'the date', time: 'the time', room: 'the room', guest_email: 'the guest\'s email', guest_count: 'the guest count', total: 'the charges' };
+    if ((d.stale || []).length) notes.push(['bad', 'The booking changed after this version was filled in (' + d.stale.map((x) => words[x] || x).join(', ') + '). Use "Change it first", then press Rebuild Contract, so the guest gets the right version.']);
+  }
+  el('notices').innerHTML = notes.map((n) => '<div class="review-note review-' + n[0] + '">' + esc(n[1]) + '</div>').join('');
+
+  const canApprove = c.status === 'draft';
+  show('actions', canApprove);
+  if (canApprove) {
+    el('approve-btn').disabled = hard.length > 0 || !!d.guest_blocked || !d.stripe_ready || !d.enabled || (d.stale || []).length > 0;
+    el('change-link').href = '/booking?id=' + encodeURIComponent(d.booking_id);
+  }
+  const status = {
+    sent: 'Approved and sent to the guest. The link ends ' + when(c.expires_at) + '.',
+    signed: 'The guest signed. Waiting on the deposit.',
+    voided: c.voided_reason === 'expired' ? 'The signing link ran out with no payment, and the date is open again.' : 'This version was replaced and its link no longer works.'
+  }[c.status];
+  el('result').textContent = c.paid_at ? 'Signed and paid. The booking is Definite.' : (status || '');
+}
+function when(t) { return t ? new Date(t).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : ''; }
+
+async function approve() {
+  const btn = el('approve-btn');
+  btn.disabled = true; btn.textContent = 'Sending…';
+  const reasons = {
+    date_taken: 'That room was just taken for this night, so nothing was sent.',
+    guest_blocked: 'This guest should not get an automated link, so nothing was sent.',
+    stripe_not_ready: 'Stripe is not connected and ready, so nothing was sent.',
+    not_enabled: 'Contracts are switched off for this venue, so nothing was sent.',
+    voided: 'This version was replaced, so nothing was sent.',
+    booking_status: 'This booking has changed, so nothing was sent.',
+    booking_changed: 'The booking changed after this version was filled in, so nothing was sent. Rebuild the contract first.',
+    event_passed: 'This event date has passed, so nothing was sent.'
+  };
+  try {
+    const sb = await getSupabase();
+    const { data, error } = await sb.rpc('contract_approve', { p_token: token });
+    if (error) throw new Error('approve');
+    if (data && data.error) {
+      el('result').textContent = reasons[data.error] || 'Nothing was sent: ' + data.error;
+      btn.textContent = 'Approve and send to the guest';
+      return;
+    }
+    await load();
+    el('result').textContent = 'Approved. The guest will get their link within about 15 minutes.';
+  } catch (e) {
+    el('result').textContent = 'That did not go through, and nothing was sent. Please try again.';
+    btn.disabled = false; btn.textContent = 'Approve and send to the guest';
+  }
+}
+</script>
+</body>
+</html>
