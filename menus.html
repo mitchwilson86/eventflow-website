@@ -61,6 +61,11 @@
     .save-indicator { font-size: 12px; color: var(--text-secondary); margin-left: 8px; }
     .save-indicator.saved { color: #047857; }
     .save-indicator.error { color: #b91c1c; }
+    /* SAVE_STATUS_VISIBLE_V1 (2026-11-04, Mitchell: "i dont see a save button"): this page saves by itself and its message sat in a
+       top bar that scrolls away, so saves and errors could not be seen while working on dishes. It now stays in view. */
+    .save-indicator:not(:empty) { position: fixed; right: 20px; bottom: 20px; z-index: 90; margin: 0; padding: 10px 14px; max-width: calc(100vw - 40px); background: var(--bg-card, #fff); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 16px rgba(15,23,42,.15); font-size: 14px; font-weight: 600; }
+    .save-indicator.saved:not(:empty) { background: #ecfdf5; border-color: #a7f3d0; }
+    .save-indicator.error:not(:empty) { background: #fef2f2; border-color: #fecaca; }
 
     .section-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; }
     .section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
@@ -245,11 +250,13 @@ window.addEventListener('load', function () {
   EF_SHELL.boot({ onClient: onClientReady });
 });
 
+let saveStatusTimer = null;
 function setStatus(msg, kind) {
   const el = document.getElementById('save-status');
+  clearTimeout(saveStatusTimer);   // SAVE_STATUS_VISIBLE_V1: an older timer can no longer clear a newer message early
   el.textContent = msg;
   el.className = 'save-indicator' + (kind ? (' ' + kind) : '');
-  if (kind === 'saved') setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 1500);
+  if (kind === 'saved') saveStatusTimer = setTimeout(() => { el.textContent = ''; }, 2500);
 }
 
 function apiPost(action, body) {
