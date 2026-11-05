@@ -86,6 +86,7 @@
               <option value="definite">Definite</option>
               <option value="completed">Completed</option>
               <option value="cancelled">Cancelled</option>
+              <option value="turned_down">Turned Down</option>
             </select>
           </div>
           <div class="cal-toolbar-group" style="margin-left:auto">
@@ -112,6 +113,7 @@
           <span class="cal-legend-item"><span class="cal-legend-swatch" style="background:#22C55E"></span>Definite</span>
           <span class="cal-legend-item"><span class="cal-legend-swatch" style="background:#15616D"></span>Completed</span>
           <span class="cal-legend-item"><span class="cal-legend-swatch" style="background:#EF4444"></span>Cancelled</span>
+          <span class="cal-legend-item"><span class="cal-legend-swatch" style="background:#475569"></span>Turned Down (hidden; pick it under Status to see them)</span>
           <span class="cal-legend-item"><span class="cal-legend-swatch cal-legend-ext"></span>Dashed border = Tripleseat (read-only)</span>
           <span class="cal-legend-item" id="cal-sync-note" style="margin-left:auto;color:var(--text-muted)"></span>
         </div>
@@ -277,6 +279,8 @@ function applyFilters() {
 
 function filteredBookings() {
   return state.bookings.filter(b => {
+    // TURNED_DOWN_V1: off the calendar and the list, unless someone asks to see them (that is how one gets undone)
+    if (b.status === 'turned_down' && state.filters.status !== 'turned_down') return false;
     if (state.filters.space_id && b.space_id !== state.filters.space_id) return false;
     if (state.filters.status && b.status !== state.filters.status) return false;
     return true;

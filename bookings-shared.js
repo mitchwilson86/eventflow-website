@@ -11,7 +11,8 @@ const STATUS_COLORS = {
   tentative:  { bg: '#EAB308', fg: '#1E293B', label: 'Tentative' },
   definite:   { bg: '#22C55E', fg: '#ffffff', label: 'Definite' },
   completed:  { bg: '#15616D', fg: '#ffffff', label: 'Completed' },
-  cancelled:  { bg: '#EF4444', fg: '#ffffff', label: 'Cancelled' }
+  cancelled:  { bg: '#EF4444', fg: '#ffffff', label: 'Cancelled' },
+  turned_down: { bg: '#475569', fg: '#ffffff', label: 'Turned Down' }
 };
 
 const BEO_CATEGORIES = [

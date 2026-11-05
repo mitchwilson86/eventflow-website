@@ -58,6 +58,7 @@
 
       <div class="dash-body">
         <div id="conflict-host"></div>
+        <div id="turned-down-host"></div>
 
         <!-- Status pipeline -->
         <div class="panel" style="padding:12px 16px">
@@ -243,6 +244,21 @@
         </div>
 
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="td-modal" id="td-modal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="td-title">
+  <div class="td-box">
+    <h3 id="td-title">Turn down this booking?</h3>
+    <div class="td-body" id="td-body"></div>
+    <div class="form-field" id="td-reason-field">
+      <label for="td-reason">Reason (required, one line)</label>
+      <input type="text" id="td-reason" maxlength="300" autocomplete="off" placeholder="e.g. That date went to a buyout" />
+    </div>
+    <div class="td-actions">
+      <button class="btn ghost" onclick="closeTurnDown()">Keep it as it is</button>
+      <button class="btn danger" id="td-confirm" onclick="confirmTurnDown()">Turn down</button>
     </div>
   </div>
 </div>
@@ -451,6 +467,7 @@ async function toggleOnRequestMenus() {
 function renderAll() {
   renderOnRequestBtn();
   renderStatusPipeline();
+  renderTurnedDown();
   renderForm();
   renderBeoItems();
   renderTotals();
@@ -461,6 +478,7 @@ function renderAll() {
 
 function renderStatusPipeline() {
   const steps = ['lead', 'tentative', 'definite', 'completed', 'cancelled'];
+  if (state.booking.id) steps.push('turned_down');   // a new booking has to be saved first: the database refuses one that starts this way
   const host = document.getElementById('status-pipeline');
   host.innerHTML = steps.map(s => `
     <div class="status-step ${state.booking.status === s ? 'active' : ''}"
@@ -804,6 +822,7 @@ function renderAiDraftNotes(data) {
 async function sendMenuLink() {
   if (!state.booking || !state.booking.id) { toast('Save the booking first, then send the menu link.', 'error'); return; }
   if (!state.contact || !state.contact.email) { toast('This booking has no contact email, so there is nobody to send the menu to.', 'error'); return; }
+  if (state.booking.status === 'turned_down') { toast('This booking is Turned Down, so EventFlow is not emailing this guest. Pick another status first.', 'error'); return; }
   const btn = document.getElementById('menu-link-btn');
   const old = btn.textContent;
   btn.disabled = true; btn.textContent = 'Creating link…';
@@ -834,7 +853,7 @@ async function sendMenuLink() {
       not_entitled_autopilot: 'This venue’s plan does not include the automatic menu builder.',
       human_handling: 'Someone on the team has personally taken over this guest, so automated emails to them are paused. Remove them from the human-handling list to re-enable it.',
       booking_not_found: 'That booking could not be found for this venue.',
-      booking_not_selectable: 'This booking is no longer in a state where a guest can choose a menu (it is cancelled, completed or already definite). Set it back to lead or tentative first.',
+      booking_not_selectable: 'This booking is no longer in a state where a guest can choose a menu (it is turned down, cancelled, completed or already definite). Set it back to lead or tentative first.',
       menu_already_submitted: 'This guest has already submitted their menu selections.',
       venue_not_registered: 'This venue is not set up in the registry yet.',
       venue_not_provisioned: 'This venue is missing its Supabase setup. Ask Mitchell to provision it.',
@@ -1092,15 +1111,180 @@ function renderInvoices() {
 
 /* ═══ Status change ════════════════════════════════════════════ */
 async function changeStatus(status) {
+  const prev = state.booking.status;
+  if (status === prev) return;
+  if (status === 'turned_down') return openTurnDown();
+  if (prev === 'turned_down' && !confirm(turnDownUndoQuestion(status))) return;
   state.booking.status = status;
   renderStatusPipeline();
   if (state.booking.id) {
     const sb = await getSupabase();
     const { error } = await sb.from('bookings').update({ status }).eq('id', state.booking.id);
-    if (error) { toast('Status update failed: ' + error.message, 'error'); return; }
+    if (error) {
+      state.booking.status = prev;   // the pill goes back: the page never shows a status the database refused
+      renderStatusPipeline();
+      toast('Status update failed: ' + turnDownMessage(error.message), 'error');
+      return;
+    }
     toast('Status updated to ' + STATUS_COLORS[status].label, 'success');
   }
+  if (prev === 'turned_down') {
+    state.booking.turned_down_reason = null;
+    renderTurnedDown();
+  }
   checkConflicts();
+}
+
+/* ═══ Turned Down ══════════════════════════════════════════════ */
+/* TURNED_DOWN_V1 (2026-11-04). Mitchell: "we need a status option on eventflows bookings page of turned down. that way the system will stop
+   messaging the guest in regards to their booking as well as take the event off the calendar."
+   The status change itself does the work, in the database (patches/sunda/turned_down/_02_core.sql): the guest goes on the do-not-email list,
+   the Events card closes, the pipeline row goes Lost, and a hold EventFlow placed is flagged for removal. Nothing here sends anything.
+   The question and the note both read booking_turn_down_info, so what is shown is what the database does. If that read fails, the question
+   stays closed rather than guessing. */
+let turnDownInfo = null;
+function turnDownMessage(msg) { return String(msg || '').replace(/^turned_down_[a-z]+:\s*/, ''); }
+async function loadTurnDownInfo() {
+  const s = await getSupabase();
+  const { data, error } = await s.rpc('booking_turn_down_info', { p_booking: state.booking.id });
+  if (error) throw new Error(error.message);
+  if (!data || data.error) throw new Error((data && data.error) || 'no answer');
+  return data;
+}
+function turnDownList(items) { return items.map((x) => `<strong>${esc(x)}</strong>`).join(', '); }
+function turnDownDay(d) { return d ? fmtDateShort(String(d).slice(0, 10)) : ''; }
+// Tripleseat events of this guest other than the holds EventFlow placed, which have their own line.
+function turnDownOtherRows(info, holds) {
+  const ours = holds.map((h) => String(h.ts_event_id));
+  return (info.tripleseat_rows || []).filter((r) => ours.indexOf(String(r.ts_event_id)) === -1)
+    .map((r) => `<strong>${esc(r.summary || 'an event')}</strong> on ${esc(turnDownDay(r.day))} (${esc(r.status)})`).join(', ');
+}
+const TURN_DOWN_BLOCKED = {
+  paid_deposit: 'A deposit has been paid on this booking, so a person needs to handle it. It cannot be turned down here.',
+  open_payment: 'The guest has a payment page open right now. Try again once it has closed.',
+  signed_contract: 'The guest has signed a contract on this booking, so a person needs to handle it. It cannot be turned down here.'
+};
+
+async function openTurnDown() {
+  if (!state.booking.id) return;
+  const body = document.getElementById('td-body'), btn = document.getElementById('td-confirm');
+  const field = document.getElementById('td-reason-field'), reason = document.getElementById('td-reason');
+  reason.value = '';
+  btn.disabled = true;
+  field.style.display = 'none';
+  body.innerHTML = '<p>Checking what this would stop…</p>';
+  document.getElementById('td-modal').style.display = 'flex';
+  let info;
+  try { info = await loadTurnDownInfo(); }
+  catch (e) { body.innerHTML = '<p class="td-warn">Could not check this booking, so nothing has changed. Please reload and try again.</p>'; return; }
+  if (info.blocker) {
+    body.innerHTML = `<p class="td-warn">${esc(TURN_DOWN_BLOCKED[info.blocker] || 'This booking cannot be turned down here.')}</p>`;
+    return;
+  }
+  const w = info.would || {}, lines = [];
+  const addrs = w.addresses || [], skipped = w.skipped || [], listed = w.already_listed || [], holds = w.holds || [];
+  if (addrs.length && !w.has_registry) {
+    lines.push('This venue has no do-not-email list yet, so only the booking itself changes.');
+  } else if (addrs.length) {
+    lines.push(`EventFlow stops emailing ${turnDownList(addrs)}, marketing included, until you pick another status.`);
+    lines.push('If they write back, it goes to your events manager and the assistant stays silent.');
+    if (listed.length) lines.push(`Already on the do-not-email list, and stays there if you undo this: ${turnDownList(listed)}.`);
+  } else {
+    lines.push('There is no guest email on this booking, so there is nobody to stop.');
+  }
+  if (skipped.length) lines.push(`Left off the list because it is a staff or test address: ${turnDownList(skipped)}.`);
+  lines.push('It leaves the Bookings calendar, and the guest’s menu link stops working.');
+  for (const h of holds) lines.push(`The Tripleseat hold on ${esc(turnDownDay(h.event_date))} comes off within the hour, with no email to the guest. A removed hold does not come back.`);
+  const others = turnDownOtherRows(info, holds);
+  if (others.length) lines.push(`Tripleseat also shows ${others}. EventFlow does not change those, so change them in Tripleseat if they should go.`);
+  if (info.on_tripleseat) lines.push('Someone still turns the lead down in Tripleseat. EventFlow cannot do that part.');
+  for (const o of (info.other_bookings || [])) lines.push(`This guest also has <strong>${esc(o.event_name)}</strong> on ${esc(turnDownDay(o.event_date))} (${esc((STATUS_COLORS[o.status] || {}).label || o.status)}). That booking stays as it is, but the stop covers this guest for everything.`);
+  lines.push('Picking another status later undoes all of this, except a hold that was already removed.');
+  body.innerHTML = lines.map((l) => `<p>${l}</p>`).join('');
+  field.style.display = '';
+  btn.disabled = false;
+  reason.focus();
+}
+function closeTurnDown() { document.getElementById('td-modal').style.display = 'none'; }
+document.addEventListener('keydown', (e) => {
+  if (document.getElementById('td-modal').style.display === 'none') return;
+  if (e.key === 'Escape') closeTurnDown();
+  if (e.key === 'Enter' && e.target && e.target.id === 'td-reason') { e.preventDefault(); confirmTurnDown(); }
+});
+
+async function confirmTurnDown() {
+  const btn = document.getElementById('td-confirm'), input = document.getElementById('td-reason');
+  if (btn.disabled) return;
+  const reason = input.value.replace(/\s+/g, ' ').trim();
+  if (!reason) { toast('Please give a one-line reason.', 'error'); input.focus(); return; }
+  btn.disabled = true;
+  try {
+    const sb = await getSupabase();
+    const { data, error } = await sb.from('bookings').update({ status: 'turned_down', turned_down_reason: reason }).eq('id', state.booking.id).select('status, turned_down_reason');
+    if (error) throw new Error(turnDownMessage(error.message));
+    if (!data || data.length !== 1) throw new Error('This booking could not be changed from this sign-in.');
+    state.booking.status = data[0].status;
+    state.booking.turned_down_reason = data[0].turned_down_reason;
+    closeTurnDown();
+    renderStatusPipeline();
+    await renderTurnedDown();
+    toast('Turned down. EventFlow has stopped emailing this guest.', 'success');
+    checkConflicts();
+  } catch (e) {
+    btn.disabled = false;
+    toast(/not turned down/.test(e.message) ? e.message : 'It was not turned down: ' + e.message, 'error');
+  }
+}
+
+async function renderTurnedDown() {
+  const host = document.getElementById('turned-down-host');
+  turnDownInfo = null;
+  if (!state.booking || !state.booking.id || state.booking.status !== 'turned_down') { host.innerHTML = ''; return; }
+  host.innerHTML = `<div class="td-banner"><p><strong>Turned Down.</strong> ${esc(state.booking.turned_down_reason || '')}</p></div>`;
+  let info;
+  try { info = await loadTurnDownInfo(); }
+  catch (e) { return; }
+  if (state.booking.status !== 'turned_down') return;
+  turnDownInfo = info;
+  const o = info.open;
+  if (!o) return;
+  const lines = [];
+  const when = new Date(o.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  lines.push(`<strong>Turned Down</strong> on ${esc(when)} by ${esc(o.by)}. Reason: ${esc(o.reason)}`);
+  const stopped = o.stopped || [];
+  if (stopped.length && !(info.would || {}).has_registry) lines.push('This venue has no do-not-email list yet, so only the booking itself changed.');
+  else lines.push(stopped.length ? `EventFlow is not emailing ${turnDownList(stopped)}. If they write back, it goes to your events manager.` : 'There is no guest email on this booking, so there was nobody to stop.');
+  if ((o.skipped || []).length) lines.push(`Left off the list because it is a staff or test address: ${turnDownList(o.skipped)}.`);
+  const fresh = ((info.would || {}).addresses || []).filter((a) => stopped.indexOf(a) === -1);
+  if (fresh.length) lines.push(`<span class="td-warn">New on this conversation since then, and not stopped: ${esc(fresh.join(', '))}.</span> To stop them too, pick Lead and then Turned Down again.`);
+  lines.push('It is off the Bookings calendar, and the guest’s menu link is off.');
+  const HOLD_AGE_LATE = 3 * 3600000;
+  for (const h of (o.holds || [])) {
+    const day = esc(turnDownDay(h.event_date));
+    if (h.status === 'released') lines.push(`The Tripleseat hold on ${day} was removed. It can take up to 4 hours to leave the calendar here.`);
+    else if (h.status === 'confirmed') lines.push(`The Tripleseat hold on ${day} is Definite in Tripleseat, so it was left alone.`);
+    else if (h.status === 'cancelled') lines.push(`The Tripleseat hold on ${day} was already gone from Tripleseat.`);
+    else if (h.release_requested_at && Date.now() - new Date(h.release_requested_at).getTime() > HOLD_AGE_LATE) lines.push(`<span class="td-warn">The Tripleseat hold on ${day} has not come off yet.</span> Please delete it in Tripleseat.`);
+    else lines.push(`The Tripleseat hold on ${day} comes off within the hour.`);
+  }
+  const others = turnDownOtherRows(info, o.holds || []);
+  if (others.length) lines.push(`Tripleseat also shows ${others}. EventFlow does not change those, so change them in Tripleseat if they should go. The calendar here copies Tripleseat every 4 hours.`);
+  if (info.on_tripleseat) lines.push('Someone still turns the lead down in Tripleseat. EventFlow cannot do that part.');
+  lines.push('Picking another status undoes this.');
+  host.innerHTML = `<div class="td-banner">${lines.map((l) => `<p>${l}</p>`).join('')}</div>`;
+}
+
+function turnDownUndoQuestion(status) {
+  const o = turnDownInfo && turnDownInfo.open;
+  const parts = ['Move this booking to ' + STATUS_COLORS[status].label + '?', ''];
+  if (o) {
+    const added = o.added || [], kept = (o.stopped || []).filter((a) => added.indexOf(a) === -1);
+    if (added.length) parts.push('EventFlow can email ' + added.join(', ') + ' again.');
+    if (kept.length) parts.push(kept.join(', ') + ' stays on the do-not-email list, because they were already on it.');
+  }
+  parts.push('The booking goes back on the calendar and the menu link works again.');
+  if (o && (o.holds || []).some((h) => h.status === 'released')) parts.push('The Tripleseat hold that was already removed does not come back.');
+  return parts.join('\n');
 }
 
 /* ═══ Conflict detection ═══════════════════════════════════════ */
@@ -1253,7 +1437,7 @@ async function deleteBooking() {
   if (!confirm('Delete this booking? This removes BEO items, contracts, invoices, and payments too. Cannot be undone.')) return;
   const sb = await getSupabase();
   const { error } = await sb.from('bookings').delete().eq('id', state.booking.id);
-  if (error) return toast('Delete failed: ' + error.message, 'error');
+  if (error) return toast('Delete failed: ' + turnDownMessage(error.message), 'error');
   toast('Deleted', 'success');
   setTimeout(() => location.href = '/bookings', 600);
 }
