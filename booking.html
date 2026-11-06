@@ -1424,6 +1424,7 @@ async function saveBooking() {
 
     toast('Saved', 'success');
     document.getElementById('page-title').textContent = b.event_name;
+    renderStatusPipeline();   // TURNED_DOWN_V1: a booking saved for the first time now offers Turned Down without a reload
     renderActions();
   } catch (err) {
     console.error(err);
