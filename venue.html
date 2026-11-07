@@ -89,6 +89,7 @@
     .vb-badge.shared { background: var(--bg-input); color: var(--text-secondary); }
     .vb-badge.buyout { background: rgba(0,21,36,.08); color: var(--dark-navy); }
     .vb-badge.off { background: rgba(147,40,44,.1); color: #93282c; } /* SPACE_OFFERED_V1 */
+    .vb-badge.rank { background: rgba(46,125,50,.1); color: #2e7d32; } /* SPACE_LADDER_V1 */
     .vb-space.is-off .vb-space-info { opacity: .62; }
     .vb-space-meta { font-size: 12.5px; color: var(--text-secondary); margin-top: 5px; line-height: 1.6; }
     .vb-space-actions { display: flex; gap: 8px; flex-shrink: 0; }
@@ -152,6 +153,7 @@
           <button class="vb-tab active" data-tab="facts" onclick="switchTab('facts')">Venue Facts</button>
           <button class="vb-tab" data-tab="spaces" onclick="switchTab('spaces')">Spaces</button>
           <button class="vb-tab" data-tab="ai" onclick="switchTab('ai')">AI Settings</button>
+          <button class="vb-tab" data-tab="sell" id="tab-sell" style="display:none;" onclick="switchTab('sell')">How we sell</button><!-- HOW_WE_SELL_V1 -->
           <button class="vb-tab" data-tab="kb" onclick="switchTab('kb')">Knowledge</button>
         </div>
 
@@ -399,6 +401,12 @@
               <label class="vf-check"><input type="checkbox" id="sp_offered" /> Offer this space to guests</label>
               <span class="hint">Untick to take a space off the table for now, for example the patio in winter. The assistant stops recommending it, quoting it and sending its photos until you tick it again. Nothing else about the space changes.</span>
             </div>
+            <!-- SPACE_LADDER_V1: hidden until the backend says it keeps the offer order (caps_space_offer_order) -->
+            <div class="vf-field" id="spOfferRankField" style="display:none;">
+              <label for="sp_offer_rank">Offer order</label>
+              <input type="number" id="sp_offer_rank" min="1" max="20" step="1" />
+              <span class="hint">1 = offered first; blank = not in the order. The assistant offers the numbered spaces one at a time, skipping any that are booked on the guest's date, too small for the group, or already turned down.</span>
+            </div>
             <div class="vf-field">
               <label>&nbsp;</label>
               <label class="vf-check"><input type="checkbox" id="sp_is_private" /> Fully private</label>
@@ -429,7 +437,7 @@
               <label for="brand_voice">Brand voice line</label>
               <input type="text" id="brand_voice" maxlength="200" placeholder="One sentence describing the personality" />
             </div>
-            <div class="vf-grid2">
+            <div class="vf-grid2" id="aiSignatureNameRow"><!-- HOW_WE_SELL_V1: hidden once the How we sell tab takes over -->
               <div class="vf-field">
                 <label for="sender_name">Signature name</label>
                 <input type="text" id="sender_name" maxlength="40" placeholder="e.g. Flow" />
@@ -459,10 +467,10 @@
                 <input type="number" id="escalation_threshold" min="1" max="500" step="1" />
                 <span class="hint">Groups this size or larger always go to your events manager.</span>
               </div>
-              <div class="vf-field">
-                <label for="small_group_threshold">Small-group threshold</label>
-                <input type="number" id="small_group_threshold" min="0" max="100" step="1" />
-                <span class="hint">At or below this size the assistant treats it as a regular reservation.</span>
+              <div class="vf-field" id="obField" style="display:none;"><!-- ONLINE_BOOKING_MAX_V1: shown only when the backend returns online_booking -->
+                <label for="online_booking_max">Largest party that can book online</label>
+                <input type="number" id="online_booking_max" min="1" max="12" step="1" oninput="obHint()" />
+                <span class="hint" id="obHintText"></span>
               </div>
             </div>
             <div class="vf-grid2">
@@ -498,6 +506,75 @@
 
           <div class="vb-actions">
             <button class="btn-primary" id="saveAiBtn" onclick="saveAiSettings()">Save AI settings</button>
+          </div>
+        </div>
+
+        <!-- ================= TAB: HOW WE SELL (HOW_WE_SELL_V1) ================= -->
+        <!-- Shown only when the backend advertises caps.how_we_sell (an older backend never sees this tab). -->
+        <div class="vb-panel" id="panel-sell">
+          <div class="panel">
+            <h3>Your assistant's name and title</h3>
+            <div class="vf-grid2">
+              <div class="vf-field">
+                <label for="hws_name">Name</label>
+                <input type="text" id="hws_name" maxlength="40" placeholder="e.g. Flow" oninput="hwsDirty()" />
+              </div>
+              <div class="vf-field">
+                <label for="hws_role">Title</label>
+                <input type="text" id="hws_role" maxlength="60" placeholder="e.g. Junior Sales Manager" oninput="hwsDirty()" />
+              </div>
+            </div>
+            <span class="hint" style="display:block;font-size:12px;color:var(--text-muted);">These sign every email the assistant sends: replies, hand-offs, check-ins and hold reminders, for example <strong id="hws_sig_example">Flow | Junior Sales Manager</strong>. A new name shows in <strong>new conversations only</strong>: a guest already talking to the assistant keeps seeing the name it started with.</span>
+            <div id="hws_earlier" class="hint" style="display:none;margin-top:8px;font-size:12px;color:var(--text-muted);"></div>
+          </div>
+
+          <div class="panel">
+            <h3>Asking about budget</h3>
+            <div id="hws_budget_opts"></div>
+          </div>
+
+          <div class="panel">
+            <h3>When the food and beverage minimum appears</h3>
+            <div id="hws_min_opts"></div>
+          </div>
+
+          <div class="panel">
+            <h3>Topics that always go to your events manager <span class="vb-h-hint">the assistant hands these to your events manager instead of answering</span></h3>
+            <div class="vf-field">
+              <label>You can switch these off</label>
+              <div id="hws_topics"></div>
+              <span class="hint">Unticked = the assistant answers it from your knowledge and venue facts.</span>
+            </div>
+            <div class="vf-field">
+              <label>Your own topics <span class="hint" style="display:inline;">(up to 10, for example "live music" or "a specific server")</span></label>
+              <div id="hws_extra"></div>
+              <button class="vb-mini-btn" id="hws_extra_add" onclick="hwsAddExtra('')">+ Add a topic</button>
+            </div>
+            <details>
+              <summary style="cursor:pointer;font-size:13px;color:var(--text-secondary);">Always handed off, cannot be switched off (<span id="hws_locked_count"></span>)</summary>
+              <div class="vf-fixed" style="margin-top:8px;"><ul id="hws_locked"></ul></div>
+            </details>
+          </div>
+
+          <div class="panel">
+            <h3>Try it before you save</h3>
+            <p style="font-size:13px;color:var(--text-secondary);margin:0 0 12px;">See how the assistant would have answered three real recent guest emails with the settings above, next to what was actually sent. It takes about 1 to 2 minutes and nothing is sent to anyone. <span id="hws_preview_left"></span></p>
+            <div class="vb-actions">
+              <button class="btn-secondary" id="hwsPreviewBtn" onclick="hwsPreview()">See how the assistant would answer</button>
+              <button class="btn-primary" id="hwsSaveBtn" onclick="hwsSave()">Save</button>
+              <span id="hws_dirty" style="display:none;font-size:12px;color:var(--burnt);">Not saved yet</span>
+            </div>
+            <div id="hws_preview_status" style="display:none;margin-top:12px;font-size:13px;color:var(--text-secondary);"></div>
+            <div id="hws_preview" style="margin-top:12px;"></div>
+          </div>
+
+          <div class="panel">
+            <details>
+              <summary style="cursor:pointer; user-select:none;">
+                <h3 style="display:inline; margin:0;">History <span class="vb-h-hint">every save is kept (the last 20); one click puts an earlier version back</span></h3>
+              </summary>
+              <div id="hws_versions" style="margin-top:8px;"></div>
+            </details>
           </div>
         </div>
 
@@ -733,6 +810,7 @@
       card.className = 'vb-space' + (isOff ? ' is-off' : '');
       var badges = '';
       if (isOff) badges += '<span class="vb-badge off">Off for now</span>';
+      if (Number(sp.offer_rank) > 0) badges += '<span class="vb-badge rank">Offered #' + Number(sp.offer_rank) + '</span>'; // SPACE_LADDER_V1
       if (Array.isArray(sp.combo_of) && sp.combo_of.length) badges += '<span class="vb-badge combo">Combination</span>';
       if (sp.buyout) badges += '<span class="vb-badge buyout">Buyout</span>';
       badges += sp.is_private === false ? '<span class="vb-badge shared">Semi-private</span>' : '<span class="vb-badge private">Private</span>';
@@ -831,6 +909,10 @@
     // SPACE_OFFERED_V1: shown only when the backend keeps the switch; a new space starts switched on.
     document.getElementById('spOfferedField').style.display = (PROFILE.caps && PROFILE.caps.space_offered) ? '' : 'none';
     document.getElementById('sp_offered').checked = !(sp && sp.offered === false);
+    // SPACE_LADDER_V1: the offer order, shown only when the backend keeps it and never for a combination (a combination
+    // has no place in the order); a new space starts outside the order.
+    document.getElementById('spOfferRankField').style.display = (PROFILE.caps && PROFILE.caps.space_offer_order && !isCombo) ? '' : 'none';
+    document.getElementById('sp_offer_rank').value = (sp && Number(sp.offer_rank) > 0) ? String(Number(sp.offer_rank)) : '';
     document.getElementById('photoRows').innerHTML = '';
     (sp && sp.photos || []).forEach(function (p) { addPhotoRow(p.url || p, p.caption || ''); });
     document.getElementById('comboPickerWrap').style.display = isCombo ? 'block' : 'none';
@@ -892,6 +974,18 @@
       return;
     }
     if (offOk) space.offered = document.getElementById('sp_offered').checked;
+    // SPACE_LADDER_V1: same rule for the offer order. It is sent only to a backend that keeps it ('' takes the space out of
+    // the order), and a space with a place in the order (or Tripleseat room ids, which EventFlow sets and the page never
+    // sends) is never saved through a backend that would drop them.
+    var rankOk = !!(PROFILE.caps && PROFILE.caps.space_offer_order);
+    if (!rankOk && editingSp && ((editingSp.offer_rank != null && String(editingSp.offer_rank) !== '') || (Array.isArray(editingSp.ts_room_ids) && editingSp.ts_room_ids.length))) { /* LADDER_PAGE_GUARD */
+      showMsg('This space has a place in the offer order, and this page cannot save that setting yet. Nothing was changed. Please contact EventFlow.', 'err');
+      return;
+    }
+    if (rankOk) {
+      var rankEl = document.getElementById('sp_offer_rank');
+      space.offer_rank = document.getElementById('spOfferRankField').style.display === 'none' ? '' : String(rankEl.value == null ? '' : rankEl.value).trim();
+    }
     var btn = document.getElementById('saveSpaceBtn');
     btn.disabled = true; btn.textContent = 'Saving…';
     api({ action: 'save_space', space: space, original_name: editingOriginalName || '' }).then(function (res) {
@@ -945,9 +1039,182 @@
     }).catch(function () { showMsg('Delete failed. Please try again.', 'err'); });
   }
 
+  /* ---------- HOW_WE_SELL_V1: the "How we sell" tab (Cohost plan item 2) ----------
+     Shown only when get_venue_profile says caps.how_we_sell. Then the AI Settings "Signature name / role" boxes are hidden
+     and left out of that save (this tab is their only writer, because it keeps the name history). */
+  var HWS = { on: false, state: null, dirty: false, busy: false };
+
+  function hwsLoad() {
+    if (!(PROFILE.caps && PROFILE.caps.how_we_sell)) return;
+    api({ action: 'get_how_we_sell' }).then(function (res) {
+      if (!res || res.success !== true || res.capability !== 'how_we_sell_v1') return; /* an older backend: the tab stays hidden */
+      HWS.on = true;
+      var row = document.getElementById('aiSignatureNameRow');
+      if (row) row.style.display = 'none';
+      document.getElementById('tab-sell').style.display = '';
+      hwsRender(res);
+      if (new URLSearchParams(location.search).get('tab') === 'sell') switchTab('sell');
+    }).catch(function () { /* the tab stays hidden */ });
+  }
+
+  function hwsRender(st) {
+    HWS.state = st;
+    var s = st.settings || {};
+    document.getElementById('hws_name').value = s.sender_name || '';
+    document.getElementById('hws_role').value = s.sender_role || '';
+    var earlier = (st.earlier_names || []).map(function (e) { return esc([e.name, e.role].filter(Boolean).join(', ')); });
+    var ed = document.getElementById('hws_earlier');
+    ed.style.display = earlier.length ? '' : 'none';
+    ed.innerHTML = earlier.length ? 'Earlier names (conversations that began with them keep them): ' + earlier.join('; ') : '';
+    var radios = function (id, name, opts, cur) {
+      document.getElementById(id).innerHTML = Object.keys(opts).map(function (k) {
+        return '<label class="vf-check" style="display:flex;margin-right:0;"><input type="radio" name="' + name + '" value="' + esc(k) + '"' + (k === (cur || '') ? ' checked' : '') + ' onchange="hwsDirty()" /> ' + esc(opts[k]) + (k === '' ? ' <span class="kb-badge" style="margin-left:6px;">today</span>' : '') + '</label>';
+      }).join('');
+    };
+    radios('hws_budget_opts', 'hws_budget', st.budget_options || {}, s.budget_question);
+    radios('hws_min_opts', 'hws_min', st.minimum_options || {}, s.first_reply_minimum);
+    var off = s.handoff_topics_off || [];
+    document.getElementById('hws_topics').innerHTML = (st.topics || []).map(function (tp) {
+      var lockBuyout = tp.key === 'buyout_pricing' && !st.buyout_minimums_known && off.indexOf('buyout_pricing') === -1;
+      return '<label class="vf-check" style="display:flex;margin-right:0;' + (lockBuyout ? 'opacity:.7;' : '') + '"><input type="checkbox" data-topic="' + esc(tp.key) + '"' + (off.indexOf(tp.key) === -1 ? ' checked' : '') + (lockBuyout ? ' disabled' : '') + ' onchange="hwsDirty()" /> ' + esc(tp.label)
+        + (tp.hint ? '<span class="hint" style="margin-left:8px;">' + esc(tp.hint) + '</span>' : '') + '</label>';
+    }).join('');
+    document.getElementById('hws_extra').innerHTML = '';
+    (s.handoff_topics_extra || []).forEach(function (x) { hwsAddExtra(x, true); });
+    hwsExtraButton();
+    var locked = st.locked_topics || [];
+    document.getElementById('hws_locked').innerHTML = locked.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('');
+    document.getElementById('hws_locked_count').textContent = String(locked.length);
+    hwsPreviewLeft(st.preview || {});
+    document.getElementById('hws_versions').innerHTML = (st.versions || []).map(function (v) {
+      var when = new Date(v.saved_at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+      return '<div class="kb-version-row"><span style="min-width:110px;">' + esc(when) + '</span><span style="flex:1;min-width:0;">' + esc(v.note || '') + ' <span class="hint" style="display:inline;">' + esc(v.saved_by || '') + '</span></span>'
+        + '<button class="vb-mini-btn" onclick="hwsRestore(\'' + esc(v.id) + '\')">Put this back</button></div>';
+    }).join('') || '<span class="hint">No changes saved yet. Your first save keeps today\'s settings here too, so it can be undone.</span>';
+    hwsSigExample();
+    HWS.dirty = false;
+    document.getElementById('hws_dirty').style.display = 'none';
+  }
+
+  function hwsPreviewLeft(p) {
+    document.getElementById('hws_preview_left').textContent = p.admin_unlimited ? '(No daily limit for EventFlow staff.)'
+      : ('You can run ' + p.remaining + ' more ' + (p.remaining === 1 ? 'preview' : 'previews') + ' today (' + p.limit + ' a day).');
+    document.getElementById('hwsPreviewBtn').disabled = !p.admin_unlimited && !(p.remaining > 0);
+  }
+
+  function hwsSigExample() {
+    var n = (document.getElementById('hws_name').value || '').trim() || 'Name';
+    var r = (document.getElementById('hws_role').value || '').trim();
+    document.getElementById('hws_sig_example').textContent = [n, r, document.getElementById('venue-name').textContent || ''].filter(Boolean).join(' | ');
+  }
+
+  function hwsDirty() {
+    HWS.dirty = true;
+    document.getElementById('hws_dirty').style.display = '';
+    hwsSigExample();
+  }
+
+  function hwsAddExtra(val, quiet) {
+    var box = document.getElementById('hws_extra');
+    if (box.children.length >= 10) return;
+    var row = document.createElement('div');
+    row.className = 'vb-photo-row';
+    row.style.gridTemplateColumns = '1fr auto';
+    row.innerHTML = '<input type="text" maxlength="60" placeholder="e.g. live music" oninput="hwsDirty()" /><button class="vb-mini-btn danger" type="button">Remove</button>';
+    row.querySelector('input').value = val || '';
+    row.querySelector('button').onclick = function () { row.remove(); hwsExtraButton(); hwsDirty(); };
+    box.appendChild(row);
+    hwsExtraButton();
+    if (!quiet) { hwsDirty(); row.querySelector('input').focus(); }
+  }
+
+  function hwsExtraButton() {
+    document.getElementById('hws_extra_add').style.display = document.getElementById('hws_extra').children.length >= 10 ? 'none' : '';
+  }
+
+  function hwsCollect() {
+    var pick = function (name) { var el = document.querySelector('input[name="' + name + '"]:checked'); return el ? el.value : ''; };
+    var off = [];
+    document.querySelectorAll('#hws_topics input[data-topic]').forEach(function (cb) { if (!cb.checked) off.push(cb.getAttribute('data-topic')); });
+    var extra = [];
+    document.querySelectorAll('#hws_extra input').forEach(function (i) { var v = (i.value || '').trim(); if (v) extra.push(v); });
+    return {
+      sender_name: (document.getElementById('hws_name').value || '').trim(), sender_role: (document.getElementById('hws_role').value || '').trim(),
+      budget_question: pick('hws_budget'), first_reply_minimum: pick('hws_min'), handoff_topics_off: off, handoff_topics_extra: extra
+    };
+  }
+
+  function hwsBusy(on, label) {
+    HWS.busy = on;
+    document.getElementById('hwsSaveBtn').disabled = on;
+    document.getElementById('hwsPreviewBtn').disabled = on || (HWS.state && HWS.state.preview && !HWS.state.preview.admin_unlimited && !(HWS.state.preview.remaining > 0));
+    var st = document.getElementById('hws_preview_status');
+    st.style.display = label ? '' : 'none';
+    st.textContent = label || '';
+  }
+
+  function hwsSave() {
+    if (HWS.busy) return;
+    clearMsg();
+    hwsBusy(true, '');
+    document.getElementById('hwsSaveBtn').textContent = 'Saving...';
+    api({ action: 'save_how_we_sell', settings: hwsCollect() }).then(function (res) {
+      document.getElementById('hwsSaveBtn').textContent = 'Save';
+      hwsBusy(false, '');
+      if (res.error) { handleAuthError(res.error); return; }
+      hwsRender(res);
+      var sv = res.saved || {};
+      if (sv.unchanged) { showMsg('Nothing changed, so nothing was saved.', 'ok'); return; }
+      showMsg('Saved. ' + (sv.changes || []).join('. ') + '. Live within a few minutes' + (sv.kb_updated ? '; the matching sentence in your knowledge was updated too.' : '.'), 'ok');
+    }).catch(function () {
+      document.getElementById('hwsSaveBtn').textContent = 'Save';
+      hwsBusy(false, '');
+      showMsg('Save failed. Please try again.', 'err');
+    });
+  }
+
+  function hwsRestore(id) {
+    if (HWS.busy) return;
+    if (!confirm('Put this earlier version back? It is saved as a new version, so you can undo this too.')) return;
+    clearMsg();
+    hwsBusy(true, '');
+    api({ action: 'restore_how_we_sell', version_id: id }).then(function (res) {
+      hwsBusy(false, '');
+      if (res.error) { handleAuthError(res.error); return; }
+      hwsRender(res);
+      showMsg('That version is back. ' + (((res.saved || {}).changes) || []).join('. '), 'ok');
+    }).catch(function () { hwsBusy(false, ''); showMsg('That did not work. Please try again.', 'err'); });
+  }
+
+  function hwsPreview() {
+    if (HWS.busy) return;
+    clearMsg();
+    document.getElementById('hws_preview').innerHTML = '';
+    hwsBusy(true, 'Answering three real guest emails on our test copy. This takes about 1 to 2 minutes...');
+    api({ action: 'preview_how_we_sell', settings: hwsCollect() }).then(function (res) {
+      hwsBusy(false, '');
+      if (res.error) { handleAuthError(res.error); return; }
+      if (res.busy || res.limit) { showMsg(res.message || 'Please try again in a few minutes.', 'err'); return; }
+      if (HWS.state && HWS.state.preview && !HWS.state.preview.admin_unlimited) { HWS.state.preview.remaining = Math.max(0, HWS.state.preview.remaining - 1); hwsPreviewLeft(HWS.state.preview); }
+      if (!(res.results || []).length) { document.getElementById('hws_preview').innerHTML = '<span class="hint">' + esc(res.message || 'No recent guest emails to try yet.') + '</span>'; return; }
+      var PATH = { reply: '', handed_off: 'Handed to your events manager', holding_reply: 'Holding reply', no_reply: 'No email (stays quiet)', timeout: 'The test copy did not answer in time', unknown: 'No answer' };
+      var box = function (title, body, badge) {
+        return '<div style="flex:1;min-width:240px;"><div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:4px;">' + esc(title)
+          + (badge ? ' <span class="kb-badge" style="margin-left:4px;">' + esc(badge) + '</span>' : '') + '</div><div class="kb-pre" style="max-height:320px;font-family:var(--font);font-size:13px;">' + esc(body || '') + '</div></div>';
+      };
+      document.getElementById('hws_preview').innerHTML = res.results.map(function (r) {
+        var when = r.received ? new Date(r.received).toLocaleDateString([], { month: 'short', day: 'numeric' }) : '';
+        return '<div class="gap-sug" style="border-left-color:var(--teal);">'
+          + '<div class="gap-asked"><strong>' + esc(r.label) + '</strong>: ' + esc(r.guest) + (when ? ', ' + esc(when) : '') + '</div>'
+          + '<details style="margin-bottom:10px;"><summary style="cursor:pointer;font-size:12px;color:var(--text-secondary);">What the guest wrote</summary><div class="gap-said">' + esc(r.guest_words) + '</div></details>'
+          + '<div style="display:flex;gap:12px;flex-wrap:wrap;">' + box('What was sent', r.sent, '') + box('With your new settings', (r.preview || {}).body, PATH[(r.preview || {}).path] || '') + '</div></div>';
+      }).join('') + (res.note ? '<span class="hint">' + esc(res.note) + '</span>' : '');
+    }).catch(function () { hwsBusy(false, ''); showMsg('The preview could not run. Please try again in a few minutes.', 'err'); });
+  }
+
   /* ---------- AI Settings tab ---------- */
   var AI_FIELDS = ['ai_tone','brand_voice','escalation_threshold','escalation_contact_name','escalation_contact_title','escalation_contact_pronouns','escalation_contact_email',
-                   'supervision_cc_email','small_group_threshold','sender_name','sender_role','sender_direct_line'];
+                   'supervision_cc_email','sender_name','sender_role','sender_direct_line']; /* ONLINE_BOOKING_MAX_V1: small_group_threshold retired */
   function fillAi(ai) {
     AI_FIELDS.forEach(function (f) {
       var el = document.getElementById(f);
@@ -959,20 +1226,57 @@
       document.getElementById('socialProofField').style.display = '';
       document.getElementById('social_proof').value = ai.social_proof || '';
     }
+    obFill(); /* ONLINE_BOOKING_MAX_V1 */
+  }
+  /* ONLINE_BOOKING_MAX_V1 (2026-10-19): "Largest party that can book online". The number lives in the party-size rules the
+     assistant follows; the backend moves only that cutoff. Shown only when the backend returns online_booking (an older
+     backend never does, so this page never sends the field to it). */
+  var OB = { on: false, editable: false, info: null };
+  function obFill() {
+    var ob = (typeof PROFILE !== 'undefined' && PROFILE) ? PROFILE.online_booking : null;
+    var field = document.getElementById('obField');
+    if (!field) return;
+    if (!ob) { OB.on = false; OB.editable = false; OB.info = null; field.style.display = 'none'; return; }
+    OB.on = true; OB.editable = !!(ob.ok && ob.editable); OB.info = ob;
+    field.style.display = '';
+    var el = document.getElementById('online_booking_max');
+    el.disabled = !OB.editable;
+    if (ob.ok) { el.value = ob.online_max; el.min = 1; el.max = ob.max_allowed; } else { el.value = ''; }
+    obHint();
+  }
+  function obHint() {
+    var out = document.getElementById('obHintText');
+    var ob = OB.info;
+    if (!out || !ob) return;
+    if (!ob.ok) {
+      out.textContent = ob.reason === 'no_rules' ? 'Set "Escalate at group size" and save first; then you can set this.' : 'Your party-size rules were set up specially, so EventFlow changes this for you. Reply to any EventFlow email.';
+      return;
+    }
+    if (!OB.editable) { out.textContent = 'Today parties of up to ' + ob.online_max + ' book online. Your party-size rules were set up specially, so EventFlow changes this for you.'; return; }
+    var n = Number(document.getElementById('online_booking_max').value);
+    if (!(n >= 1 && n <= ob.max_allowed && n === Math.round(n))) { out.textContent = 'A whole number from 1 to ' + ob.max_allowed + '.'; return; }
+    var nameEl = document.getElementById('escalation_contact_name');
+    var who = (nameEl && nameEl.value.trim()) || 'your events manager';
+    var t = 'Parties of 1 to ' + n + ' are sent your reservations link.';
+    if (n < ob.max_allowed) t += ' Parties of ' + (n + 1) + ' to ' + ob.max_allowed + ' go to ' + who + ' to arrange a table.';
+    if (ob.ask_min) t += ' From ' + ob.ask_min + (ob.ask_max && ob.ask_max !== ob.ask_min ? ' to ' + ob.ask_max : '') + ' guests the assistant asks whether they would like the private room.';
+    out.textContent = t + ' (1 to ' + ob.max_allowed + ')';
   }
   function saveAiSettings() {
     clearMsg();
     var settings = {};
-    AI_FIELDS.forEach(function (f) { settings[f] = document.getElementById(f).value; });
+    AI_FIELDS.forEach(function (f) { if (HWS.on && (f === 'sender_name' || f === 'sender_role')) return; /* HOW_WE_SELL_V1 */ settings[f] = document.getElementById(f).value; });
     if (document.getElementById('socialProofField').style.display !== 'none') {
       settings.social_proof = document.getElementById('social_proof').value;
     }
+    if (OB.on && OB.editable) settings.online_booking_max = document.getElementById('online_booking_max').value; /* ONLINE_BOOKING_MAX_V1 */
     var btn = document.getElementById('saveAiBtn');
     btn.disabled = true; btn.textContent = 'Saving…';
     api({ action: 'save_ai_settings', settings: settings }).then(function (res) {
       btn.disabled = false; btn.textContent = 'Save AI settings';
       if (res.error) { handleAuthError(res.error); return; }
       showMsg('AI settings saved (live within a few minutes).', 'ok');
+      if (res.online_booking) { PROFILE.online_booking = res.online_booking; obFill(); } /* ONLINE_BOOKING_MAX_V1 */
       /* HANDOVER_ON_SAVE_V1: only a backend that handled a change of events manager sends this; older ones never do. */
       if (res.handover && res.handover.to) handleHandover(res.handover);
     }).catch(function () {
@@ -1425,8 +1729,9 @@
   function loadProfile() {
     api({ action: 'get_venue_profile' }).then(function (res) {
       if (res.error) { handleAuthError(res.error); return; }
-      PROFILE = { facts: res.facts || {}, spaces: res.spaces || [], ai: res.ai || {}, caps: res.caps || {} }; // SPACE_FB_MIN_POLICY_V1
+      PROFILE = { facts: res.facts || {}, spaces: res.spaces || [], ai: res.ai || {}, caps: res.caps || {}, online_booking: res.online_booking || null }; // SPACE_FB_MIN_POLICY_V1; ONLINE_BOOKING_MAX_V1
       if (res.caps_space_offered === true) PROFILE.caps.space_offered = true; // SPACE_OFFERED_V1: the backend keeps a space's on/off switch
+      if (res.caps_space_offer_order === true) PROFILE.caps.space_offer_order = true; // SPACE_LADDER_V1: the backend keeps a space's offer order
       EF_SHELL.mountSidebar('venue', { venueName: res.venue_name || SLUG });
       document.getElementById('venue-name').textContent = res.venue_name || SLUG;
       document.getElementById('user-email-sidebar').textContent = res.caller || '';
@@ -1446,6 +1751,7 @@
       fillAi(PROFILE.ai);
       renderSetupWizard(res.setup, res.channel || {});
       loadKb();
+      hwsLoad(); /* HOW_WE_SELL_V1 */
       showApp();
       if (window.EF_ADMIN && EF_ADMIN.showAdminNav) { try { EF_ADMIN.showAdminNav(); } catch (e) {} }
       renderGlobalPicker();
@@ -1493,7 +1799,7 @@
     // configured ACTIVE venue) is never forced.
     try {
       var __qtab = new URLSearchParams(location.search).get('tab');
-      if (__qtab && ['facts', 'spaces', 'ai', 'kb', 'setup'].indexOf(__qtab) !== -1) {
+      if (__qtab && ['facts', 'spaces', 'ai', 'sell', 'kb', 'setup'].indexOf(__qtab) !== -1) {
         setTimeout(function () {
           var __btn = document.querySelector('.vb-tab[data-tab="' + __qtab + '"]');
           if (__btn && __btn.style.display !== 'none') switchTab(__qtab);
