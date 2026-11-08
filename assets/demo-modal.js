@@ -76,7 +76,7 @@
         '</form>' +
       '</div>' +
       '<div class="ef-demo-success" style="display:none">' +
-        '<h3>Thanks — we\'ll be in touch soon.</h3>' +
+        '<h3>Thanks, we\'ll be in touch soon.</h3>' +
         '<p>We\'ve got your request and will follow up within one business day.</p>' +
         '<div class="actions" style="justify-content:center">' +
           '<button type="button" class="ef-demo-btn primary" data-demo-close-success>Close</button>' +
@@ -176,7 +176,7 @@
       bodyEl.style.display = 'none';
       successEl.style.display = '';
     }).catch(function (err) {
-      showError('Something went wrong — please email sales@eventflowsales.com directly. (' + err.message + ')');
+      showError('Something went wrong. Please email sales@eventflowsales.com directly. (' + err.message + ')');
     }).finally(function () {
       btn.disabled = false;
       btn.textContent = 'Request demo';
