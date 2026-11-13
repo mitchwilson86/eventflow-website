@@ -280,8 +280,12 @@
                 <input type="number" id="corkage" min="0" step="1" />
               </div>
               <div class="vf-field">
-                <label for="cake_fee">Cake-cutting fee ($ per person)</label>
+                <label for="cake_fee">Cake-cutting fee ($)</label>
                 <input type="number" id="cake_fee" min="0" step="1" />
+                <select id="cake_fee_basis" aria-label="How the cake-cutting fee is charged" style="margin-top:8px">
+                  <option value="per_person">per person</option>
+                  <option value="flat">one flat fee per cake</option>
+                </select>
               </div>
             </div>
             <div class="vf-field">
@@ -727,12 +731,15 @@
 
   /* ---------- Venue Facts tab ---------- */
   var FACT_FIELDS = ['privacy_layouts','semi_private','min_low','min_high','alacarte_max','standing_text',
-                     'happy_hour','bar_formats','corkage','cake_fee','dietary','high_chairs','step_free','gift_cards'];
+                     'happy_hour','bar_formats','corkage','cake_fee','cake_fee_basis','dietary','high_chairs','step_free','gift_cards'];
+  /* CAKE_FEE_BASIS_V1 (2026-11-13): cake_fee_basis ('per_person' | 'flat') is optional on the server (13.38); a venue with none stored
+     shows "per person", which is what its knowledge already says. */
   function fillFacts(facts) {
     FACT_FIELDS.forEach(function (f) {
       var el = document.getElementById(f);
       if (!el) return;
       if (el.type === 'checkbox') el.checked = !!facts[f];
+      else if (f === 'cake_fee_basis') el.value = facts[f] === 'flat' ? 'flat' : 'per_person'; /* nothing stored = per person, never a previous venue's choice */
       else if (facts[f] !== undefined && facts[f] !== null) el.value = facts[f];
     });
   }
