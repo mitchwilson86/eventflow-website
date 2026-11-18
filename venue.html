@@ -511,6 +511,44 @@
           <div class="vb-actions">
             <button class="btn-primary" id="saveAiBtn" onclick="saveAiSettings()">Save AI settings</button>
           </div>
+
+          <div class="panel" id="helperSettingsPanel" style="display:none;"><!-- HELPER_SETTINGS_V1 (2026-11-18): shown only when the backend answers get_helper_settings, which it does for EventFlow admins only -->
+            <h3>Kitchen email and menu link sizes <span class="vb-h-hint">EventFlow admins only. Read by the shared (multi-venue) helpers; a venue on its own copy is not affected.</span></h3>
+            <div class="vf-grid2">
+              <div class="vf-field">
+                <label for="hs_chef_mode">Weekly kitchen email</label>
+                <select id="hs_chef_mode" onchange="hsHint()">
+                  <option value="">Off</option>
+                  <option value="preview">Preview (EventFlow only)</option>
+                  <option value="on">On (the kitchen team below)</option>
+                </select>
+                <span class="hint">Mondays at 9 AM on the venue's clock: the week's confirmed events, menus and dietary notes.</span>
+              </div>
+              <div class="vf-field">
+                <label for="hs_chef_to">Kitchen team</label>
+                <input type="text" id="hs_chef_to" maxlength="600" placeholder="chef@venue.com, sous@venue.com" oninput="hsHint()" />
+                <span class="hint">Email addresses, separated by commas. Up to 10.</span>
+              </div>
+              <div class="vf-field">
+                <label for="hs_chef_cc">Copies (optional)</label>
+                <input type="text" id="hs_chef_cc" maxlength="600" placeholder="gm@venue.com" />
+              </div>
+            </div>
+            <div class="vf-grid2">
+              <div class="vf-field">
+                <label for="hs_min">Smallest party that gets the menu link</label>
+                <input type="number" id="hs_min" min="1" max="1000" step="1" oninput="hsHint()" />
+              </div>
+              <div class="vf-field">
+                <label for="hs_max">Largest party that gets the menu link</label>
+                <input type="number" id="hs_max" min="1" max="1000" step="1" oninput="hsHint()" />
+              </div>
+            </div>
+            <span class="hint" id="hsHintText"></span>
+            <div class="vb-actions">
+              <button class="btn-primary" id="saveHsBtn" onclick="saveHelperSettings()">Save kitchen email and sizes</button>
+            </div>
+          </div>
         </div>
 
         <!-- ================= TAB: HOW WE SELL (HOW_WE_SELL_V1) ================= -->
@@ -1292,6 +1330,68 @@
     });
   }
 
+  /* HELPER_SETTINGS_V1 (2026-11-18): the weekly kitchen email and the menu-link party sizes. The card appears only when the
+     backend answers get_helper_settings with success, which it does for EventFlow admins only; a venue's own user, or an
+     older backend that does not know the action, leaves it hidden and this page never sends a save. */
+  var HS = { on: false };
+  function loadHelperSettings() {
+    var panel = document.getElementById('helperSettingsPanel');
+    if (!panel) return;
+    api({ action: 'get_helper_settings' }).then(function (res) {
+      if (!res || res.success !== true || !res.helper_settings) { HS.on = false; panel.style.display = 'none'; return; }
+      HS.on = true;
+      hsFill(res.helper_settings);
+      panel.style.display = '';
+    }).catch(function () { HS.on = false; panel.style.display = 'none'; });
+  }
+  function hsFill(h) {
+    var mode = String(h.chef_report_mode || '').toLowerCase();
+    document.getElementById('hs_chef_mode').value = (mode === 'on' || mode === 'preview') ? mode : '';
+    document.getElementById('hs_chef_to').value = h.chef_report_to || '';
+    document.getElementById('hs_chef_cc').value = h.chef_report_cc || '';
+    document.getElementById('hs_min').value = h.menu_build_min_guests || '';
+    document.getElementById('hs_max').value = h.menu_build_max_guests || '';
+    hsHint();
+  }
+  function hsHint() {
+    var out = document.getElementById('hsHintText');
+    if (!out) return;
+    var mode = document.getElementById('hs_chef_mode').value;
+    var to = document.getElementById('hs_chef_to').value.trim();
+    var lo = document.getElementById('hs_min').value.trim(), hi = document.getElementById('hs_max').value.trim();
+    var parts = [];
+    if (mode === 'on') parts.push(to ? 'The kitchen team gets the email every Monday.' : 'Add at least one kitchen team address to switch the email on.');
+    else if (mode === 'preview') parts.push('Only EventFlow gets the kitchen email, marked [Preview].');
+    else parts.push('No kitchen email is sent.');
+    if (!lo && !hi) parts.push('Party sizes left blank: parties of 13 to 28 get the menu link.');
+    else if (!lo || !hi) parts.push('Fill in both party sizes, or leave both blank.');
+    else if (!(Number(lo) >= 1 && Number(hi) >= Number(lo) && Number(hi) <= 1000 && Number(lo) === Math.round(Number(lo)) && Number(hi) === Math.round(Number(hi)))) parts.push('Party sizes: whole numbers, smallest first, up to 1000.');
+    else parts.push('Parties of ' + Number(lo) + ' to ' + Number(hi) + ' get the menu link.');
+    out.textContent = parts.join(' ');
+  }
+  function saveHelperSettings() {
+    if (!HS.on) return;
+    clearMsg();
+    var settings = {
+      chef_report_mode: document.getElementById('hs_chef_mode').value,
+      chef_report_to: document.getElementById('hs_chef_to').value,
+      chef_report_cc: document.getElementById('hs_chef_cc').value,
+      menu_build_min_guests: document.getElementById('hs_min').value.trim(),
+      menu_build_max_guests: document.getElementById('hs_max').value.trim()
+    };
+    var btn = document.getElementById('saveHsBtn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    api({ action: 'save_helper_settings', settings: settings }).then(function (res) {
+      btn.disabled = false; btn.textContent = 'Save kitchen email and sizes';
+      if (res.error) { showMsg(res.error, 'err'); return; }
+      if (res.helper_settings) hsFill(res.helper_settings);
+      showMsg('Kitchen email and menu link sizes saved.', 'ok');
+    }).catch(function () {
+      btn.disabled = false; btn.textContent = 'Save kitchen email and sizes';
+      showMsg('Save failed. Please try again.', 'err');
+    });
+  }
+
   /* HANDOVER_ON_SAVE_V1 (2026-09-28): the events manager changed. Say what the save did, then ask about the old
      contact's dashboard access (nothing is removed without a yes). */
   function handleHandover(ho) {
@@ -1743,6 +1843,7 @@
       document.getElementById('venue-name').textContent = res.venue_name || SLUG;
       document.getElementById('user-email-sidebar').textContent = res.caller || '';
       fillFacts(PROFILE.facts);
+      loadHelperSettings(); /* HELPER_SETTINGS_V1: its own read; the card stays hidden unless the backend says yes */
       if (res.parking_info !== undefined) {
         document.getElementById('parkingBillingPanel').style.display = '';
         document.getElementById('parking_info').value = res.parking_info || '';
