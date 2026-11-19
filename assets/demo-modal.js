@@ -147,6 +147,24 @@
     errorBox.classList.add('show');
   }
 
+  // SOCIAL_PAGE_V1: remember the first EventFlow page of this visit and the site the visitor came from (its host
+  // only, never a full address), so a demo request can be counted as "from social" even when the visitor looked at
+  // other pages first. Kept for this browser tab only. Storage can be blocked; then both are simply blank.
+  var visit = { landing: '', referrer: '' };
+  try {
+    var saved = sessionStorage.getItem('ef_visit');
+    if (saved) visit = JSON.parse(saved) || visit;
+    else {
+      var refHost = '';
+      try { if (document.referrer) refHost = new URL(document.referrer).hostname; } catch (_) {}
+      if (refHost === location.hostname) refHost = '';
+      visit = { landing: location.pathname, referrer: refHost };
+      sessionStorage.setItem('ef_visit', JSON.stringify(visit));
+    }
+  } catch (_) {
+    visit = { landing: location.pathname, referrer: '' };
+  }
+
   function onSubmit(e) {
     e.preventDefault();
     errorBox.classList.remove('show');
@@ -157,7 +175,9 @@
       company: form.company.value.trim(),
       venue_type: form.venue_type.value,
       notes: form.notes.value.trim(),
-      source_page: location.pathname + location.search
+      source_page: location.pathname + location.search,
+      landing_page: String((visit && visit.landing) || ''),
+      referrer_host: String((visit && visit.referrer) || '')
     };
 
     if (!data.name) { showError('Please enter your name.'); return; }

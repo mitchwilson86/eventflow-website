@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>See EventFlow answer a real inquiry</title>
+    <!-- SOCIAL_PAGE_V1 (2026-11-19): the page social posts link to. Kept out of search results on purpose, so a visit here
+         means the visitor came from a post, and a demo request sent from here is counted as "from social". -->
+    <meta name="robots" content="noindex">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" href="/favicon.png" sizes="32x32">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <meta name="description" content="EventFlow answers your private-event inquiries from your own inbox, in about a minute during the day. See a sample reply and book a demo.">
+    <link rel="canonical" href="https://eventflowsales.com/see-it">
+    <meta property="og:title" content="See EventFlow answer a real inquiry">
+    <meta property="og:description" content="A private-event inquiry at 7:42 PM, a full reply at 7:43, from the venue's own address.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://eventflowsales.com/see-it">
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y5L9CGEL9S"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-Y5L9CGEL9S');
+    </script>
+
+    <script>document.documentElement.classList.add('js')</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/site/site.css">
+    <style>
+        /* Only what this page adds to the shared board. */
+        .see { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--gap); margin-top: var(--gap); }
+        .see > * { min-width: 0; }
+        .see-mail { grid-column: 1 / 9; display: flex; flex-direction: column; gap: 16px; background: var(--paper); color: var(--ink); }
+        .see-mail h2 { font-size: var(--step-lead); line-height: 1.2; letter-spacing: -0.01em; }
+        .see-mail [data-ui].frag { margin-top: 0; min-height: 0; font-size: 15px; }
+        .see-mail [data-ui] .msg-out p + p, .see-mail [data-ui] .msg-out p + ul, .see-mail [data-ui] .msg-out ul + p { margin-top: 8px; }
+        .see-mail [data-ui] .msg-out ul { padding-left: 18px; margin: 0; }
+        .see-mail .small { color: var(--muted-light); }
+        .see-side { grid-column: 9 / 13; display: grid; gap: var(--gap); grid-template-rows: 1fr 1fr; }
+        .see-side .tile { display: flex; flex-direction: column; justify-content: flex-end; gap: 12px; }
+        .see-side .mark { font-size: var(--step-title); line-height: 0.95; letter-spacing: -0.03em; font-weight: 700; }
+        .see-does { margin-top: var(--gap); }
+        .see-does > .tile { min-height: 240px; justify-content: flex-end; }
+        .phead-title .btn { margin-top: 4px; }
+        @media (max-width: 900px) {
+            .see-mail, .see-side { grid-column: 1 / 13; }
+            .see-side { grid-template-rows: none; grid-template-columns: 1fr 1fr; }
+            .see-does { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (max-width: 600px) {
+            .see-side { grid-template-columns: 1fr; }
+            .see-does { grid-template-columns: 1fr; }
+            .see-does > .tile { min-height: 0; }
+            .see-mail [data-ui] .msg-head { flex-wrap: wrap; gap: 2px 12px; }
+        }
+    </style>
+</head>
+<body>
+    <a href="#main" class="skip-link">Skip to main content</a>
+
+    <div class="page">
+        <!-- ==================== TOP ROW (same as the home page) ==================== -->
+        <header class="top" role="banner">
+            <a class="tile top-logo" href="/" aria-label="EventFlow home"><img src="/assets/home/mark.png" width="160" height="160" alt=""></a>
+            <nav class="tile top-links" aria-label="Main navigation">
+                <ul>
+                    <li><a href="/#demo">Demo</a></li>
+                    <li><a href="/#features">Features</a></li>
+                    <li><a href="/pricing">Pricing</a></li>
+                    <li><a href="/#faq">Questions</a></li>
+                </ul>
+            </nav>
+            <div class="tile top-menu">
+                <button type="button" id="menuToggle" aria-expanded="false" aria-controls="menuSheet">Menu</button>
+            </div>
+            <div class="tile top-action"><a class="btn" href="/#contact" data-demo-trigger>Book a demo</a></div>
+            <nav class="menu-sheet" id="menuSheet" hidden aria-label="Main navigation (phone)">
+                <a href="/#demo">Demo</a>
+                <a href="/#features">Features</a>
+                <a href="/pricing">Pricing</a>
+                <a href="/#faq">Questions</a>
+                <a href="/about">About</a>
+            </nav>
+        </header>
+
+        <main id="main">
+        <!-- ==================== PAGE HEAD ==================== -->
+        <section class="phead phead--wide phead--photo" aria-labelledby="page-title">
+            <div class="tile phead-title">
+                <h1 id="page-title"><span>Your events inbox, answered in about a minute</span></h1>
+                <a class="btn" href="/#contact" data-demo-trigger>Book a demo</a>
+            </div>
+            <div class="tile tile--accent phead-side">
+                <p class="lead rise" style="--d:260ms">EventFlow reads each private-event inquiry as it arrives and replies from your own address, using your rooms, menus and calendar.</p>
+                <p class="rise" style="--d:370ms"><a class="link" href="#sample">See a sample reply</a></p>
+            </div>
+            <figure class="tile photo phead-pic shutter">
+                <img src="/assets/home/giuseppe-grill-leblon-private-dining-room-rio.jpg" width="1280" height="853" fetchpriority="high" decoding="async" alt="A private dining room set for a large party, with a long wooden table, wine glasses at every place and a wall of wine bottles.">
+            </figure>
+        </section>
+
+        <!-- ==================== THE SAMPLE: one inquiry, one reply ==================== -->
+        <section class="see" id="sample" aria-labelledby="sample-title">
+            <div class="tile see-mail">
+                <h2 id="sample-title">Friday, 7:42 PM. Every table is full, and a new inquiry lands.</h2>
+                <div class="frag" data-ui role="img" aria-label="A sample events inbox: Dana Kowalski asked at 7:42 PM about a rehearsal dinner for 24, and EventFlow replied at 7:43 PM offering the private room, two group menus and a one-week hold.">
+                    <div class="frag-head"><b>Events inbox</b><span>events@theharborview.com</span></div>
+                    <div class="frag-body">
+                        <div class="msgs">
+                            <div class="msg msg-in">
+                                <div class="msg-head"><b>Dana Kowalski</b><time>Fri 7:42 PM</time></div>
+                                <p>Hi! We're hoping to host our rehearsal dinner on Saturday, March 13, for 24 guests. Do you have a private room, and what are the menu options?</p>
+                            </div>
+                            <div class="msg msg-out">
+                                <div class="msg-head"><b>The Harborview Events Team</b><time>Fri 7:43 PM</time></div>
+                                <p>Hi Dana,</p>
+                                <p>Congratulations, and thank you for thinking of us! Saturday, March 13 is open for our Harbor Room, which is fully private and seats up to 28, so your 24 guests fit comfortably.</p>
+                                <p>Most rehearsal dinners choose one of our group menus:</p>
+                                <ul>
+                                    <li><u>$65 Family-Style Menu</u></li>
+                                    <li><u>$85 Chef's Menu</u></li>
+                                </ul>
+                                <p>Would you like me to hold March 13 for you for one week while you decide?</p>
+                                <p><span class="tag">Sent by EventFlow from your address</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="small">A sample, with a made-up venue and guest. In a real setup the room, the menus and the open date come from your own venue facts and your calendar.</p>
+            </div>
+            <div class="see-side">
+                <div class="tile tile--brandy">
+                    <p class="mark nums">1 minute</p>
+                    <p>From the guest's email to a full reply in this sample. That is the usual pace from 9 AM to 9 PM Central, and within about an hour overnight.</p>
+                </div>
+                <div class="tile">
+                    <p class="mark nums">7,000+</p>
+                    <p>checks run on every change before it can reach one of your guests.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== WHAT IT DOES ==================== -->
+        <section class="board see-does" aria-label="What EventFlow does">
+            <div class="tile tile--accent">
+                <h3>Answers from your inbox</h3>
+                <p>Replies come from your own events address, signed the way your team signs.</p>
+            </div>
+            <div class="tile tile--paper">
+                <h3>Follows up</h3>
+                <p>Checks in with guests who went quiet, and stops when they book or decline.</p>
+            </div>
+            <div class="tile">
+                <h3>Holds the date</h3>
+                <p>Places a courtesy hold in Tripleseat, so the date is not lost while the guest decides.</p>
+            </div>
+            <div class="tile tile--brandy">
+                <h3>Hands off to your manager</h3>
+                <p>Big groups, special requests and anything sensitive go to your events manager, on your rules.</p>
+            </div>
+        </section>
+
+        <!-- ==================== THE CLOSE ==================== -->
+        <section class="cta" aria-labelledby="cta-title">
+            <figure class="tile photo cta-l">
+                <img src="/assets/home/main-dining-room-set-for-a-banquet.jpg" width="1280" height="776" loading="lazy" decoding="async" alt="An archival photograph of a club dining room set for a banquet, with long tables of food and stacked plates.">
+            </figure>
+            <div class="tile tile--accent cta-c">
+                <h2 class="head" id="cta-title">Let's look at your inbox</h2>
+                <p>Tell us how inquiries reach you today, and we'll walk you through what EventFlow would have sent back. Plans start at $199 a month per venue, month to month.</p>
+                <a class="btn" href="/#contact" data-demo-trigger>Book a demo</a>
+                <a class="link" href="/#demo">Or try your own inquiry on the home page</a>
+            </div>
+            <div class="tile tile--brandy cta-r" aria-hidden="true"></div>
+        </section>
+        </main>
+
+        <!-- ==================== FOOTER ==================== -->
+        <footer class="foot" role="contentinfo">
+            <div class="blocks" aria-label="EventFlow, drawn as a bar chart that rises from left to right" role="img">
+                <div class="b-row" aria-hidden="true"><span style="height:38%">E</span><span style="height:42%">V</span><span style="height:48%">E</span><span style="height:55%">N</span><span style="height:63%">T</span></div><div class="b-row" aria-hidden="true"><span style="height:72%">F</span><span style="height:82%">L</span><span style="height:91%">O</span><span style="height:100%">W</span></div>
+            </div>
+            <div class="foot-grid">
+                <div class="foot-col">
+                    <h2>Product</h2>
+                    <a href="/#features">Features</a>
+                    <a href="/pricing">Pricing</a>
+                    <a href="/integrations">Integrations</a>
+                    <a href="/changelog">Changelog</a>
+                </div>
+                <div class="foot-col">
+                    <h2>Company</h2>
+                    <a href="/about">About</a>
+                    <a href="/blog">Blog</a>
+                    <a href="/careers">Careers</a>
+                    <a href="/#contact">Contact</a>
+                </div>
+                <div class="foot-col">
+                    <h2>Resources</h2>
+                    <a href="/documentation">Documentation</a>
+                    <a href="/help">Help Center</a>
+                    <a href="/promises">Our Promises</a>
+                    <a href="/developers">Developers</a>
+                </div>
+                <div class="foot-col">
+                    <h2>Legal</h2>
+                    <a href="/privacy">Privacy Policy</a>
+                    <a href="/terms">Terms of Service</a>
+                </div>
+                <div class="foot-contact">
+                    <p>Questions? Email <a class="link" href="mailto:sales@eventflowsales.com">sales@eventflowsales.com</a></p>
+                    <p class="footer-social">Follow us on <a class="link" href="https://www.linkedin.com/company/eventflowsales/" target="_blank" rel="noopener">LinkedIn</a>, <a class="link" href="https://www.instagram.com/eventflowsales/" target="_blank" rel="noopener">Instagram</a> and <a class="link" href="https://www.tiktok.com/@eventflowsales" target="_blank" rel="noopener">TikTok</a>.</p>
+                </div>
+                <p class="credits">Pictures: <a href="https://commons.wikimedia.org/wiki/File:Giuseppe_Grill_Leblon_Private_Dining_Room_Rio_de_Janeiro.jpg">"Giuseppe Grill Leblon Private Dining Room Rio de Janeiro"</a>, <a href="https://creativecommons.org/licenses/by-sa/4.0">CC BY-SA 4.0</a>;<a href="https://commons.wikimedia.org/wiki/File:Main_Dining_Room_Set_for_a_Banquet_at_the_Minneapolis_Athletic_Club_-_DPLA_-_908797a753aee756f9a4ea92ae17f4e0.jpg">"Main Dining Room Set for a Banquet at the Minneapolis Athletic Club"</a>, public domain. Via Wikimedia Commons, shown in black and white.</p>
+            </div>
+            <div class="foot-last">
+                <span>&copy; 2026 EventFlow. Smarter Bookings. Fuller Rooms.</span>
+                <a class="btn" href="/#contact" data-demo-trigger>Book a demo</a>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/SplitText.min.js"></script>
+    <script src="/assets/site/site.js"></script>
+    <script src="/assets/demo-modal.js" defer></script>
+</body>
+</html>

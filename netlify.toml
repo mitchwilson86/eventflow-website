@@ -111,6 +111,12 @@
   to = "/social.html"
   status = 200
 
+# SOCIAL_PAGE_V1 (2026-11-19): the page social posts link to (a demo request from it counts as "from social").
+[[redirects]]
+  from = "/see-it"
+  to = "/see-it.html"
+  status = 200
+
 [[redirects]]
   from = "/unsubscribe"
   to = "/unsubscribe.html"
