@@ -29,6 +29,40 @@
 
     <link rel="canonical" href="https://eventflowsales.com/about">
 
+    <!-- Company facts schema: must match the visible "Company Facts" section below -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "AboutPage",
+          "@id": "https://eventflowsales.com/about#page",
+          "url": "https://eventflowsales.com/about",
+          "name": "About EventFlow",
+          "about": { "@id": "https://eventflowsales.com/#organization" }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://eventflowsales.com/#organization",
+          "name": "EventFlow",
+          "url": "https://eventflowsales.com/",
+          "foundingDate": "2026",
+          "founder": { "@id": "https://eventflowsales.com/about#founder" },
+          "address": { "@type": "PostalAddress", "addressLocality": "Nashville", "addressRegion": "TN", "addressCountry": "US" },
+          "areaServed": { "@type": "Country", "name": "United States" },
+          "knowsAbout": ["AI integration for restaurants", "Private event sales automation", "Event inquiry management", "Tripleseat integration", "Hospitality sales", "AI email assistants"]
+        },
+        {
+          "@type": "Person",
+          "@id": "https://eventflowsales.com/about#founder",
+          "name": "Mitchell Wilson",
+          "jobTitle": "Founder",
+          "worksFor": { "@id": "https://eventflowsales.com/#organization" }
+        }
+      ]
+    }
+    </script>
+
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y5L9CGEL9S"></script>
     <script>
@@ -130,6 +164,18 @@
                 <h2 id="where-we-are-today-h">Where We Are Today</h2>
                 <div class="prose">
                     <p>EventFlow ran live at its first venue, a restaurant in Nashville, from July to November 2026, answering real private-event inquiries from the venue's own inbox and working inside Tripleseat. We are a small team, so you work directly with the people who build it. Today we are setting EventFlow up for restaurant groups and event venues, and every change is tested before it reaches a guest.</p>
+                </div>
+            </section>
+            <section class="band" id="company-facts" aria-labelledby="company-facts-h">
+                <h2 id="company-facts-h">Company Facts</h2>
+                <div class="prose">
+                    <ul>
+                        <li><strong>Founder:</strong> Mitchell Wilson</li>
+                        <li><strong>Founded:</strong> 2026</li>
+                        <li><strong>Headquarters:</strong> Nashville, Tennessee</li>
+                        <li><strong>What we do:</strong> AI integration for restaurants and event venues: AI replies to private-event inquiries, follow-ups, and Tripleseat integration</li>
+                        <li><strong>Contact:</strong> <a href="mailto:sales@eventflowsales.com">sales@eventflowsales.com</a></li>
+                    </ul>
                 </div>
             </section>
         </div>
