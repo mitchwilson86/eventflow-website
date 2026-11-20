@@ -125,7 +125,23 @@
     form.addEventListener('submit', onSubmit);
   }
 
-  function open() {
+  // DEMO_TRACKING_V1: tell Google Analytics when the demo form opens and when a request is sent, so visits from
+  // a page, post or search can be tied to demo requests. Never sends what the visitor typed (no name, email,
+  // company or notes). Does nothing if Google Analytics is blocked or missing.
+  function track(name, params) {
+    try {
+      if (typeof window.gtag === 'function') window.gtag('event', name, params || {});
+    } catch (_) {}
+  }
+
+  var openedFrom = '';
+
+  function open(trigger) {
+    openedFrom = '';
+    try {
+      if (trigger && trigger.nodeType === 1) openedFrom = (trigger.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 60);
+    } catch (_) {}
+    track('demo_open', { button_text: openedFrom, source_page: location.pathname });
     buildModal();
     errorBox.classList.remove('show');
     bodyEl.style.display = '';
@@ -195,7 +211,16 @@
       if (!res.ok) throw new Error('Request failed (' + res.status + ')');
       bodyEl.style.display = 'none';
       successEl.style.display = '';
+      track('generate_lead', {
+        lead_source: 'demo_form',
+        button_text: openedFrom,
+        source_page: location.pathname,
+        landing_page: data.landing_page,
+        referrer_host: data.referrer_host,
+        venue_type: data.venue_type
+      });
     }).catch(function (err) {
+      track('demo_error', { source_page: location.pathname });
       showError('Something went wrong. Please email sales@eventflowsales.com directly. (' + err.message + ')');
     }).finally(function () {
       btn.disabled = false;
@@ -208,7 +233,7 @@
     var t = e.target.closest('[data-demo-trigger]');
     if (!t) return;
     e.preventDefault();
-    open();
+    open(t);
   });
 
   // Expose a tiny global for ad-hoc buttons too.
