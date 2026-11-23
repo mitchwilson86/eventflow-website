@@ -349,7 +349,7 @@ function loadOverview(slug) {
       const webN = Number(k.reply_samples_web) || 0;
       setText('kpi-response-sub', k.reply_samples
         ? (webN > 0
-          ? 'Typical wait, ' + k.reply_samples + ' answered (' + webN + ' web form' + (webN === 1 ? '' : 's') + ', timed from when the guest sent it)'
+          ? 'Typical wait, ' + k.reply_samples + ' answered (' + webN + (webN === 1 ? ' web form, timed from when it was sent)' : ' web forms, timed from when they were sent)')
           : 'Typical wait, ' + k.reply_samples + ' email' + (k.reply_samples === 1 ? '' : 's') + ' (web forms not counted)')
         : 'No emails answered in the last 7 days');
       setVal('kpi-escalations', k.escalations);
