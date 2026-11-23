@@ -168,6 +168,9 @@
               </table>
             </div>
             <div id="approve-result" style="margin-top:12px;font-size:13px;"></div>
+            <!-- APPROVE_VENUE_RETIRED_V1 (2026-11-23): the Approve button is gone. It copied the retired Gmail workflow with
+                 Sunda's details and posted to Sunda's Slack. Set a venue up with "Add venue" above and its /venue page. -->
+            <p style="margin-top:8px;font-size:12px;color:var(--text-muted);">To set one of these up, use "Add venue" above, then its /venue page.</p>
           </div>
 
           <!-- 3. Multi-Client Overview -->
@@ -531,7 +534,6 @@ function renderPending(pending) {
       '<td>' + esc(onboarded) + '</td>' +
       '<td>' + esc(source) + '</td>' +
       '<td>' +
-        '<button class="btn-primary" style="padding:6px 14px;font-size:13px;margin-right:6px;" onclick="approveVenue(\'' + esc(c.slug) + '\', this)">Approve</button>' +
         '<button style="padding:6px 14px;font-size:13px;background:none;border:1px solid var(--border);color:var(--red);cursor:pointer;border-radius:6px;" onclick="deleteVenue(\'' + esc(c.slug) + '\', this)">Delete</button>' +
       '</td>' +
       '</tr>';
@@ -634,54 +636,7 @@ async function addVenue() {
   btn.textContent = 'Create + invite';
 }
 
-async function approveVenue(slug, btn) {
-  const resultEl = document.getElementById('approve-result');
-  const idToken = sessionStorage.getItem('ef_id_token');
-  const exp = parseInt(sessionStorage.getItem('ef_id_token_exp') || '0', 10);
-  if (!idToken || !exp || Date.now() > exp) {
-    resultEl.innerHTML = '<span style="color:var(--red);">Session expired. Please sign in again to approve.</span>';
-    return;
-  }
-  btn.disabled = true;
-  btn.textContent = 'Approving...';
-  resultEl.textContent = '';
-
-  try {
-    const res = await fetch(DATA_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'approve_venue', id_token: idToken, client_slug: slug })
-    });
-    const data = await res.json();
-    if (data.success) {
-      let msg = '<span style="color:var(--green);">&#10003; ' + esc(slug) + ' approved.</span>';
-      if (data.provisioning) {
-        const p = data.provisioning;
-        msg += '<br><span style="color:var(--text-muted);font-size:12px;">';
-        if (p.supabase_venue_id) msg += 'Supabase venue: ' + esc(p.supabase_venue_id.slice(0, 8)) + '... · ';
-        if (p.workflow_b_id) msg += 'Workflow B: <code>' + esc(p.workflow_b_id) + '</code> · ';
-        msg += '</span>';
-      }
-      if (data.warnings && data.warnings.length) {
-        msg += '<br><span style="color:var(--orange);font-size:12px;">Warnings: ' + data.warnings.map(esc).join(' · ') + '</span>';
-      }
-      if (data.next_steps) {
-        msg += '<br><span style="font-size:12px;">' + esc(data.next_steps) + '</span>';
-      }
-      resultEl.innerHTML = msg;
-      // Refresh the pending list
-      setTimeout(loadPendingSignups, 800);
-    } else {
-      resultEl.innerHTML = '<span style="color:var(--red);">Error: ' + esc(data.error || 'unknown') + '</span>';
-      btn.disabled = false;
-      btn.textContent = 'Approve';
-    }
-  } catch (err) {
-    resultEl.innerHTML = '<span style="color:var(--red);">Request failed: ' + esc(err.message) + '</span>';
-    btn.disabled = false;
-    btn.textContent = 'Approve';
-  }
-}
+/* APPROVE_VENUE_RETIRED_V1 (2026-11-23): approveVenue() removed with its button. */
 
 function renderAlerts(alerts) {
   const el = document.getElementById('alerts');
