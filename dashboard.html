@@ -344,8 +344,13 @@ function loadOverview(slug) {
         : k.inquiries + ' email' + (k.inquiries === 1 ? '' : 's') + ', last 7 days');
       setVal('kpi-replies', k.ai_replies);
       setVal('kpi-response', k.reply_minutes_median == null ? null : fmtMinutes(k.reply_minutes_median));
+      // WEB_FORM_REPLY_TIME_V1 (2026-11-23, Apps Script 13.44): web forms count from the moment the guest sent the form when that
+      // time is known (reply_samples_web); with none, the label is exactly as before.
+      const webN = Number(k.reply_samples_web) || 0;
       setText('kpi-response-sub', k.reply_samples
-        ? 'Typical wait, ' + k.reply_samples + ' email' + (k.reply_samples === 1 ? '' : 's') + ' (web forms not counted)'
+        ? (webN > 0
+          ? 'Typical wait, ' + k.reply_samples + ' answered (' + webN + ' web form' + (webN === 1 ? '' : 's') + ', timed from when the guest sent it)'
+          : 'Typical wait, ' + k.reply_samples + ' email' + (k.reply_samples === 1 ? '' : 's') + ' (web forms not counted)')
         : 'No emails answered in the last 7 days');
       setVal('kpi-escalations', k.escalations);
       setVal('stat-holds', k.holds_placed);
