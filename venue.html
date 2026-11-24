@@ -216,6 +216,22 @@
             <button class="btn-primary" id="sw-crm-save" onclick="saveCrmSettings()">Save booking system</button>
           </div>
 
+          <!-- CLIENT_GOALS_V1 (2026-11-24): client lifecycle step 3. Shown only when the backend sends `business` (Apps Script 13.45+).
+               Internal: the assistant never reads these and never mentions them to guests. -->
+          <div class="panel" id="sw-goals-panel" style="display:none;">
+            <h3>Your goals and competition</h3>
+            <p style="font-size:13px;color:#8a8f98;margin:2px 0 10px;">Only the EventFlow team sees this. Your assistant never reads it and never mentions it to guests.</p>
+            <div class="vf-field">
+              <label for="sw_goals">What would a good month with EventFlow look like for you?</label>
+              <textarea id="sw_goals" maxlength="1000" placeholder="e.g. every inquiry answered within minutes, more weeknight bookings, fewer hours in the inbox"></textarea>
+            </div>
+            <div class="vf-field">
+              <label for="sw_competitors">Which two or three venues do you most often lose events to?</label>
+              <textarea id="sw_competitors" maxlength="1000" placeholder="e.g. the venue down the street with the rooftop, a hotel ballroom nearby"></textarea>
+            </div>
+            <button class="btn-primary" id="sw-goals-save" onclick="saveBusinessProfile()">Save goals and competition</button>
+          </div>
+
           <div class="panel" id="sw-golive-panel">
             <h3>Go live</h3>
             <div id="sw-golive-status" style="font-size:13.5px;line-height:1.8;"></div>
@@ -1696,6 +1712,7 @@
   // res.setup so an older backend can never break the page. Credential ids are
   // never shown here; the backend only sends connected booleans.
   var SW_SETUP = null, SW_CHANNEL = {}, swDefaulted = false;
+  var SW_BUSINESS = null; /* CLIENT_GOALS_V1: { client_goals, client_competitors } from get_venue_profile, or null from an older backend */
 
   function renderSetupWizard(setup, channel) {
     var tab = document.getElementById('tab-setup');
@@ -1712,11 +1729,15 @@
       { ok: !!setup.has_channel, label: 'Email channel', note: 'Which inbox the assistant works.', go: function () { swScroll('sw-channel-panel'); } },
       { ok: !!setup.has_crm, label: 'Booking system', note: 'Tripleseat, or plain email.', go: function () { swScroll('sw-crm-panel'); } }
     ];
+    /* CLIENT_GOALS_V1: an eighth step when the backend knows it (13.45+). It is needed for the go-live request, but a venue that is
+       already live with the seven assistant steps done keeps its Setup tab hidden, as before. */
+    if (setup.has_goals !== undefined) steps.push({ ok: !!setup.has_goals, lifecycle: true, label: 'Your goals and competition', note: 'What a good month looks like to you, and who you lose events to. Only EventFlow sees it.', go: function () { swScroll('sw-goals-panel'); } });
     var doneCount = 0;
     steps.forEach(function (s) { if (s.ok) doneCount++; });
     var allDone = doneCount === steps.length;
+    var coreDone = steps.every(function (s) { return s.ok || s.lifecycle; });
     var live = setup.status === 'active';
-    if (allDone && live) {
+    if (coreDone && live) {
       tab.style.display = 'none';
       if (tab.classList.contains('active')) switchTab('facts');
       return;
@@ -1776,6 +1797,27 @@
     document.getElementById('sw_ts_location').disabled = lock;
     document.getElementById('sw_ts_rooms').disabled = lock;
     document.getElementById('sw-crm-save').disabled = lock;
+    /* CLIENT_GOALS_V1: the box shows only when the backend sends `business`; it stays editable while live. */
+    var gp = document.getElementById('sw-goals-panel');
+    if (SW_BUSINESS && typeof SW_BUSINESS === 'object') {
+      gp.style.display = '';
+      document.getElementById('sw_goals').value = SW_BUSINESS.client_goals || '';
+      document.getElementById('sw_competitors').value = SW_BUSINESS.client_competitors || '';
+    } else {
+      gp.style.display = 'none';
+    }
+  }
+
+  function saveBusinessProfile() {
+    var settings = { client_goals: (document.getElementById('sw_goals').value || '').trim(), client_competitors: (document.getElementById('sw_competitors').value || '').trim() };
+    var btn = document.getElementById('sw-goals-save');
+    btn.disabled = true;
+    api({ action: 'save_business_profile', settings: settings }).then(function (res) {
+      btn.disabled = false;
+      if (res.error) { showMsg(res.error, 'err'); return; }
+      showMsg('Goals and competition saved.', 'ok');
+      loadProfile();
+    }).catch(function () { btn.disabled = false; showMsg('Save failed. Please try again.', 'err'); });
   }
 
   function swChannelChanged() {
@@ -1857,6 +1899,7 @@
       }
       renderSpaces();
       fillAi(PROFILE.ai);
+      SW_BUSINESS = (res.business && typeof res.business === 'object') ? res.business : null; /* CLIENT_GOALS_V1 */
       renderSetupWizard(res.setup, res.channel || {});
       loadKb();
       hwsLoad(); /* HOW_WE_SELL_V1 */
